@@ -8,11 +8,42 @@ embedded = true
 [build]
 automatically_update_urls_on_dev = true
 
+[app_proxy]
+url = "https://zip-code-checker-production-b1a0.up.railway.app"
+subpath = "zipcheck"
+prefix = "apps"
+
 [webhooks]
 api_version = "2026-01"
 
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app_subscriptions/update" ]
+  uri = "/webhooks/app_subscriptions/update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "customers/data_request" ]
+  uri = "/webhooks/customers/data_request"
+  compliance_topic = true
+
+  [[webhooks.subscriptions]]
+  topics = [ "customers/redact" ]
+  uri = "/webhooks/customers/redact"
+  compliance_topic = true
+
+  [[webhooks.subscriptions]]
+  topics = [ "shop/redact" ]
+  uri = "/webhooks/shop/redact"
+  compliance_topic = true
+
 [access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_customers,write_customers,write_metaobjects,read_products,read_themes"
 optional_scopes = [ ]
 use_legacy_install_flow = false

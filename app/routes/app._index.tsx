@@ -47,8 +47,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   let activeThemeName: string | null = null;
   let themeEditorUrl = `https://${shop}/admin/themes/current/editor`;
   let themeEditorAppEmbedsUrl = `https://${shop}/admin/themes/current/editor?context=apps`;
-  let debugInfo: string | null = null;
-
   try {
     const themeResponse = await admin.graphql(`{
       themes(first: 1, roles: MAIN) {
@@ -83,26 +81,34 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       };
     };
     const mainTheme = themeData?.data?.themes?.nodes?.[0];
-    if (!mainTheme) {
-      debugInfo = "No main theme found via GraphQL";
-    } else {
+    if (mainTheme) {
       const gidParts = mainTheme.id.split("/");
       const numericId = gidParts[gidParts.length - 1];
       activeThemeName = mainTheme.name;
       themeEditorUrl = `https://${shop}/admin/themes/${numericId}/editor`;
       themeEditorAppEmbedsUrl = `https://${shop}/admin/themes/${numericId}/editor?context=apps`;
 
-      const content = mainTheme.files?.nodes?.[0]?.body?.content;
-      if (!content) {
-        debugInfo = `Theme "${mainTheme.name}" found but settings_data.json is empty or unreadable`;
-      } else {
+      let content = mainTheme.files?.nodes?.[0]?.body?.content;
+      if (content) {
         /* eslint-disable @typescript-eslint/no-explicit-any */
-        const settingsData = JSON.parse(content) as any;
+        // Strip leading comments (some themes prepend CSS/JS comments)
+        content = content.replace(/^\/\*[\s\S]*?\*\/\s*/, "").trim();
+        // Find the first { to start valid JSON
+        const jsonStart = content.indexOf("{");
+        if (jsonStart > 0) content = content.substring(jsonStart);
+
+        let settingsData: any;
+        try {
+          settingsData = JSON.parse(content);
+        } catch {
+          return {
+            stats, subscription, appEmbedEnabled, activeThemeName,
+            themeEditorUrl, themeEditorAppEmbedsUrl,
+          };
+        }
         const apiKey = process.env.SHOPIFY_API_KEY ?? "";
 
-        // Collect all block keys from settings_data.json for debugging
         const blocks = settingsData?.current?.blocks ?? {};
-        const blockKeys = Object.keys(blocks);
         const embedBlocks = Object.entries(blocks).filter(([, block]) => {
           const b = block as { type?: string };
           const t = b.type ?? "";
@@ -141,13 +147,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           }
         }
 
-        // Debug info
-        debugInfo = `Theme: ${mainTheme.name} | API Key: ${apiKey || "(empty)"} | Total blocks: ${blockKeys.length} | Embed blocks: ${embedBlocks.length} | Embed block types: ${embedBlocks.map(([k, b]) => `${k.substring(0, 60)}... (disabled=${(b as any).disabled})`).join("; ") || "none"} | Result: ${appEmbedEnabled}`;
         /* eslint-enable @typescript-eslint/no-explicit-any */
       }
     }
-  } catch (err) {
-    debugInfo = `Error: ${err instanceof Error ? err.message : String(err)}`;
+  } catch {
+    // Theme detection failed — leave appEmbedEnabled as false
   }
 
   return {
@@ -157,7 +161,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     activeThemeName,
     themeEditorUrl,
     themeEditorAppEmbedsUrl,
-    debugInfo,
   };
 };
 
@@ -169,7 +172,6 @@ export default function DashboardPage() {
     activeThemeName,
     themeEditorUrl,
     themeEditorAppEmbedsUrl,
-    debugInfo,
   } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const { revalidate, state: revalidateState } = useRevalidator();
@@ -257,13 +259,6 @@ export default function DashboardPage() {
                   <strong>Zip Code Checker</strong> block, and save
                 </List.Item>
               </List>
-            </Banner>
-          )}
-
-          {/* Debug info for embed detection (temporary) */}
-          {debugInfo && (
-            <Banner tone="info" title="Embed Detection Debug">
-              <Text as="p" variant="bodySm">{debugInfo}</Text>
             </Banner>
           )}
 

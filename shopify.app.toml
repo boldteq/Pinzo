@@ -28,21 +28,6 @@ api_version = "2026-01"
   topics = [ "app_subscriptions/update" ]
   uri = "/webhooks/app_subscriptions/update"
 
-  [[webhooks.subscriptions]]
-  topics = [ "customers/data_request" ]
-  uri = "/webhooks/customers/data_request"
-  compliance_topic = true
-
-  [[webhooks.subscriptions]]
-  topics = [ "customers/redact" ]
-  uri = "/webhooks/customers/redact"
-  compliance_topic = true
-
-  [[webhooks.subscriptions]]
-  topics = [ "shop/redact" ]
-  uri = "/webhooks/shop/redact"
-  compliance_topic = true
-
 [access_scopes]
 # read_themes is required to detect whether the app embed is enabled in the
 # merchant's active theme (reads config/settings_data.json via GraphQL themes API).

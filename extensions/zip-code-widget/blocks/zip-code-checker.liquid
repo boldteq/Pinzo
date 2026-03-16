@@ -187,6 +187,7 @@
       customCss: "",
       blockCartOnInvalid: false,
       showSocialProof: true,
+      widgetStyle: "minimal",
     };
     Object.keys(D).forEach(function (k) {
       if (cfg[k] === undefined || cfg[k] === null || cfg[k] === "") cfg[k] = D[k];
@@ -328,159 +329,127 @@
     return result;
   }
 
-  // ── Shared: inject CSS ──────────────────────────────────────────────────────
-  function injectCss(wid, cfg, rad) {
-    var W = "#" + wid;
-    var css =
-      // Keyframe animations (must be outside scoped selectors)
-      "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
-      "@keyframes zcc-check-draw{to{stroke-dashoffset:0}}" +
-      "@keyframes zcc-fade-in{from{opacity:0}to{opacity:1}}" +
-      "@keyframes zcc-pulse{0%,100%{box-shadow:0 0 0 0 " + cfg.primaryColor + "40}50%{box-shadow:0 0 0 8px " + cfg.primaryColor + "00}}" +
-
-      // Container — elevated card with hover lift
-      W + "{" +
-        "background:" + cfg.backgroundColor + " !important;" +
-        "color:" + cfg.textColor + " !important;" +
-        "border-radius:" + rad + " !important;" +
-        "padding:24px !important;" +
-        "border:none !important;" +
-        "box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.06) !important;" +
-        "max-width:480px;" +
-        "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important;" +
-        "box-sizing:border-box !important;" +
-        "transition:box-shadow 0.2s ease !important;" +
-      "}" +
-      W + ":hover{box-shadow:0 4px 12px rgba(0,0,0,0.1) !important}" +
-      W + " *{box-sizing:border-box !important}" +
-
-      // Heading with location pin icon
-      W + " .zcc-heading{" +
-        "font-size:17px !important;font-weight:700 !important;letter-spacing:-0.01em !important;" +
-        "margin:0 0 20px !important;color:" + cfg.textColor + " !important;" +
-        "display:flex !important;align-items:center !important;gap:8px !important" +
-      "}" +
-      W + " .zcc-heading-icon{" +
-        "display:inline-flex !important;align-items:center !important;justify-content:center !important;" +
-        "width:28px !important;height:28px !important;border-radius:50% !important;" +
-        "background:" + cfg.primaryColor + "12 !important;flex-shrink:0 !important" +
-      "}" +
-      W + " .zcc-heading-icon svg{width:16px !important;height:16px !important}" +
-
-      // Unified search bar (input + button in one container)
-      W + " .zcc-search-bar{" +
-        "display:flex !important;border:2px solid #e1e3e5 !important;border-radius:" + rad + " !important;" +
-        "overflow:hidden !important;transition:border-color 0.2s ease,box-shadow 0.2s ease !important;margin-bottom:0 !important" +
-      "}" +
-      W + " .zcc-search-bar:focus-within{" +
-        "border-color:" + cfg.primaryColor + " !important;box-shadow:0 0 0 3px " + cfg.primaryColor + "20 !important" +
-      "}" +
-      W + " .zcc-row{display:flex !important;gap:0 !important;margin-bottom:0 !important}" + // backward compat alias
-
-      // Input — borderless inside unified bar
-      W + " .zcc-input{" +
-        "flex:1 !important;padding:12px 16px !important;border:none !important;" +
-        "font-size:14px !important;outline:none !important;" +
-        "background:transparent !important;color:" + cfg.textColor + " !important;min-width:0 !important" +
-      "}" +
-      W + " .zcc-input::placeholder{color:#8c9196 !important}" +
-
-      // Button — right side of search bar
-      W + " .zcc-btn{" +
-        "background:" + cfg.primaryColor + " !important;color:#fff !important;border:none !important;" +
-        "border-left:1px solid " + cfg.primaryColor + " !important;" +
-        "padding:12px 24px !important;font-size:14px !important;" +
-        "font-weight:600 !important;cursor:pointer !important;white-space:nowrap !important;" +
-        "flex-shrink:0 !important;transition:all 0.2s ease !important" +
-      "}" +
-      W + " .zcc-btn:hover{filter:brightness(1.08) !important}" +
-      W + " .zcc-btn:active{transform:scale(0.98) !important}" +
-      W + " .zcc-btn:disabled{opacity:.6 !important;cursor:not-allowed !important;filter:none !important}" +
-
-      // Result card — shared base
-      W + " .zcc-result{" +
-        "margin-top:16px !important;padding:14px 16px !important;border-radius:" + rad + " !important;" +
-        "font-size:14px !important;line-height:1.5 !important;" +
-        "animation:zcc-slide-in 0.3s ease !important;" +
-        "display:flex !important;gap:12px !important;align-items:flex-start !important" +
-      "}" +
-
-      // Success result
-      W + " .zcc-result.ok{" +
-        "background:linear-gradient(135deg," + cfg.successColor + "08," + cfg.successColor + "14) !important;" +
-        "border:1px solid " + cfg.successColor + "30 !important;color:" + cfg.successColor + " !important" +
-      "}" +
-
-      // Error / not found result
-      W + " .zcc-result.fail{" +
-        "background:linear-gradient(135deg," + cfg.errorColor + "08," + cfg.errorColor + "14) !important;" +
-        "border:1px solid " + cfg.errorColor + "30 !important;color:" + cfg.errorColor + " !important" +
-      "}" +
-
-      // Result icon container
-      W + " .zcc-result-icon{" +
-        "flex-shrink:0 !important;width:24px !important;height:24px !important;display:flex !important;align-items:center !important;justify-content:center !important" +
-      "}" +
+  // ── Shared meta/waitlist CSS — injected by all three style presets ──────────
+  function buildSharedCss(W, cfg) {
+    return (
+      W + " .zcc-row{display:flex !important;gap:0 !important;margin-bottom:0 !important}" +
+      W + " .zcc-result-icon{flex-shrink:0 !important;width:24px !important;height:24px !important;display:flex !important;align-items:center !important;justify-content:center !important}" +
       W + " .zcc-result-icon svg{width:22px !important;height:22px !important}" +
       W + " .zcc-result-content{flex:1 !important;min-width:0 !important}" +
-
-      // Meta info lines
-      W + " .zcc-meta{" +
-        "margin-top:6px !important;font-size:13px !important;opacity:.85 !important;" +
-        "display:flex !important;align-items:center !important;gap:6px !important" +
-      "}" +
+      W + " .zcc-meta{margin-top:6px !important;font-size:13px !important;opacity:.85 !important;display:flex !important;align-items:center !important;gap:6px !important}" +
       W + " .zcc-meta svg{width:14px !important;height:14px !important;flex-shrink:0 !important}" +
-
-      // Specific meta classes
       W + " .zcc-cutoff{margin-top:6px !important;font-size:0.85em !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:6px !important}" +
       W + " .zcc-days{margin-top:6px !important;font-size:0.85em !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:6px !important}" +
       W + " .zcc-cod{margin-top:6px !important;font-size:0.85em !important;font-weight:500 !important;display:flex !important;align-items:center !important;gap:6px !important}" +
       W + " .zcc-cod--available{color:#008060 !important}" +
       W + " .zcc-cod--unavailable{color:#d72c0d !important}" +
       W + " .zcc-return-policy{margin-top:6px !important;font-size:0.85em !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:6px !important}" +
-
-      // Waitlist section
-      W + " .zcc-wl{margin-top:14px !important;padding:14px !important;background:" + cfg.errorColor + "06 !important;border-radius:" + rad + " !important}" +
-      W + " .zcc-wl-toggle{" +
-        "display:inline-flex !important;align-items:center !important;gap:6px !important;" +
-        "font-size:13px !important;font-weight:600 !important;color:" + cfg.primaryColor + " !important;" +
-        "text-decoration:none !important;cursor:pointer !important;border:none !important;background:none !important;padding:0 !important" +
-      "}" +
+      W + " .zcc-wl-toggle{display:inline-flex !important;align-items:center !important;gap:6px !important;font-size:13px !important;font-weight:600 !important;color:" + cfg.primaryColor + " !important;text-decoration:none !important;cursor:pointer !important;border:none !important;background:none !important;padding:0 !important}" +
       W + " .zcc-wl-toggle:hover{text-decoration:underline !important}" +
-      W + " .zcc-wl-input{" +
-        "width:100% !important;padding:10px 12px !important;border:1px solid #e1e3e5 !important;" +
-        "border-radius:" + rad + " !important;font-size:13px !important;margin-bottom:8px !important;" +
-        "display:block !important;outline:none !important;transition:border-color 0.2s !important" +
-      "}" +
       W + " .zcc-wl-input:focus{border-color:" + cfg.primaryColor + " !important;box-shadow:0 0 0 2px " + cfg.primaryColor + "20 !important}" +
-      W + " .zcc-wl-btn{" +
-        "background:" + cfg.primaryColor + " !important;color:#fff !important;border:none !important;" +
-        "border-radius:" + rad + " !important;padding:10px 16px !important;font-size:13px !important;" +
-        "cursor:pointer !important;width:100% !important;font-weight:600 !important;" +
-        "transition:all 0.2s ease !important" +
-      "}" +
       W + " .zcc-wl-btn:hover{filter:brightness(1.08) !important}" +
       W + " .zcc-wl-btn:disabled{opacity:.6 !important;cursor:not-allowed !important}" +
+      W + " .zcc-social-proof{display:inline-flex !important;align-items:center !important;gap:6px !important;font-size:12px !important;color:#6d7175 !important;margin-bottom:10px !important;background:#f6f6f7 !important;padding:4px 10px !important;border-radius:20px !important}" +
+      "@keyframes zcc-pulse{0%,100%{box-shadow:0 0 0 0 " + cfg.primaryColor + "40}50%{box-shadow:0 0 0 8px " + cfg.primaryColor + "00}}"
+    );
+  }
 
-      // Social proof badge
-      W + " .zcc-social-proof{" +
-        "display:inline-flex !important;align-items:center !important;gap:6px !important;" +
-        "font-size:12px !important;color:#6d7175 !important;margin-bottom:10px !important;" +
-        "background:#f6f6f7 !important;padding:4px 10px !important;border-radius:20px !important" +
-      "}" +
+  // ── Style: Minimal (edge-to-edge, pill shape, no card) ────────────────────
+  function buildMinimalCss(wid, cfg, rad) {
+    var W = "#" + wid;
+    return (
+      "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
+      W + "{background:transparent !important;color:" + cfg.textColor + " !important;padding:0 !important;border:none !important;box-shadow:none !important;max-width:480px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important;box-sizing:border-box !important}" +
+      W + " *{box-sizing:border-box !important}" +
+      W + " .zcc-heading{font-size:18px !important;font-weight:800 !important;margin:0 0 16px !important;color:" + cfg.textColor + " !important;display:flex !important;align-items:center !important;gap:8px !important}" +
+      W + " .zcc-heading-icon{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:28px !important;height:28px !important;border-radius:50% !important;background:" + cfg.primaryColor + "18 !important;flex-shrink:0 !important}" +
+      W + " .zcc-heading-icon svg{width:16px !important;height:16px !important}" +
+      W + " .zcc-search-bar{display:flex !important;border:2px solid #e5e7eb !important;border-radius:50px !important;overflow:hidden !important;transition:border-color 0.2s ease,box-shadow 0.2s ease !important}" +
+      W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + " !important;box-shadow:0 0 0 3px " + cfg.primaryColor + "22 !important}" +
+      W + " .zcc-input{flex:1 !important;padding:14px 20px !important;border:none !important;font-size:15px !important;outline:none !important;background:transparent !important;color:" + cfg.textColor + " !important;min-width:0 !important}" +
+      W + " .zcc-input::placeholder{color:#9ca3af !important}" +
+      W + " .zcc-btn{background:" + cfg.primaryColor + " !important;color:#fff !important;border:none !important;padding:14px 28px !important;font-size:15px !important;font-weight:700 !important;cursor:pointer !important;white-space:nowrap !important;flex-shrink:0 !important;border-radius:50px !important;transition:all 0.2s ease !important}" +
+      W + " .zcc-btn:hover{filter:brightness(1.08) !important}" +
+      W + " .zcc-btn:active{transform:scale(0.98) !important}" +
+      W + " .zcc-btn:disabled{opacity:.6 !important;cursor:not-allowed !important;filter:none !important}" +
+      W + " .zcc-result{margin-top:14px !important;padding:12px 16px !important;border-radius:50px !important;font-size:14px !important;line-height:1.5 !important;animation:zcc-slide-in 0.3s ease !important;display:flex !important;gap:10px !important;align-items:center !important;font-weight:500 !important}" +
+      W + " .zcc-result.ok{background:" + cfg.successColor + "12 !important;color:" + cfg.successColor + " !important}" +
+      W + " .zcc-result.fail{background:" + cfg.errorColor + "12 !important;color:" + cfg.errorColor + " !important}" +
+      W + " .zcc-result .zcc-result-content{display:flex !important;align-items:center !important;gap:8px !important;flex-wrap:wrap !important}" +
+      W + " .zcc-wl{margin-top:14px !important;padding:14px !important;background:" + cfg.errorColor + "06 !important;border-radius:16px !important}" +
+      W + " .zcc-wl-input{width:100% !important;padding:10px 16px !important;border:1.5px solid #e5e7eb !important;border-radius:50px !important;font-size:13px !important;margin-bottom:8px !important;display:block !important;outline:none !important;transition:border-color 0.2s !important}" +
+      W + " .zcc-wl-btn{background:" + cfg.primaryColor + " !important;color:#fff !important;border:none !important;border-radius:50px !important;padding:10px 16px !important;font-size:13px !important;cursor:pointer !important;width:100% !important;font-weight:600 !important;transition:all 0.2s ease !important}" +
+      "@media(max-width:480px){" + W + " .zcc-search-bar{flex-direction:column !important;border-radius:16px !important}" + W + " .zcc-btn{border-radius:0 0 14px 14px !important}" + "}" +
+      buildSharedCss(W, cfg)
+    );
+  }
 
-      // Mobile responsive
-      "@media(max-width:480px){" +
-        W + "{padding:16px !important}" +
-        W + " .zcc-heading{font-size:15px !important;margin:0 0 16px !important}" +
-        W + " .zcc-search-bar{flex-direction:column !important;border-radius:" + rad + " !important}" +
-        W + " .zcc-btn{border-left:none !important;border-top:1px solid " + cfg.primaryColor + " !important}" +
-        W + " .zcc-result{flex-direction:column !important;gap:8px !important}" +
-      "}" +
+  // ── Style: Bold (full-width branded strip with left accent) ───────────────
+  function buildBoldCss(wid, cfg, rad) {
+    var W = "#" + wid;
+    return (
+      "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
+      W + "{background:" + cfg.primaryColor + "08 !important;color:" + cfg.textColor + " !important;border-left:4px solid " + cfg.primaryColor + " !important;border-top:none !important;border-right:none !important;border-bottom:none !important;padding:20px 24px !important;border-radius:4px !important;max-width:480px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important;box-sizing:border-box !important;width:100% !important}" +
+      W + " *{box-sizing:border-box !important}" +
+      W + " .zcc-heading{font-size:17px !important;font-weight:700 !important;margin:0 0 14px !important;color:" + cfg.textColor + " !important;display:flex !important;align-items:center !important;gap:8px !important}" +
+      W + " .zcc-heading-icon{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:26px !important;height:26px !important;border-radius:50% !important;background:" + cfg.primaryColor + "20 !important;flex-shrink:0 !important}" +
+      W + " .zcc-heading-icon svg{width:14px !important;height:14px !important}" +
+      W + " .zcc-search-bar{display:flex !important;background:#fff !important;border:1.5px solid #e5e7eb !important;border-radius:8px !important;overflow:hidden !important;transition:border-color 0.2s ease !important}" +
+      W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + " !important}" +
+      W + " .zcc-input{flex:1 !important;padding:12px 16px !important;border:none !important;font-size:14px !important;outline:none !important;background:transparent !important;color:" + cfg.textColor + " !important;min-width:0 !important}" +
+      W + " .zcc-input::placeholder{color:#9ca3af !important}" +
+      W + " .zcc-btn{background:" + cfg.primaryColor + " !important;color:#fff !important;border:none !important;padding:12px 24px !important;font-size:14px !important;font-weight:700 !important;cursor:pointer !important;white-space:nowrap !important;flex-shrink:0 !important;border-radius:0 6px 6px 0 !important;transition:all 0.2s ease !important}" +
+      W + " .zcc-btn:hover{filter:brightness(1.08) !important}" +
+      W + " .zcc-btn:active{transform:scale(0.98) !important}" +
+      W + " .zcc-btn:disabled{opacity:.6 !important;cursor:not-allowed !important;filter:none !important}" +
+      W + " .zcc-result{margin-top:12px !important;padding:10px 14px !important;border-radius:6px !important;font-size:14px !important;line-height:1.5 !important;animation:zcc-slide-in 0.3s ease !important;display:flex !important;gap:10px !important;align-items:flex-start !important}" +
+      W + " .zcc-result.ok{background:linear-gradient(90deg," + cfg.successColor + "0c," + cfg.successColor + "18) !important;border-left:3px solid " + cfg.successColor + " !important;color:" + cfg.successColor + " !important}" +
+      W + " .zcc-result.fail{background:linear-gradient(90deg," + cfg.errorColor + "0c," + cfg.errorColor + "18) !important;border-left:3px solid " + cfg.errorColor + " !important;color:" + cfg.errorColor + " !important}" +
+      W + " .zcc-wl{margin-top:12px !important;padding:14px !important;background:" + cfg.errorColor + "06 !important;border-radius:6px !important}" +
+      W + " .zcc-wl-input{width:100% !important;padding:10px 12px !important;border:1px solid #e1e3e5 !important;border-radius:6px !important;font-size:13px !important;margin-bottom:8px !important;display:block !important;outline:none !important;transition:border-color 0.2s !important}" +
+      W + " .zcc-wl-btn{background:" + cfg.primaryColor + " !important;color:#fff !important;border:none !important;border-radius:6px !important;padding:10px 16px !important;font-size:13px !important;cursor:pointer !important;width:100% !important;font-weight:600 !important;transition:all 0.2s ease !important}" +
+      "@media(max-width:480px){" + W + " .zcc-search-bar{flex-direction:column !important;border-radius:8px !important}" + W + " .zcc-btn{border-radius:0 0 6px 6px !important}" + "}" +
+      buildSharedCss(W, cfg)
+    );
+  }
 
-      // Scoped custom CSS
-      scopeCustomCss(cfg.customCss, wid);
+  // ── Style: Card (elevated card with shadow and gradient result) ───────────
+  function buildCardCss(wid, cfg, rad) {
+    var W = "#" + wid;
+    return (
+      "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
+      W + "{background:#fff !important;color:" + cfg.textColor + " !important;border-radius:12px !important;padding:24px !important;border:1px solid rgba(0,0,0,0.05) !important;box-shadow:0 4px 24px rgba(0,0,0,0.08) !important;max-width:480px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important;box-sizing:border-box !important;transition:box-shadow 0.2s ease !important}" +
+      W + ":hover{box-shadow:0 8px 32px rgba(0,0,0,0.12) !important}" +
+      W + " *{box-sizing:border-box !important}" +
+      W + " .zcc-heading{font-size:18px !important;font-weight:800 !important;letter-spacing:-0.02em !important;margin:0 0 20px !important;color:" + cfg.textColor + " !important;display:flex !important;align-items:center !important;gap:8px !important}" +
+      W + " .zcc-heading-icon{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:30px !important;height:30px !important;border-radius:50% !important;background:" + cfg.primaryColor + "15 !important;flex-shrink:0 !important}" +
+      W + " .zcc-heading-icon svg{width:16px !important;height:16px !important}" +
+      W + " .zcc-search-bar{display:flex !important;border:2px solid #e5e7eb !important;border-radius:10px !important;overflow:hidden !important;transition:border-color 0.2s ease,box-shadow 0.2s ease !important}" +
+      W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + " !important;box-shadow:0 0 0 3px " + cfg.primaryColor + "20 !important}" +
+      W + " .zcc-input{flex:1 !important;padding:13px 16px !important;border:none !important;font-size:14px !important;outline:none !important;background:transparent !important;color:" + cfg.textColor + " !important;min-width:0 !important}" +
+      W + " .zcc-input::placeholder{color:#9ca3af !important}" +
+      W + " .zcc-btn{background:" + cfg.primaryColor + " !important;color:#fff !important;border:none !important;padding:13px 24px !important;font-size:14px !important;font-weight:700 !important;cursor:pointer !important;white-space:nowrap !important;flex-shrink:0 !important;border-radius:0 8px 8px 0 !important;transition:all 0.2s ease !important}" +
+      W + " .zcc-btn:hover{filter:brightness(1.08) !important}" +
+      W + " .zcc-btn:active{transform:scale(0.98) !important}" +
+      W + " .zcc-btn:disabled{opacity:.6 !important;cursor:not-allowed !important;filter:none !important}" +
+      W + " .zcc-result{margin-top:16px !important;padding:14px 16px !important;border-radius:10px !important;font-size:14px !important;line-height:1.5 !important;animation:zcc-slide-in 0.3s ease !important;display:flex !important;gap:12px !important;align-items:flex-start !important;border-left:4px solid transparent !important}" +
+      W + " .zcc-result.ok{background:linear-gradient(135deg," + cfg.successColor + "08," + cfg.successColor + "14) !important;border-left-color:" + cfg.successColor + " !important;color:" + cfg.successColor + " !important}" +
+      W + " .zcc-result.fail{background:linear-gradient(135deg," + cfg.errorColor + "08," + cfg.errorColor + "14) !important;border-left-color:" + cfg.errorColor + " !important;color:" + cfg.errorColor + " !important}" +
+      W + " .zcc-wl{margin-top:14px !important;padding:16px !important;background:" + cfg.errorColor + "06 !important;border-radius:10px !important}" +
+      W + " .zcc-wl-input{width:100% !important;padding:10px 12px !important;border:1px solid #e1e3e5 !important;border-radius:8px !important;font-size:13px !important;margin-bottom:8px !important;display:block !important;outline:none !important;transition:border-color 0.2s !important}" +
+      W + " .zcc-wl-btn{background:" + cfg.primaryColor + " !important;color:#fff !important;border:none !important;border-radius:8px !important;padding:10px 16px !important;font-size:13px !important;cursor:pointer !important;width:100% !important;font-weight:600 !important;transition:all 0.2s ease !important}" +
+      "@media(max-width:480px){" + W + "{padding:16px !important}" + W + " .zcc-heading{font-size:16px !important;margin:0 0 16px !important}" + W + " .zcc-search-bar{flex-direction:column !important;border-radius:10px !important}" + W + " .zcc-btn{border-radius:0 0 8px 8px !important}" + "}" +
+      buildSharedCss(W, cfg)
+    );
+  }
 
+  // ── Shared: inject CSS — dispatches to style-specific builder ───────────────
+  function injectCss(wid, cfg, rad) {
+    var style = cfg.widgetStyle || "minimal";
+    var css = style === "bold" ? buildBoldCss(wid, cfg, rad) :
+              style === "card" ? buildCardCss(wid, cfg, rad) :
+              buildMinimalCss(wid, cfg, rad);
+    css += scopeCustomCss(cfg.customCss, wid);
     var styleEl = document.createElement("style");
     styleEl.textContent = css;
     document.head.appendChild(styleEl);

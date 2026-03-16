@@ -43,6 +43,7 @@ const DEFAULTS = {
   blockCheckoutInCart: false,
   showSocialProof: true,
   borderRadius: "8",
+  widgetStyle: "minimal",
   customCss: null as string | null,
 };
 
@@ -121,6 +122,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         blockCheckoutInCart: config.blockCheckoutInCart ?? false,
         showSocialProof: config.showSocialProof ?? true,
         borderRadius: config.borderRadius,
+        widgetStyle: config.widgetStyle ?? "minimal",
         customCss: config.customCss ? sanitizeCss(config.customCss) : null,
       }
     : DEFAULTS;

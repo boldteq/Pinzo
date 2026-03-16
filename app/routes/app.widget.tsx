@@ -145,6 +145,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       blockCheckoutInCart: formData.get("blockCheckoutInCart") === "true",
       showSocialProof: formData.get("showSocialProof") === "true",
       borderRadius: String(formData.get("borderRadius") || "8"),
+      widgetStyle: String(formData.get("widgetStyle") || "minimal"),
       customCss: String(formData.get("customCss") || "") || null,
     };
 
@@ -184,6 +185,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       blockCheckoutInCart: false,
       showSocialProof: true,
       borderRadius: "8",
+      widgetStyle: "minimal",
       customCss: null,
     };
 
@@ -225,6 +227,7 @@ type WidgetConfig = {
   blockCheckoutInCart: boolean;
   showSocialProof: boolean;
   borderRadius: string;
+  widgetStyle: string;
   customCss: string | null;
 };
 
@@ -253,6 +256,7 @@ const DEFAULTS = {
   blockCheckoutInCart: false,
   showSocialProof: true,
   borderRadius: "8",
+  widgetStyle: "minimal",
   customCss: "",
 };
 
@@ -283,61 +287,13 @@ function scopeAdminCss(rawCss: string | null | undefined, wid: string): string {
   return result;
 }
 
-// ── CSS generator — mirrors the Liquid block CSS exactly ────────────────────
-function buildWidgetCss(wid: string, cfg: WidgetConfig): string {
-  const rad = cfg.borderRadius + "px";
-  const W = "#" + wid;
+// ── CSS generators — one per style preset, mirrors the Liquid block CSS ─────
+
+function buildSharedMetaCss(W: string, cfg: WidgetConfig): string {
   return (
-    // Keyframe animations
-    "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
-
-    // Container — elevated card
-    W + "{" +
-      "background:" + cfg.backgroundColor + ";" +
-      "color:" + cfg.textColor + ";" +
-      "border-radius:" + rad + ";" +
-      "padding:24px;" +
-      "border:none;" +
-      "box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.06);" +
-      "max-width:400px;" +
-      "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;" +
-      "box-sizing:border-box;" +
-    "}" +
-    W + " *{box-sizing:border-box}" +
-
-    // Heading with icon
-    W + " .zcc-heading{font-size:17px;font-weight:700;letter-spacing:-0.01em;margin:0 0 20px;color:" + cfg.textColor + ";display:flex;align-items:center;gap:8px}" +
-    W + " .zcc-heading-icon{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:" + cfg.primaryColor + "12;flex-shrink:0}" +
-    W + " .zcc-heading-icon svg{width:16px;height:16px}" +
-
-    // Unified search bar
-    W + " .zcc-search-bar{display:flex;border:2px solid #e1e3e5;border-radius:" + rad + ";overflow:hidden;transition:border-color 0.2s ease,box-shadow 0.2s ease}" +
-    W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + ";box-shadow:0 0 0 3px " + cfg.primaryColor + "20}" +
-
-    // Input
-    W + " .zcc-input{flex:1;padding:12px 16px;border:none;font-size:14px;outline:none;background:transparent;color:" + cfg.textColor + ";min-width:0}" +
-    W + " .zcc-input::placeholder{color:#8c9196}" +
-
-    // Button
-    W + " .zcc-btn{" +
-      "background:" + cfg.primaryColor + ";color:#fff;border:none;" +
-      "border-left:1px solid " + cfg.primaryColor + ";" +
-      "padding:12px 24px;font-size:14px;" +
-      "font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.2s ease" +
-    "}" +
-    W + " .zcc-btn:hover{filter:brightness(1.08)}" +
-
-    // Result card
-    W + " .zcc-result{margin-top:16px;padding:14px 16px;border-radius:" + rad + ";font-size:14px;line-height:1.5;animation:zcc-slide-in 0.3s ease;display:flex;gap:12px;align-items:flex-start}" +
-    W + " .zcc-result.ok{background:linear-gradient(135deg," + cfg.successColor + "08," + cfg.successColor + "14);border:1px solid " + cfg.successColor + "30;color:" + cfg.successColor + "}" +
-    W + " .zcc-result.fail{background:linear-gradient(135deg," + cfg.errorColor + "08," + cfg.errorColor + "14);border:1px solid " + cfg.errorColor + "30;color:" + cfg.errorColor + "}" +
-
-    // Result icon + content
     W + " .zcc-result-icon{flex-shrink:0;width:24px;height:24px;display:flex;align-items:center;justify-content:center}" +
     W + " .zcc-result-icon svg{width:22px;height:22px}" +
     W + " .zcc-result-content{flex:1;min-width:0}" +
-
-    // Meta
     W + " .zcc-meta{margin-top:6px;font-size:13px;opacity:.85;display:flex;align-items:center;gap:6px}" +
     W + " .zcc-meta svg{width:14px;height:14px;flex-shrink:0}" +
     W + " .zcc-cutoff{margin-top:6px;font-size:0.85em;color:#6d7175;display:flex;align-items:center;gap:6px}" +
@@ -345,23 +301,93 @@ function buildWidgetCss(wid: string, cfg: WidgetConfig): string {
     W + " .zcc-cod{margin-top:6px;font-size:0.85em;font-weight:500;display:flex;align-items:center;gap:6px}" +
     W + " .zcc-cod--available{color:#008060}" +
     W + " .zcc-cod--unavailable{color:#d72c0d}" +
-    W + " .zcc-return-policy{margin-top:6px;font-size:0.85em;color:#6d7175;display:flex;align-items:center;gap:6px}" +
-
-    // Waitlist
-    W + " .zcc-wl{margin-top:14px;padding:14px;background:" + cfg.errorColor + "06;border-radius:" + rad + "}" +
-    W + " .zcc-wl-input{" +
-      "width:100%;padding:10px 12px;border:1px solid #e1e3e5;" +
-      "border-radius:" + rad + ";font-size:13px;margin-bottom:8px;display:block;outline:none" +
-    "}" +
-    W + " .zcc-wl-btn{" +
-      "background:" + cfg.primaryColor + ";color:#fff;border:none;" +
-      "border-radius:" + rad + ";padding:10px 16px;font-size:13px;" +
-      "cursor:pointer;width:100%;font-weight:600" +
-    "}" +
-
-    // Scoped custom CSS
-    scopeAdminCss(cfg.customCss, wid)
+    W + " .zcc-return-policy{margin-top:6px;font-size:0.85em;color:#6d7175;display:flex;align-items:center;gap:6px}"
   );
+}
+
+function buildMinimalCss(wid: string, cfg: WidgetConfig): string {
+  const W = "#" + wid;
+  return (
+    "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
+    W + "{background:transparent;color:" + cfg.textColor + ";padding:0;border:none;box-shadow:none;max-width:480px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-sizing:border-box;}" +
+    W + " *{box-sizing:border-box}" +
+    W + " .zcc-heading{font-size:18px;font-weight:800;margin:0 0 16px;color:" + cfg.textColor + ";display:flex;align-items:center;gap:8px}" +
+    W + " .zcc-heading-icon{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:" + cfg.primaryColor + "18;flex-shrink:0}" +
+    W + " .zcc-heading-icon svg{width:16px;height:16px}" +
+    W + " .zcc-search-bar{display:flex;border:2px solid #e5e7eb;border-radius:50px;overflow:hidden;transition:border-color 0.2s ease,box-shadow 0.2s ease}" +
+    W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + ";box-shadow:0 0 0 3px " + cfg.primaryColor + "22}" +
+    W + " .zcc-input{flex:1;padding:14px 20px;border:none;font-size:15px;outline:none;background:transparent;color:" + cfg.textColor + ";min-width:0}" +
+    W + " .zcc-input::placeholder{color:#9ca3af}" +
+    W + " .zcc-btn{background:" + cfg.primaryColor + ";color:#fff;border:none;padding:14px 28px;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;border-radius:50px;transition:all 0.2s ease}" +
+    W + " .zcc-btn:hover{filter:brightness(1.08)}" +
+    W + " .zcc-result{margin-top:14px;padding:12px 16px;border-radius:50px;font-size:14px;line-height:1.5;animation:zcc-slide-in 0.3s ease;display:flex;gap:10px;align-items:center;font-weight:500}" +
+    W + " .zcc-result.ok{background:" + cfg.successColor + "12;color:" + cfg.successColor + "}" +
+    W + " .zcc-result.fail{background:" + cfg.errorColor + "12;color:" + cfg.errorColor + "}" +
+    W + " .zcc-result .zcc-result-content{display:flex;align-items:center;gap:8px;flex-wrap:wrap}" +
+    W + " .zcc-wl{margin-top:14px;padding:14px;background:" + cfg.errorColor + "06;border-radius:16px}" +
+    W + " .zcc-wl-input{width:100%;padding:10px 16px;border:1.5px solid #e5e7eb;border-radius:50px;font-size:13px;margin-bottom:8px;display:block;outline:none}" +
+    W + " .zcc-wl-btn{background:" + cfg.primaryColor + ";color:#fff;border:none;border-radius:50px;padding:10px 16px;font-size:13px;cursor:pointer;width:100%;font-weight:600}" +
+    buildSharedMetaCss(W, cfg)
+  );
+}
+
+function buildBoldCss(wid: string, cfg: WidgetConfig): string {
+  const W = "#" + wid;
+  return (
+    "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
+    W + "{background:" + cfg.primaryColor + "08;color:" + cfg.textColor + ";border-left:4px solid " + cfg.primaryColor + ";padding:20px 24px;border-radius:4px;border-top:none;border-right:none;border-bottom:none;max-width:480px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-sizing:border-box;width:100%}" +
+    W + " *{box-sizing:border-box}" +
+    W + " .zcc-heading{font-size:17px;font-weight:700;margin:0 0 14px;color:" + cfg.textColor + ";display:flex;align-items:center;gap:8px}" +
+    W + " .zcc-heading-icon{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:" + cfg.primaryColor + "20;flex-shrink:0}" +
+    W + " .zcc-heading-icon svg{width:14px;height:14px}" +
+    W + " .zcc-search-bar{display:flex;background:#fff;border:1.5px solid #e5e7eb;border-radius:8px;overflow:hidden;transition:border-color 0.2s ease}" +
+    W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + "}" +
+    W + " .zcc-input{flex:1;padding:12px 16px;border:none;font-size:14px;outline:none;background:transparent;color:" + cfg.textColor + ";min-width:0}" +
+    W + " .zcc-input::placeholder{color:#9ca3af}" +
+    W + " .zcc-btn{background:" + cfg.primaryColor + ";color:#fff;border:none;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;border-radius:0 6px 6px 0;transition:all 0.2s ease}" +
+    W + " .zcc-btn:hover{filter:brightness(1.08)}" +
+    W + " .zcc-result{margin-top:12px;padding:10px 14px;border-radius:6px;font-size:14px;line-height:1.5;animation:zcc-slide-in 0.3s ease;display:flex;gap:10px;align-items:flex-start}" +
+    W + " .zcc-result.ok{background:linear-gradient(90deg," + cfg.successColor + "0c," + cfg.successColor + "18);border-left:3px solid " + cfg.successColor + ";color:" + cfg.successColor + "}" +
+    W + " .zcc-result.fail{background:linear-gradient(90deg," + cfg.errorColor + "0c," + cfg.errorColor + "18);border-left:3px solid " + cfg.errorColor + ";color:" + cfg.errorColor + "}" +
+    W + " .zcc-wl{margin-top:12px;padding:14px;background:" + cfg.errorColor + "06;border-radius:6px}" +
+    W + " .zcc-wl-input{width:100%;padding:10px 12px;border:1px solid #e1e3e5;border-radius:6px;font-size:13px;margin-bottom:8px;display:block;outline:none}" +
+    W + " .zcc-wl-btn{background:" + cfg.primaryColor + ";color:#fff;border:none;border-radius:6px;padding:10px 16px;font-size:13px;cursor:pointer;width:100%;font-weight:600}" +
+    buildSharedMetaCss(W, cfg)
+  );
+}
+
+function buildCardCss(wid: string, cfg: WidgetConfig): string {
+  const W = "#" + wid;
+  return (
+    "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
+    W + "{background:#fff;color:" + cfg.textColor + ";border-radius:12px;padding:24px;border:1px solid rgba(0,0,0,0.05);box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:480px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-sizing:border-box;}" +
+    W + " *{box-sizing:border-box}" +
+    W + " .zcc-heading{font-size:18px;font-weight:800;letter-spacing:-0.02em;margin:0 0 20px;color:" + cfg.textColor + ";display:flex;align-items:center;gap:8px}" +
+    W + " .zcc-heading-icon{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:" + cfg.primaryColor + "15;flex-shrink:0}" +
+    W + " .zcc-heading-icon svg{width:16px;height:16px}" +
+    W + " .zcc-search-bar{display:flex;border:2px solid #e5e7eb;border-radius:10px;overflow:hidden;transition:border-color 0.2s ease,box-shadow 0.2s ease}" +
+    W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + ";box-shadow:0 0 0 3px " + cfg.primaryColor + "20}" +
+    W + " .zcc-input{flex:1;padding:13px 16px;border:none;font-size:14px;outline:none;background:transparent;color:" + cfg.textColor + ";min-width:0}" +
+    W + " .zcc-input::placeholder{color:#9ca3af}" +
+    W + " .zcc-btn{background:" + cfg.primaryColor + ";color:#fff;border:none;padding:13px 24px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;border-radius:0 8px 8px 0;transition:all 0.2s ease}" +
+    W + " .zcc-btn:hover{filter:brightness(1.08)}" +
+    W + " .zcc-result{margin-top:16px;padding:14px 16px;border-radius:10px;font-size:14px;line-height:1.5;animation:zcc-slide-in 0.3s ease;display:flex;gap:12px;align-items:flex-start;border-left:4px solid}" +
+    W + " .zcc-result.ok{background:linear-gradient(135deg," + cfg.successColor + "08," + cfg.successColor + "14);border-left-color:" + cfg.successColor + ";color:" + cfg.successColor + "}" +
+    W + " .zcc-result.fail{background:linear-gradient(135deg," + cfg.errorColor + "08," + cfg.errorColor + "14);border-left-color:" + cfg.errorColor + ";color:" + cfg.errorColor + "}" +
+    W + " .zcc-wl{margin-top:14px;padding:16px;background:" + cfg.errorColor + "06;border-radius:10px}" +
+    W + " .zcc-wl-input{width:100%;padding:10px 12px;border:1px solid #e1e3e5;border-radius:8px;font-size:13px;margin-bottom:8px;display:block;outline:none}" +
+    W + " .zcc-wl-btn{background:" + cfg.primaryColor + ";color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:13px;cursor:pointer;width:100%;font-weight:600}" +
+    buildSharedMetaCss(W, cfg)
+  );
+}
+
+function buildWidgetCss(wid: string, cfg: WidgetConfig): string {
+  const style = cfg.widgetStyle || "minimal";
+  const baseCss =
+    style === "bold" ? buildBoldCss(wid, cfg) :
+    style === "card" ? buildCardCss(wid, cfg) :
+    buildMinimalCss(wid, cfg);
+  return baseCss + scopeAdminCss(cfg.customCss, wid);
 }
 
 // ── Live Preview component (defined outside WidgetPage to avoid remounting) ─
@@ -663,6 +689,7 @@ export default function WidgetPage() {
   const [blockCheckoutInCart, setBlockCheckoutInCart] = useState(c.blockCheckoutInCart ?? false);
   const [showSocialProof, setShowSocialProof] = useState(c.showSocialProof ?? true);
   const [borderRadius, setBorderRadius] = useState(c.borderRadius);
+  const [widgetStyle, setWidgetStyle] = useState((c as unknown as { widgetStyle?: string }).widgetStyle || "minimal");
   const [customCss, setCustomCss] = useState(c.customCss || "");
 
   // Unsaved changes tracking
@@ -718,6 +745,7 @@ export default function WidgetPage() {
   const handleBlockCheckoutInCartChange = useCallback((v: boolean) => { setBlockCheckoutInCart(v); mark(); }, [mark]);
   const handleShowSocialProofChange = useCallback((v: boolean) => { setShowSocialProof(v); mark(); }, [mark]);
   const handleBorderRadiusChange = useCallback((v: string) => { setBorderRadius(v); mark(); }, [mark]);
+  const handleWidgetStyleChange = useCallback((v: string) => { setWidgetStyle(v); mark(); }, [mark]);
   const handleCustomCssChange = useCallback((v: string) => { setCustomCss(v); mark(); }, [mark]);
 
   const handleSave = useCallback(() => {
@@ -746,6 +774,7 @@ export default function WidgetPage() {
     fd.set("blockCheckoutInCart", String(blockCheckoutInCart));
     fd.set("showSocialProof", String(showSocialProof));
     fd.set("borderRadius", borderRadius);
+    fd.set("widgetStyle", widgetStyle);
     fd.set("customCss", customCss);
     fetcher.submit(fd, { method: "POST" });
     shopify.toast.show("Widget settings saved");
@@ -754,7 +783,7 @@ export default function WidgetPage() {
     textColor, heading, placeholder, buttonText, successMessage, errorMessage,
     notFoundMessage, showEta, showZone, showWaitlistOnFailure, showCod,
     showReturnPolicy, showCutoffTime, showDeliveryDays, blockCartOnInvalid,
-    blockCheckoutInCart, showSocialProof, borderRadius, customCss,
+    blockCheckoutInCart, showSocialProof, borderRadius, widgetStyle, customCss,
     fetcher, shopify,
   ]);
 
@@ -785,6 +814,7 @@ export default function WidgetPage() {
     setBlockCheckoutInCart(DEFAULTS.blockCheckoutInCart);
     setShowSocialProof(DEFAULTS.showSocialProof);
     setBorderRadius(DEFAULTS.borderRadius);
+    setWidgetStyle(DEFAULTS.widgetStyle);
     setCustomCss(DEFAULTS.customCss);
     setPreviewState("idle");
     setIsDirty(false);
@@ -804,7 +834,7 @@ export default function WidgetPage() {
     textColor, heading, placeholder, buttonText, successMessage, errorMessage,
     notFoundMessage, showEta, showZone, showWaitlistOnFailure, showCod,
     showReturnPolicy, showCutoffTime, showDeliveryDays, blockCartOnInvalid,
-    blockCheckoutInCart, showSocialProof, borderRadius, customCss,
+    blockCheckoutInCart, showSocialProof, borderRadius, widgetStyle, customCss,
   };
 
   const handleDiscard = useCallback(() => {
@@ -831,6 +861,7 @@ export default function WidgetPage() {
     setBlockCheckoutInCart(c.blockCheckoutInCart ?? false);
     setShowSocialProof(c.showSocialProof ?? true);
     setBorderRadius(c.borderRadius);
+    setWidgetStyle((c as unknown as { widgetStyle?: string }).widgetStyle || "minimal");
     setCustomCss(c.customCss || "");
     setIsDirty(false);
     setPreviewState("idle");
@@ -865,6 +896,130 @@ export default function WidgetPage() {
             <InlineGrid columns={{ xs: 1, md: 2 }} gap="400" alignItems="start">
               {/* ── Settings Column ── */}
               <BlockStack gap="400">
+
+                {/* Style Preset */}
+                <Card>
+                  <BlockStack gap="400">
+                    <Text as="h2" variant="headingMd">
+                      Widget Style
+                    </Text>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      Choose a visual style for your widget. All styles respect your color settings.
+                    </Text>
+                    <BlockStack gap="300">
+                      {/* Minimal */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => handleWidgetStyleChange("minimal")}
+                        onKeyDown={(e) => e.key === "Enter" && handleWidgetStyleChange("minimal")}
+                        style={{
+                          border: widgetStyle === "minimal" ? "2px solid " + primaryColor : "2px solid #e5e7eb",
+                          borderRadius: "10px",
+                          padding: "16px",
+                          cursor: "pointer",
+                          background: widgetStyle === "minimal" ? primaryColor + "06" : "#fff",
+                          transition: "all 0.15s ease",
+                          outline: "none",
+                        }}
+                      >
+                        <BlockStack gap="200">
+                          <InlineStack align="space-between" blockAlign="center">
+                            <Text as="p" variant="bodyMd" fontWeight="semibold">Minimal</Text>
+                            {widgetStyle === "minimal" && (
+                              <div style={{ width: 18, height: 18, borderRadius: "50%", background: primaryColor, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <svg viewBox="0 0 12 12" fill="none" style={{ width: 10, height: 10 }}><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                              </div>
+                            )}
+                          </InlineStack>
+                          <Text as="p" variant="bodySm" tone="subdued">Pill-shaped, edge-to-edge — no card or shadow. Clean Apple-style layout that blends into any theme.</Text>
+                          {/* Mini visual preview */}
+                          <div style={{ marginTop: 8, pointerEvents: "none", userSelect: "none" }}>
+                            <div style={{ display: "flex", border: "2px solid #e5e7eb", borderRadius: "50px", overflow: "hidden", height: 36 }}>
+                              <div style={{ flex: 1, background: "transparent", borderRadius: "50px 0 0 50px" }} />
+                              <div style={{ background: primaryColor, padding: "0 14px", display: "flex", alignItems: "center", borderRadius: "50px", fontSize: 11, color: "#fff", fontWeight: 700, margin: 3 }}>Check</div>
+                            </div>
+                          </div>
+                        </BlockStack>
+                      </div>
+
+                      {/* Bold */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => handleWidgetStyleChange("bold")}
+                        onKeyDown={(e) => e.key === "Enter" && handleWidgetStyleChange("bold")}
+                        style={{
+                          border: widgetStyle === "bold" ? "2px solid " + primaryColor : "2px solid #e5e7eb",
+                          borderRadius: "10px",
+                          padding: "16px",
+                          cursor: "pointer",
+                          background: widgetStyle === "bold" ? primaryColor + "06" : "#fff",
+                          transition: "all 0.15s ease",
+                          outline: "none",
+                        }}
+                      >
+                        <BlockStack gap="200">
+                          <InlineStack align="space-between" blockAlign="center">
+                            <Text as="p" variant="bodyMd" fontWeight="semibold">Bold</Text>
+                            {widgetStyle === "bold" && (
+                              <div style={{ width: 18, height: 18, borderRadius: "50%", background: primaryColor, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <svg viewBox="0 0 12 12" fill="none" style={{ width: 10, height: 10 }}><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                              </div>
+                            )}
+                          </InlineStack>
+                          <Text as="p" variant="bodySm" tone="subdued">Full-width branded strip with a left accent border. Confident, high-conversion layout for product pages.</Text>
+                          {/* Mini visual preview */}
+                          <div style={{ marginTop: 8, pointerEvents: "none", userSelect: "none" }}>
+                            <div style={{ borderLeft: "4px solid " + primaryColor, background: primaryColor + "10", padding: "8px 12px", borderRadius: "0 4px 4px 0", display: "flex", gap: 8, alignItems: "center" }}>
+                              <div style={{ flex: 1, background: "#fff", borderRadius: "6px", height: 30, border: "1px solid #e5e7eb" }} />
+                              <div style={{ background: primaryColor, padding: "0 12px", height: 30, display: "flex", alignItems: "center", borderRadius: "0 6px 6px 0", fontSize: 11, color: "#fff", fontWeight: 700, marginLeft: -1 }}>Check</div>
+                            </div>
+                          </div>
+                        </BlockStack>
+                      </div>
+
+                      {/* Card */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => handleWidgetStyleChange("card")}
+                        onKeyDown={(e) => e.key === "Enter" && handleWidgetStyleChange("card")}
+                        style={{
+                          border: widgetStyle === "card" ? "2px solid " + primaryColor : "2px solid #e5e7eb",
+                          borderRadius: "10px",
+                          padding: "16px",
+                          cursor: "pointer",
+                          background: widgetStyle === "card" ? primaryColor + "06" : "#fff",
+                          transition: "all 0.15s ease",
+                          outline: "none",
+                        }}
+                      >
+                        <BlockStack gap="200">
+                          <InlineStack align="space-between" blockAlign="center">
+                            <Text as="p" variant="bodyMd" fontWeight="semibold">Card</Text>
+                            {widgetStyle === "card" && (
+                              <div style={{ width: 18, height: 18, borderRadius: "50%", background: primaryColor, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <svg viewBox="0 0 12 12" fill="none" style={{ width: 10, height: 10 }}><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                              </div>
+                            )}
+                          </InlineStack>
+                          <Text as="p" variant="bodySm" tone="subdued">Elevated card with subtle shadow and gradient. Bold heading, focused result with accent strip.</Text>
+                          {/* Mini visual preview */}
+                          <div style={{ marginTop: 8, pointerEvents: "none", userSelect: "none" }}>
+                            <div style={{ background: "#fff", borderRadius: "10px", padding: "10px 12px", boxShadow: "0 4px 16px rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.05)" }}>
+                              <div style={{ display: "flex", border: "2px solid #e5e7eb", borderRadius: "8px", overflow: "hidden", height: 30 }}>
+                                <div style={{ flex: 1 }} />
+                                <div style={{ background: primaryColor, padding: "0 12px", display: "flex", alignItems: "center", borderRadius: "0 6px 6px 0", fontSize: 11, color: "#fff", fontWeight: 700 }}>Check</div>
+                              </div>
+                            </div>
+                          </div>
+                        </BlockStack>
+                      </div>
+                    </BlockStack>
+                  </BlockStack>
+                </Card>
+
                 {/* Layout */}
                 <Card>
                   <BlockStack gap="400">

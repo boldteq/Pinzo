@@ -225,8 +225,8 @@ async function handleZipCheck(shop: string | null, zip: string | null) {
       returnPolicy: widgetConfig?.showReturnPolicy !== false ? (zipRecord.returnPolicy ?? null) : null,
       showWaitlist: false,
       waitlistCount: 0,
-      cutoffTime: matchedRule?.cutoffTime ?? null,
-      daysOfWeek: matchedRule?.daysOfWeek ?? null,
+      cutoffTime: widgetConfig?.showCutoffTime !== false ? (matchedRule?.cutoffTime ?? null) : null,
+      daysOfWeek: widgetConfig?.showDeliveryDays !== false ? (matchedRule?.daysOfWeek ?? null) : null,
     }),
     { status: 200, headers: SUCCESS_HEADERS },
   );

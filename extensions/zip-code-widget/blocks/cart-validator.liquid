@@ -28,7 +28,7 @@
 {% else %}
   {%- liquid
     assign shop_domain = shop.permanent_domain
-    assign metafield_value = shop.metafields.zip_checker.widget_config.value
+    assign metafield_value = app.metafields.zip_checker.widget_config.value
   -%}
 
   <div id="zcc-cart-validator" style="display:none; margin: 16px 0;" aria-live="polite"></div>

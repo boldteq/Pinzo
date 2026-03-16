@@ -35,6 +35,10 @@ const DEFAULTS = {
   showEta: true,
   showZone: false,
   showWaitlistOnFailure: false,
+  showCod: true,
+  showReturnPolicy: true,
+  showCutoffTime: true,
+  showDeliveryDays: true,
   blockCartOnInvalid: false,
   blockCheckoutInCart: false,
   showSocialProof: true,
@@ -109,6 +113,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         showEta: config.showEta,
         showZone: config.showZone,
         showWaitlistOnFailure: config.showWaitlistOnFailure,
+        showCod: config.showCod ?? true,
+        showReturnPolicy: config.showReturnPolicy ?? true,
+        showCutoffTime: config.showCutoffTime ?? true,
+        showDeliveryDays: config.showDeliveryDays ?? true,
         blockCartOnInvalid: config.blockCartOnInvalid ?? false,
         blockCheckoutInCart: config.blockCheckoutInCart ?? false,
         showSocialProof: config.showSocialProof ?? true,
@@ -132,7 +140,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           textColor: DEFAULTS.textColor,
         }),
     // ETA/COD/Return policy toggles
-    ...(limits.showEtaCodReturn ? {} : { showEta: false, showZone: false }),
+    ...(limits.showEtaCodReturn ? {} : {
+      showEta: false,
+      showZone: false,
+      showCod: false,
+      showReturnPolicy: false,
+      showCutoffTime: false,
+      showDeliveryDays: false,
+    }),
     // Cart blocking
     ...(limits.cartBlocking
       ? {}

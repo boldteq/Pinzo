@@ -256,57 +256,111 @@ const DEFAULTS = {
   customCss: "",
 };
 
+// ── Scope custom CSS for admin preview — prefix selectors with #wid ─────────
+function scopeAdminCss(rawCss: string | null | undefined, wid: string): string {
+  if (!rawCss) return "";
+  const css = rawCss.replace(/<\/style>/gi, "");
+  let result = "";
+  let remaining = css;
+  while (remaining.length > 0) {
+    const openBrace = remaining.indexOf("{");
+    if (openBrace === -1) break;
+    const closeBrace = remaining.indexOf("}", openBrace);
+    if (closeBrace === -1) break;
+    const selector = remaining.substring(0, openBrace).trim();
+    const body = remaining.substring(openBrace + 1, closeBrace);
+    remaining = remaining.substring(closeBrace + 1);
+    if (selector.startsWith("@")) {
+      result += selector + "{" + body + "}";
+    } else if (selector) {
+      const prefixed = selector.split(",").map(s => {
+        s = s.trim();
+        return s ? "#" + wid + " " + s : "";
+      }).filter(Boolean).join(", ");
+      result += prefixed + " {" + body + "}";
+    }
+  }
+  return result;
+}
+
 // ── CSS generator — mirrors the Liquid block CSS exactly ────────────────────
 function buildWidgetCss(wid: string, cfg: WidgetConfig): string {
   const rad = cfg.borderRadius + "px";
+  const W = "#" + wid;
   return (
-    "#" + wid + "{" +
+    // Keyframe animations
+    "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
+
+    // Container — elevated card
+    W + "{" +
       "background:" + cfg.backgroundColor + ";" +
       "color:" + cfg.textColor + ";" +
       "border-radius:" + rad + ";" +
       "padding:24px;" +
-      "border:1px solid #e1e3e5;" +
+      "border:none;" +
+      "box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.06);" +
       "max-width:400px;" +
       "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;" +
       "box-sizing:border-box;" +
     "}" +
-    "#" + wid + " *{box-sizing:border-box}" +
-    "#" + wid + " .zcc-heading{font-size:16px;font-weight:600;margin:0 0 16px;color:" + cfg.textColor + "}" +
-    "#" + wid + " .zcc-row{display:flex;gap:8px;margin-bottom:0}" +
-    "#" + wid + " .zcc-input{" +
-      "flex:1;padding:10px 12px;border:1px solid #c9cccf;" +
-      "border-radius:" + rad + ";font-size:14px;outline:none;" +
-      "background:#fafbfb;color:" + cfg.textColor + ";min-width:0" +
-    "}" +
-    "#" + wid + " .zcc-input:focus{border-color:" + cfg.primaryColor + ";box-shadow:0 0 0 2px " + cfg.primaryColor + "22}" +
-    "#" + wid + " .zcc-btn{" +
+    W + " *{box-sizing:border-box}" +
+
+    // Heading with icon
+    W + " .zcc-heading{font-size:17px;font-weight:700;letter-spacing:-0.01em;margin:0 0 20px;color:" + cfg.textColor + ";display:flex;align-items:center;gap:8px}" +
+    W + " .zcc-heading-icon{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:" + cfg.primaryColor + "12;flex-shrink:0}" +
+    W + " .zcc-heading-icon svg{width:16px;height:16px}" +
+
+    // Unified search bar
+    W + " .zcc-search-bar{display:flex;border:2px solid #e1e3e5;border-radius:" + rad + ";overflow:hidden;transition:border-color 0.2s ease,box-shadow 0.2s ease}" +
+    W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + ";box-shadow:0 0 0 3px " + cfg.primaryColor + "20}" +
+
+    // Input
+    W + " .zcc-input{flex:1;padding:12px 16px;border:none;font-size:14px;outline:none;background:transparent;color:" + cfg.textColor + ";min-width:0}" +
+    W + " .zcc-input::placeholder{color:#8c9196}" +
+
+    // Button
+    W + " .zcc-btn{" +
       "background:" + cfg.primaryColor + ";color:#fff;border:none;" +
-      "border-radius:" + rad + ";padding:10px 20px;font-size:14px;" +
-      "font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0" +
+      "border-left:1px solid " + cfg.primaryColor + ";" +
+      "padding:12px 24px;font-size:14px;" +
+      "font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.2s ease" +
     "}" +
-    "#" + wid + " .zcc-btn:hover{opacity:.9}" +
-    "#" + wid + " .zcc-result{margin-top:12px;padding:12px;border-radius:" + rad + ";font-size:14px;line-height:1.4}" +
-    "#" + wid + " .zcc-result.ok{background:" + cfg.successColor + "15;border-left:3px solid " + cfg.successColor + ";color:" + cfg.successColor + "}" +
-    "#" + wid + " .zcc-result.fail{background:" + cfg.errorColor + "15;border-left:3px solid " + cfg.errorColor + ";color:" + cfg.errorColor + "}" +
-    "#" + wid + " .zcc-meta{margin-top:4px;font-size:13px;opacity:.8}" +
-    "#" + wid + " .zcc-cutoff{margin-top:4px;font-size:0.85em;color:#6d7175}" +
-    "#" + wid + " .zcc-days{margin-top:4px;font-size:0.85em;color:#6d7175}" +
-    "#" + wid + " .zcc-cod{margin-top:4px;font-size:0.85em;font-weight:500}" +
-    "#" + wid + " .zcc-cod--available{color:#008060}" +
-    "#" + wid + " .zcc-cod--unavailable{color:#d72c0d}" +
-    "#" + wid + " .zcc-return-policy{margin-top:4px;font-size:0.85em;color:#6d7175}" +
-    "#" + wid + " .zcc-wl{margin-top:10px}" +
-    "#" + wid + " .zcc-wl-input{" +
-      "width:100%;padding:8px 10px;border:1px solid " + cfg.errorColor + "40;" +
-      "border-radius:" + rad + ";font-size:13px;margin-bottom:6px;display:block" +
+    W + " .zcc-btn:hover{filter:brightness(1.08)}" +
+
+    // Result card
+    W + " .zcc-result{margin-top:16px;padding:14px 16px;border-radius:" + rad + ";font-size:14px;line-height:1.5;animation:zcc-slide-in 0.3s ease;display:flex;gap:12px;align-items:flex-start}" +
+    W + " .zcc-result.ok{background:linear-gradient(135deg," + cfg.successColor + "08," + cfg.successColor + "14);border:1px solid " + cfg.successColor + "30;color:" + cfg.successColor + "}" +
+    W + " .zcc-result.fail{background:linear-gradient(135deg," + cfg.errorColor + "08," + cfg.errorColor + "14);border:1px solid " + cfg.errorColor + "30;color:" + cfg.errorColor + "}" +
+
+    // Result icon + content
+    W + " .zcc-result-icon{flex-shrink:0;width:24px;height:24px;display:flex;align-items:center;justify-content:center}" +
+    W + " .zcc-result-icon svg{width:22px;height:22px}" +
+    W + " .zcc-result-content{flex:1;min-width:0}" +
+
+    // Meta
+    W + " .zcc-meta{margin-top:6px;font-size:13px;opacity:.85;display:flex;align-items:center;gap:6px}" +
+    W + " .zcc-meta svg{width:14px;height:14px;flex-shrink:0}" +
+    W + " .zcc-cutoff{margin-top:6px;font-size:0.85em;color:#6d7175;display:flex;align-items:center;gap:6px}" +
+    W + " .zcc-days{margin-top:6px;font-size:0.85em;color:#6d7175;display:flex;align-items:center;gap:6px}" +
+    W + " .zcc-cod{margin-top:6px;font-size:0.85em;font-weight:500;display:flex;align-items:center;gap:6px}" +
+    W + " .zcc-cod--available{color:#008060}" +
+    W + " .zcc-cod--unavailable{color:#d72c0d}" +
+    W + " .zcc-return-policy{margin-top:6px;font-size:0.85em;color:#6d7175;display:flex;align-items:center;gap:6px}" +
+
+    // Waitlist
+    W + " .zcc-wl{margin-top:14px;padding:14px;background:" + cfg.errorColor + "06;border-radius:" + rad + "}" +
+    W + " .zcc-wl-input{" +
+      "width:100%;padding:10px 12px;border:1px solid #e1e3e5;" +
+      "border-radius:" + rad + ";font-size:13px;margin-bottom:8px;display:block;outline:none" +
     "}" +
-    "#" + wid + " .zcc-wl-btn{" +
-      "background:" + cfg.errorColor + ";color:#fff;border:none;" +
-      "border-radius:" + rad + ";padding:8px 16px;font-size:13px;" +
+    W + " .zcc-wl-btn{" +
+      "background:" + cfg.primaryColor + ";color:#fff;border:none;" +
+      "border-radius:" + rad + ";padding:10px 16px;font-size:13px;" +
       "cursor:pointer;width:100%;font-weight:600" +
     "}" +
-    // Sanitize customCss: strip </style> close tags to prevent injection into <style> elements
-    (cfg.customCss ? cfg.customCss.replace(/<\/style>/gi, "") : "")
+
+    // Scoped custom CSS
+    scopeAdminCss(cfg.customCss, wid)
   );
 }
 
@@ -330,10 +384,50 @@ function WidgetPreview({
     previewState === "error" ? cfg.errorMessage :
     previewState === "notfound" ? cfg.notFoundMessage : null;
 
+  // SVG icons as inline JSX
+  const pinIcon = (
+    <svg viewBox="0 0 24 24" fill="none" stroke={cfg.primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:16,height:16}}>
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+    </svg>
+  );
+  const searchIcon = (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{width:16,height:16,verticalAlign:"middle",marginRight:4}}>
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+  );
+  const checkIcon = (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/>
+    </svg>
+  );
+  const xIcon = (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>
+    </svg>
+  );
+  const truckIcon = (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,flexShrink:0}}>
+      <path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+    </svg>
+  );
+  const calendarIcon = (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,flexShrink:0}}>
+      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+  );
+  const clockIcon = (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,flexShrink:0}}>
+      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+    </svg>
+  );
+
   const widgetHtml = (
     <div id={wid}>
-      <p className="zcc-heading">{cfg.heading}</p>
-      <div className="zcc-row">
+      <div className="zcc-heading">
+        <span className="zcc-heading-icon">{pinIcon}</span>
+        <span>{cfg.heading}</span>
+      </div>
+      <div className="zcc-search-bar">
         <input
           className="zcc-input"
           type="text"
@@ -341,44 +435,56 @@ function WidgetPreview({
           readOnly
         />
         <button className="zcc-btn" type="button">
+          {searchIcon}
           {cfg.buttonText}
         </button>
       </div>
       {resultMessage && (
         <div className={`zcc-result ${resultClass}`}>
-          {resultMessage}
-          {previewState === "success" && cfg.showEta && (
-            <div className="zcc-meta">Estimated delivery: 2–3 business days</div>
-          )}
-          {previewState === "success" && cfg.showZone && (
-            <div className="zcc-meta">Zone: Manhattan</div>
-          )}
-          {previewState === "success" && cfg.showDeliveryDays && (
-            <div className="zcc-meta zcc-days">Delivers: Mon &middot; Tue &middot; Wed &middot; Thu &middot; Fri</div>
-          )}
-          {previewState === "success" && cfg.showCutoffTime && (
-            <div className="zcc-meta zcc-cutoff">Order by 2:00 PM for same-day delivery</div>
-          )}
-          {previewState === "success" && cfg.showCod && (
-            <div className="zcc-cod zcc-cod--available">Cash on Delivery Available</div>
-          )}
-          {previewState === "success" && cfg.showReturnPolicy && (
-            <div className="zcc-return-policy">30-day returns accepted. Exchange within 7 days.</div>
-          )}
-          {(previewState === "error" || previewState === "notfound") &&
-            cfg.showWaitlistOnFailure && (
-              <div className="zcc-wl">
-                <input
-                  className="zcc-wl-input"
-                  type="email"
-                  placeholder="Enter email to join waitlist"
-                  readOnly
-                />
-                <button className="zcc-wl-btn" type="button">
-                  Join Waitlist
-                </button>
-              </div>
+          <div className="zcc-result-icon">
+            {previewState === "success" ? checkIcon : xIcon}
+          </div>
+          <div className="zcc-result-content">
+            <div>{resultMessage}</div>
+            {previewState === "success" && cfg.showEta && (
+              <div className="zcc-meta">{truckIcon} Estimated delivery: 2–3 business days</div>
             )}
+            {previewState === "success" && cfg.showZone && (
+              <div className="zcc-meta">Zone: Manhattan</div>
+            )}
+            {previewState === "success" && cfg.showDeliveryDays && (
+              <div className="zcc-meta zcc-days">{calendarIcon} Mon &middot; Tue &middot; Wed &middot; Thu &middot; Fri</div>
+            )}
+            {previewState === "success" && cfg.showCutoffTime && (
+              <div className="zcc-meta zcc-cutoff">{clockIcon} Order by 2:00 PM for same-day</div>
+            )}
+            {previewState === "success" && cfg.showCod && (
+              <div className="zcc-cod zcc-cod--available">Cash on Delivery Available</div>
+            )}
+            {previewState === "success" && cfg.showReturnPolicy && (
+              <div className="zcc-return-policy">30-day returns accepted. Exchange within 7 days.</div>
+            )}
+            {(previewState === "error" || previewState === "notfound") &&
+              cfg.showWaitlistOnFailure && (
+                <div className="zcc-wl">
+                  <input
+                    className="zcc-wl-input"
+                    type="text"
+                    placeholder="Your name"
+                    readOnly
+                  />
+                  <input
+                    className="zcc-wl-input"
+                    type="email"
+                    placeholder="Your email"
+                    readOnly
+                  />
+                  <button className="zcc-wl-btn" type="button">
+                    Submit Request
+                  </button>
+                </div>
+              )}
+          </div>
         </div>
       )}
     </div>
@@ -413,11 +519,12 @@ function WidgetPreview({
               gap: "8px",
             }}
           >
-            <div id={wid} style={{ maxWidth: "300px" }}>
-              <p className="zcc-heading" style={{ marginBottom: "12px" }}>
-                {cfg.heading}
-              </p>
-              <div className="zcc-row">
+            <div id={wid} style={{ maxWidth: "300px", border: "none", boxShadow: "none" }}>
+              <div className="zcc-heading" style={{ marginBottom: "12px" }}>
+                <span className="zcc-heading-icon">{pinIcon}</span>
+                <span>{cfg.heading}</span>
+              </div>
+              <div className="zcc-search-bar">
                 <input
                   className="zcc-input"
                   type="text"
@@ -425,6 +532,7 @@ function WidgetPreview({
                   readOnly
                 />
                 <button className="zcc-btn" type="button">
+                  {searchIcon}
                   {cfg.buttonText}
                 </button>
               </div>
@@ -436,14 +544,20 @@ function WidgetPreview({
                 color: "#fff",
                 border: "none",
                 borderRadius: "50px",
-                padding: "10px 18px",
-                fontSize: "13px",
+                padding: "12px 20px",
+                fontSize: "14px",
                 fontWeight: 600,
                 cursor: "pointer",
-                boxShadow: "0 4px 12px rgba(0,0,0,.2)",
+                boxShadow: `0 4px 16px ${cfg.primaryColor}40`,
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
               }}
             >
-              📍 Check Delivery
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{width:18,height:18}}>
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+              </svg>
+              Check Delivery
             </button>
           </div>
         </div>
@@ -469,13 +583,19 @@ function WidgetPreview({
                 color: "#fff",
                 border: "none",
                 borderRadius: cfg.borderRadius + "px",
-                padding: "10px 24px",
+                padding: "12px 28px",
                 fontSize: "14px",
                 fontWeight: 600,
                 cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
               }}
             >
-              Check Delivery Availability
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:16,height:16}}>
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+              </svg>
+              {cfg.heading}
             </button>
           </div>
           <div
@@ -1172,7 +1292,7 @@ export default function WidgetPage() {
                       placeholder=".zcc-heading { font-size: 18px; } .zcc-btn { border-radius: 4px; }"
                       autoComplete="off"
                       disabled={!limits.customCss}
-                      helpText="Target .zcc-heading, .zcc-btn, .zcc-input, .zcc-result, .zcc-meta classes."
+                      helpText="Write plain CSS using widget classes (.zcc-heading, .zcc-btn, .zcc-input, .zcc-result, .zcc-search-bar, .zcc-meta). All selectors are automatically scoped to the widget only — your CSS won't affect the rest of your store."
                     />
                     {!limits.customCss && (
                       <Banner tone="info">

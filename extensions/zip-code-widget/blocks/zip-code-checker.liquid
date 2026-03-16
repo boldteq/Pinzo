@@ -27,34 +27,48 @@
     <div id="zcc-active-{{ block.id }}" style="display:none;">
       <div style="
         background:#ffffff;
-        border:1px solid #e1e3e5;
-        border-radius:8px;
+        border:none;
+        border-radius:12px;
         padding:24px;
         max-width:480px;
         font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
         box-sizing:border-box;
         color:#202223;
+        box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.06);
       ">
-        <p style="font-size:16px;font-weight:600;margin:0 0 16px;">Check Delivery Availability</p>
-        <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:8px;margin:0 0 20px;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#00806012;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#008060" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </span>
+          <span style="font-size:17px;font-weight:700;letter-spacing:-0.01em;">Check Delivery Availability</span>
+        </div>
+        <div style="display:flex;border:2px solid #e1e3e5;border-radius:8px;overflow:hidden;">
           <input type="text" placeholder="Enter your zip code" disabled style="
-            flex:1;padding:10px 12px;border:1px solid #c9cccf;border-radius:8px;
-            font-size:14px;background:#fafbfb;color:#202223;min-width:0;
+            flex:1;padding:12px 16px;border:none;
+            font-size:14px;background:transparent;color:#202223;min-width:0;outline:none;
           ">
           <button type="button" disabled style="
-            background:#008060;color:#fff;border:none;border-radius:8px;
-            padding:10px 20px;font-size:14px;font-weight:600;white-space:nowrap;
-            opacity:0.7;cursor:default;
-          ">Check</button>
+            background:#008060;color:#fff;border:none;border-left:1px solid #008060;
+            padding:12px 24px;font-size:14px;font-weight:600;white-space:nowrap;
+            opacity:0.7;cursor:default;display:flex;align-items:center;gap:4px;
+          "><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Check</button>
         </div>
         <div style="
-          background:#00806015;border-left:3px solid #008060;border-radius:8px;
-          padding:12px;font-size:14px;color:#008060;line-height:1.4;
+          margin-top:16px;padding:14px 16px;border-radius:8px;
+          background:linear-gradient(135deg,#00806008,#00806014);border:1px solid #00806030;
+          font-size:14px;color:#008060;line-height:1.5;
+          display:flex;gap:12px;align-items:flex-start;
         ">
-          Great news! We deliver to your area.
-          <div style="margin-top:4px;font-size:13px;opacity:0.8;">Estimated delivery: 2-3 business days</div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px;flex-shrink:0;margin-top:1px"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+          <div>
+            Great news! We deliver to your area.
+            <div style="margin-top:6px;font-size:13px;opacity:0.85;display:flex;align-items:center;gap:6px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              Estimated delivery: 2-3 business days
+            </div>
+          </div>
         </div>
-        <p style="margin:12px 0 0;font-size:11px;color:#8c9196;text-align:center;">
+        <p style="margin:14px 0 0;font-size:11px;color:#8c9196;text-align:center;">
           Zip Code Checker — live widget loads on your storefront
         </p>
       </div>
@@ -242,58 +256,230 @@
     }
   }
 
+  // ── Scope custom CSS: auto-prefix selectors with widget container ID ──────
+  function scopeCustomCss(rawCss, wid) {
+    if (!rawCss) return "";
+    // Strip </style> tags to prevent injection
+    var css = rawCss.replace(/<\/style>/gi, "");
+    var result = "";
+    var i = 0;
+    while (i < css.length) {
+      // Skip whitespace
+      while (i < css.length && /\s/.test(css[i])) { result += css[i]; i++; }
+      if (i >= css.length) break;
+      // Pass through @keyframes and @font-face unchanged
+      if (css[i] === '@') {
+        var atRule = "";
+        var j = i;
+        while (j < css.length && css[j] !== '{' && css[j] !== ';') { atRule += css[j]; j++; }
+        var atName = atRule.trim().toLowerCase();
+        if (atName.indexOf("@keyframes") === 0 || atName.indexOf("@font-face") === 0) {
+          result += atRule;
+          if (j < css.length && css[j] === '{') {
+            var depth = 1; result += css[j]; j++;
+            while (j < css.length && depth > 0) {
+              if (css[j] === '{') depth++;
+              if (css[j] === '}') depth--;
+              result += css[j]; j++;
+            }
+          }
+          i = j; continue;
+        }
+        // @media: scope inner rules
+        if (atName.indexOf("@media") === 0) {
+          result += atRule;
+          if (j < css.length && css[j] === '{') {
+            result += '{'; j++;
+            // Collect inner content
+            var depth = 1; var inner = "";
+            while (j < css.length && depth > 0) {
+              if (css[j] === '{') depth++;
+              if (css[j] === '}') depth--;
+              if (depth > 0) inner += css[j];
+              j++;
+            }
+            result += scopeCustomCss(inner, wid);
+            result += '}';
+          }
+          i = j; continue;
+        }
+      }
+      // Regular rule: grab selector, prefix with #wid
+      var sel = ""; var body = "";
+      while (i < css.length && css[i] !== '{') { sel += css[i]; i++; }
+      if (i < css.length) { i++; } // skip {
+      var depth = 1;
+      while (i < css.length && depth > 0) {
+        if (css[i] === '{') depth++;
+        if (css[i] === '}') depth--;
+        if (depth > 0) body += css[i];
+        i++;
+      }
+      if (sel.trim()) {
+        // Split multiple selectors by comma and prefix each
+        var selectors = sel.split(',').map(function(s) {
+          s = s.trim();
+          if (!s) return '';
+          return '#' + wid + ' ' + s;
+        }).filter(Boolean).join(', ');
+        result += selectors + ' {' + body + '}';
+      }
+    }
+    return result;
+  }
+
   // ── Shared: inject CSS ──────────────────────────────────────────────────────
   function injectCss(wid, cfg, rad) {
+    var W = "#" + wid;
     var css =
-      "#" + wid + "{" +
+      // Keyframe animations (must be outside scoped selectors)
+      "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
+      "@keyframes zcc-check-draw{to{stroke-dashoffset:0}}" +
+      "@keyframes zcc-fade-in{from{opacity:0}to{opacity:1}}" +
+      "@keyframes zcc-pulse{0%,100%{box-shadow:0 0 0 0 " + cfg.primaryColor + "40}50%{box-shadow:0 0 0 8px " + cfg.primaryColor + "00}}" +
+
+      // Container — elevated card with hover lift
+      W + "{" +
         "background:" + cfg.backgroundColor + " !important;" +
         "color:" + cfg.textColor + " !important;" +
         "border-radius:" + rad + " !important;" +
         "padding:24px !important;" +
-        "border:1px solid #e1e3e5 !important;" +
+        "border:none !important;" +
+        "box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.06) !important;" +
         "max-width:480px;" +
         "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important;" +
         "box-sizing:border-box !important;" +
+        "transition:box-shadow 0.2s ease !important;" +
       "}" +
-      "#" + wid + " *{box-sizing:border-box !important}" +
-      "#" + wid + " .zcc-heading{font-size:16px !important;font-weight:600 !important;margin:0 0 16px !important;color:" + cfg.textColor + " !important}" +
-      "#" + wid + " .zcc-row{display:flex !important;gap:8px !important;margin-bottom:0 !important}" +
-      "#" + wid + " .zcc-input{" +
-        "flex:1 !important;padding:10px 12px !important;border:1px solid #c9cccf !important;" +
-        "border-radius:" + rad + " !important;font-size:14px !important;outline:none !important;" +
-        "background:#fafbfb !important;color:" + cfg.textColor + " !important;min-width:0 !important" +
+      W + ":hover{box-shadow:0 4px 12px rgba(0,0,0,0.1) !important}" +
+      W + " *{box-sizing:border-box !important}" +
+
+      // Heading with location pin icon
+      W + " .zcc-heading{" +
+        "font-size:17px !important;font-weight:700 !important;letter-spacing:-0.01em !important;" +
+        "margin:0 0 20px !important;color:" + cfg.textColor + " !important;" +
+        "display:flex !important;align-items:center !important;gap:8px !important" +
       "}" +
-      "#" + wid + " .zcc-input:focus{border-color:" + cfg.primaryColor + " !important;box-shadow:0 0 0 2px " + cfg.primaryColor + "22 !important}" +
-      "#" + wid + " .zcc-btn{" +
+      W + " .zcc-heading-icon{" +
+        "display:inline-flex !important;align-items:center !important;justify-content:center !important;" +
+        "width:28px !important;height:28px !important;border-radius:50% !important;" +
+        "background:" + cfg.primaryColor + "12 !important;flex-shrink:0 !important" +
+      "}" +
+      W + " .zcc-heading-icon svg{width:16px !important;height:16px !important}" +
+
+      // Unified search bar (input + button in one container)
+      W + " .zcc-search-bar{" +
+        "display:flex !important;border:2px solid #e1e3e5 !important;border-radius:" + rad + " !important;" +
+        "overflow:hidden !important;transition:border-color 0.2s ease,box-shadow 0.2s ease !important;margin-bottom:0 !important" +
+      "}" +
+      W + " .zcc-search-bar:focus-within{" +
+        "border-color:" + cfg.primaryColor + " !important;box-shadow:0 0 0 3px " + cfg.primaryColor + "20 !important" +
+      "}" +
+      W + " .zcc-row{display:flex !important;gap:0 !important;margin-bottom:0 !important}" + // backward compat alias
+
+      // Input — borderless inside unified bar
+      W + " .zcc-input{" +
+        "flex:1 !important;padding:12px 16px !important;border:none !important;" +
+        "font-size:14px !important;outline:none !important;" +
+        "background:transparent !important;color:" + cfg.textColor + " !important;min-width:0 !important" +
+      "}" +
+      W + " .zcc-input::placeholder{color:#8c9196 !important}" +
+
+      // Button — right side of search bar
+      W + " .zcc-btn{" +
         "background:" + cfg.primaryColor + " !important;color:#fff !important;border:none !important;" +
-        "border-radius:" + rad + " !important;padding:10px 20px !important;font-size:14px !important;" +
-        "font-weight:600 !important;cursor:pointer !important;white-space:nowrap !important;flex-shrink:0 !important" +
+        "border-left:1px solid " + cfg.primaryColor + " !important;" +
+        "padding:12px 24px !important;font-size:14px !important;" +
+        "font-weight:600 !important;cursor:pointer !important;white-space:nowrap !important;" +
+        "flex-shrink:0 !important;transition:all 0.2s ease !important" +
       "}" +
-      "#" + wid + " .zcc-btn:hover{opacity:.9 !important}" +
-      "#" + wid + " .zcc-btn:disabled{opacity:.6 !important;cursor:not-allowed !important}" +
-      "#" + wid + " .zcc-result{margin-top:12px !important;padding:12px !important;border-radius:" + rad + " !important;font-size:14px !important;line-height:1.4 !important}" +
-      "#" + wid + " .zcc-result.ok{background:" + cfg.successColor + "15 !important;border-left:3px solid " + cfg.successColor + " !important;color:" + cfg.successColor + " !important}" +
-      "#" + wid + " .zcc-result.fail{background:" + cfg.errorColor + "15 !important;border-left:3px solid " + cfg.errorColor + " !important;color:" + cfg.errorColor + " !important}" +
-      "#" + wid + " .zcc-meta{margin-top:4px !important;font-size:13px !important;opacity:.8 !important}" +
-      "#" + wid + " .zcc-wl{margin-top:10px !important}" +
-      "#" + wid + " .zcc-wl-input{" +
-        "width:100% !important;padding:8px 10px !important;border:1px solid " + cfg.errorColor + "40 !important;" +
-        "border-radius:" + rad + " !important;font-size:13px !important;margin-bottom:6px !important;display:block !important" +
+      W + " .zcc-btn:hover{filter:brightness(1.08) !important}" +
+      W + " .zcc-btn:active{transform:scale(0.98) !important}" +
+      W + " .zcc-btn:disabled{opacity:.6 !important;cursor:not-allowed !important;filter:none !important}" +
+
+      // Result card — shared base
+      W + " .zcc-result{" +
+        "margin-top:16px !important;padding:14px 16px !important;border-radius:" + rad + " !important;" +
+        "font-size:14px !important;line-height:1.5 !important;" +
+        "animation:zcc-slide-in 0.3s ease !important;" +
+        "display:flex !important;gap:12px !important;align-items:flex-start !important" +
       "}" +
-      "#" + wid + " .zcc-wl-btn{" +
-        "background:" + cfg.errorColor + " !important;color:#fff !important;border:none !important;" +
-        "border-radius:" + rad + " !important;padding:8px 16px !important;font-size:13px !important;" +
-        "cursor:pointer !important;width:100% !important;font-weight:600 !important" +
+
+      // Success result
+      W + " .zcc-result.ok{" +
+        "background:linear-gradient(135deg," + cfg.successColor + "08," + cfg.successColor + "14) !important;" +
+        "border:1px solid " + cfg.successColor + "30 !important;color:" + cfg.successColor + " !important" +
       "}" +
-      "#" + wid + " .zcc-wl-btn:disabled{opacity:.6 !important;cursor:not-allowed !important}" +
-      "#" + wid + " .zcc-cutoff{margin-top:4px !important;font-size:0.85em !important;color:#6d7175 !important}" +
-      "#" + wid + " .zcc-days{margin-top:4px !important;font-size:0.85em !important;color:#6d7175 !important}" +
-      "#" + wid + " .zcc-cod{margin-top:4px !important;font-size:0.85em !important;font-weight:500 !important}" +
-      "#" + wid + " .zcc-cod--available{color:#008060 !important}" +
-      "#" + wid + " .zcc-cod--unavailable{color:#d72c0d !important}" +
-      "#" + wid + " .zcc-return-policy{margin-top:4px !important;font-size:0.85em !important;color:#6d7175 !important}" +
-      "#" + wid + " .zcc-social-proof{display:block !important;font-size:0.82em !important;color:#6d7175 !important;margin-bottom:8px !important;font-style:italic !important}" +
-      (cfg.customCss || "");
+
+      // Error / not found result
+      W + " .zcc-result.fail{" +
+        "background:linear-gradient(135deg," + cfg.errorColor + "08," + cfg.errorColor + "14) !important;" +
+        "border:1px solid " + cfg.errorColor + "30 !important;color:" + cfg.errorColor + " !important" +
+      "}" +
+
+      // Result icon container
+      W + " .zcc-result-icon{" +
+        "flex-shrink:0 !important;width:24px !important;height:24px !important;display:flex !important;align-items:center !important;justify-content:center !important" +
+      "}" +
+      W + " .zcc-result-icon svg{width:22px !important;height:22px !important}" +
+      W + " .zcc-result-content{flex:1 !important;min-width:0 !important}" +
+
+      // Meta info lines
+      W + " .zcc-meta{" +
+        "margin-top:6px !important;font-size:13px !important;opacity:.85 !important;" +
+        "display:flex !important;align-items:center !important;gap:6px !important" +
+      "}" +
+      W + " .zcc-meta svg{width:14px !important;height:14px !important;flex-shrink:0 !important}" +
+
+      // Specific meta classes
+      W + " .zcc-cutoff{margin-top:6px !important;font-size:0.85em !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:6px !important}" +
+      W + " .zcc-days{margin-top:6px !important;font-size:0.85em !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:6px !important}" +
+      W + " .zcc-cod{margin-top:6px !important;font-size:0.85em !important;font-weight:500 !important;display:flex !important;align-items:center !important;gap:6px !important}" +
+      W + " .zcc-cod--available{color:#008060 !important}" +
+      W + " .zcc-cod--unavailable{color:#d72c0d !important}" +
+      W + " .zcc-return-policy{margin-top:6px !important;font-size:0.85em !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:6px !important}" +
+
+      // Waitlist section
+      W + " .zcc-wl{margin-top:14px !important;padding:14px !important;background:" + cfg.errorColor + "06 !important;border-radius:" + rad + " !important}" +
+      W + " .zcc-wl-toggle{" +
+        "display:inline-flex !important;align-items:center !important;gap:6px !important;" +
+        "font-size:13px !important;font-weight:600 !important;color:" + cfg.primaryColor + " !important;" +
+        "text-decoration:none !important;cursor:pointer !important;border:none !important;background:none !important;padding:0 !important" +
+      "}" +
+      W + " .zcc-wl-toggle:hover{text-decoration:underline !important}" +
+      W + " .zcc-wl-input{" +
+        "width:100% !important;padding:10px 12px !important;border:1px solid #e1e3e5 !important;" +
+        "border-radius:" + rad + " !important;font-size:13px !important;margin-bottom:8px !important;" +
+        "display:block !important;outline:none !important;transition:border-color 0.2s !important" +
+      "}" +
+      W + " .zcc-wl-input:focus{border-color:" + cfg.primaryColor + " !important;box-shadow:0 0 0 2px " + cfg.primaryColor + "20 !important}" +
+      W + " .zcc-wl-btn{" +
+        "background:" + cfg.primaryColor + " !important;color:#fff !important;border:none !important;" +
+        "border-radius:" + rad + " !important;padding:10px 16px !important;font-size:13px !important;" +
+        "cursor:pointer !important;width:100% !important;font-weight:600 !important;" +
+        "transition:all 0.2s ease !important" +
+      "}" +
+      W + " .zcc-wl-btn:hover{filter:brightness(1.08) !important}" +
+      W + " .zcc-wl-btn:disabled{opacity:.6 !important;cursor:not-allowed !important}" +
+
+      // Social proof badge
+      W + " .zcc-social-proof{" +
+        "display:inline-flex !important;align-items:center !important;gap:6px !important;" +
+        "font-size:12px !important;color:#6d7175 !important;margin-bottom:10px !important;" +
+        "background:#f6f6f7 !important;padding:4px 10px !important;border-radius:20px !important" +
+      "}" +
+
+      // Mobile responsive
+      "@media(max-width:480px){" +
+        W + "{padding:16px !important}" +
+        W + " .zcc-heading{font-size:15px !important;margin:0 0 16px !important}" +
+        W + " .zcc-search-bar{flex-direction:column !important;border-radius:" + rad + " !important}" +
+        W + " .zcc-btn{border-left:none !important;border-top:1px solid " + cfg.primaryColor + " !important}" +
+        W + " .zcc-result{flex-direction:column !important;gap:8px !important}" +
+      "}" +
+
+      // Scoped custom CSS
+      scopeCustomCss(cfg.customCss, wid);
 
     var styleEl = document.createElement("style");
     styleEl.textContent = css;
@@ -303,12 +489,20 @@
   // ── Shared: build widget inner HTML + wire up events ────────────────────────
   function buildWidgetInner(wid, cfg, btnLabel) {
     return (
-      '<p class="zcc-heading">' + esc(cfg.heading) + "</p>" +
-      '<div class="zcc-row">' +
+      '<div class="zcc-heading">' +
+        '<span class="zcc-heading-icon">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="' + escAttr(cfg.primaryColor) + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
+        '</span>' +
+        '<span>' + esc(cfg.heading) + '</span>' +
+      "</div>" +
+      '<div class="zcc-search-bar">' +
         '<input class="zcc-input" type="text" id="' + wid + '-inp"' +
           ' placeholder="' + escAttr(cfg.placeholder) + '"' +
           ' aria-label="' + escAttr(cfg.placeholder) + '" />' +
-        '<button class="zcc-btn" id="' + wid + '-btn" type="button">' + esc(btnLabel) + "</button>" +
+        '<button class="zcc-btn" id="' + wid + '-btn" type="button">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>' +
+          esc(btnLabel) +
+        "</button>" +
       "</div>" +
       '<div id="' + wid + '-res"></div>'
     );
@@ -319,6 +513,7 @@
     var btn = document.getElementById(wid + "-btn");
     var res = document.getElementById(wid + "-res");
     var btnLabel = cfg.buttonText;
+    var btnOrigHtml = btn ? btn.innerHTML : '';
     if (!inp || !btn || !res) return;
 
     function normalizeZip(raw) {
@@ -344,7 +539,7 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
           btn.disabled = false;
-          btn.textContent = btnLabel;
+          btn.innerHTML = btnOrigHtml;
 
           // Store validation result for cart page
           try {
@@ -357,17 +552,28 @@
             }));
           } catch(e) { /* sessionStorage may be unavailable */ }
 
+          // SVG icons for results
+          var svgCheck = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>';
+          var svgX = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>';
+          var svgClock = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+          var svgTruck = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>';
+          var svgCalendar = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+          var svgReturn = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>';
+
           if (data.allowed) {
-            var html = '<div class="zcc-result ok">' + esc(data.message);
+            var html = '<div class="zcc-result ok">' +
+              '<div class="zcc-result-icon">' + svgCheck + '</div>' +
+              '<div class="zcc-result-content">' +
+              '<div>' + esc(data.message) + '</div>';
             if (cfg.showEta && data.eta) {
-              html += '<div class="zcc-meta">Estimated delivery: ' + esc(data.eta) + "</div>";
+              html += '<div class="zcc-meta">' + svgTruck + ' Estimated delivery: ' + esc(data.eta) + "</div>";
             }
             if (cfg.showZone && data.zone) {
               html += '<div class="zcc-meta">Zone: ' + esc(data.zone) + "</div>";
             }
             if (cfg.showDeliveryDays && data.daysOfWeek) {
               var days = data.daysOfWeek.split(',').map(function(d) { return d.trim(); }).join(' \u00b7 ');
-              html += '<div class="zcc-meta zcc-days">Delivers: ' + esc(days) + '</div>';
+              html += '<div class="zcc-meta zcc-days">' + svgCalendar + ' ' + esc(days) + '</div>';
             }
             if (cfg.showCutoffTime && data.cutoffTime) {
               var parts = data.cutoffTime.split(':');
@@ -375,33 +581,37 @@
               var min = parts[1] || '00';
               var ampm = hr >= 12 ? 'PM' : 'AM';
               var hr12 = hr % 12 || 12;
-              html += '<div class="zcc-meta zcc-cutoff">Order by ' + hr12 + ':' + min + ' ' + ampm + ' for same-day delivery</div>';
+              html += '<div class="zcc-meta zcc-cutoff">' + svgClock + ' Order by ' + hr12 + ':' + min + ' ' + ampm + ' for same-day</div>';
             }
             if (data.codAvailable === true) {
-              html += '<div class="zcc-cod zcc-cod--available">\u2713 Cash on Delivery Available</div>';
+              html += '<div class="zcc-cod zcc-cod--available"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Cash on Delivery Available</div>';
             } else if (data.codAvailable === false) {
-              html += '<div class="zcc-cod zcc-cod--unavailable">\u2717 COD Not Available</div>';
+              html += '<div class="zcc-cod zcc-cod--unavailable"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> COD Not Available</div>';
             }
             if (data.returnPolicy) {
-              html += '<div class="zcc-return-policy">\u21a9 ' + esc(data.returnPolicy) + '</div>';
+              html += '<div class="zcc-return-policy">' + svgReturn + ' ' + esc(data.returnPolicy) + '</div>';
             }
-            html += "</div>";
+            html += "</div></div>";
             res.innerHTML = html;
           } else {
-            var html = '<div class="zcc-result fail">' + esc(data.message);
+            var html = '<div class="zcc-result fail">' +
+              '<div class="zcc-result-icon">' + svgX + '</div>' +
+              '<div class="zcc-result-content">' +
+              '<div>' + esc(data.message) + '</div>';
             if (cfg.showWaitlistOnFailure) {
               html +=
                 '<div class="zcc-wl">' +
-                '<a href="#" id="' + wid + '-wl-toggle" style="display:inline-block;margin-bottom:8px;font-size:13px;font-weight:600;color:' + cfg.primaryColor + ';text-decoration:underline;cursor:pointer">Request ZIP Code</a>' +
-                '<div id="' + wid + '-wl-form" style="display:none">' +
-                '<p style="font-size:12px;color:#6d7175;margin:0 0 8px">Request delivery to your area</p>' +
-                '<input class="zcc-wl-input" type="text" id="' + wid + '-wl-name" placeholder="Your name" style="margin-bottom:6px" />' +
+                '<button class="zcc-wl-toggle" id="' + wid + '-wl-toggle" type="button">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>' +
+                ' Request delivery to your area</button>' +
+                '<div id="' + wid + '-wl-form" style="display:none;margin-top:12px">' +
+                '<input class="zcc-wl-input" type="text" id="' + wid + '-wl-name" placeholder="Your name" />' +
                 '<input class="zcc-wl-input" type="email" id="' + wid + '-wl-email" placeholder="Your email" />' +
                 '<button class="zcc-wl-btn" id="' + wid + '-wl-btn" type="button">Submit Request</button>' +
                 '</div>' +
                 "</div>";
             }
-            html += "</div>";
+            html += "</div></div>";
             res.innerHTML = html;
 
             if (cfg.showWaitlistOnFailure) {
@@ -479,8 +689,8 @@
         })
         .catch(function () {
           btn.disabled = false;
-          btn.textContent = btnLabel;
-          res.innerHTML = '<div class="zcc-result fail">Something went wrong. Please try again.</div>';
+          btn.innerHTML = btnOrigHtml;
+          res.innerHTML = '<div class="zcc-result fail"><div class="zcc-result-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></div><div class="zcc-result-content">Something went wrong. Please try again.</div></div>';
           try {
             sessionStorage.setItem('zcc:valid', 'false');
             window.dispatchEvent(new CustomEvent('zcc:validated', { detail: { valid: false, zip: zip } }));
@@ -560,28 +770,31 @@
 
     // Additional styles for floating UI
     var floatCss =
-      "#" + WID + "-float{position:fixed !important;bottom:20px !important;right:20px !important;z-index:9998 !important;display:flex !important;flex-direction:column !important;align-items:flex-end !important;gap:10px !important}" +
+      "#" + WID + "-float{position:fixed !important;bottom:20px !important;right:20px !important;z-index:9998 !important;display:flex !important;flex-direction:column !important;align-items:flex-end !important;gap:12px !important}" +
       "#" + WID + "-panel{" +
-        "background:" + cfg.backgroundColor + " !important;border-radius:" + rad + " !important;" +
-        "box-shadow:0 8px 32px rgba(0,0,0,.18) !important;overflow:hidden !important;" +
-        "transition:opacity .2s,transform .2s;transform-origin:bottom right" +
+        "background:" + cfg.backgroundColor + " !important;border-radius:16px !important;" +
+        "box-shadow:0 12px 40px rgba(0,0,0,.15),0 4px 12px rgba(0,0,0,.08) !important;overflow:hidden !important;" +
+        "animation:zcc-slide-in 0.25s ease !important;max-width:380px !important;width:380px !important" +
       "}" +
       "#" + WID + "-panel.zcc-hidden{display:none !important}" +
       "#" + WID + "-panel .zcc-panel-header{" +
         "display:flex !important;align-items:center !important;justify-content:space-between !important;" +
-        "padding:14px 16px 0 !important;margin-bottom:0 !important" +
+        "padding:16px 20px 0 !important;margin-bottom:0 !important" +
       "}" +
+      "#" + WID + "-panel .zcc-panel-title{font-size:14px !important;font-weight:700 !important;color:" + cfg.textColor + " !important;display:flex !important;align-items:center !important;gap:8px !important}" +
       "#" + WID + "-panel .zcc-panel-close{" +
-        "background:none !important;border:none !important;cursor:pointer !important;font-size:20px !important;line-height:1 !important;" +
-        "color:" + cfg.textColor + " !important;opacity:.6;padding:0 4px !important" +
+        "background:none !important;border:none !important;cursor:pointer !important;line-height:1 !important;" +
+        "color:" + cfg.textColor + " !important;opacity:.5 !important;padding:4px !important;border-radius:6px !important;transition:all 0.15s !important" +
       "}" +
-      "#" + WID + "-panel .zcc-panel-close:hover{opacity:1 !important}" +
+      "#" + WID + "-panel .zcc-panel-close:hover{opacity:1 !important;background:#f6f6f7 !important}" +
       "#" + WID + "-trigger{" +
         "background:" + cfg.primaryColor + " !important;color:#fff !important;border:none !important;" +
-        "border-radius:50px !important;padding:12px 20px !important;font-size:14px !important;font-weight:600 !important;" +
-        "cursor:pointer !important;box-shadow:0 4px 12px rgba(0,0,0,.2) !important;white-space:nowrap !important" +
+        "border-radius:50px !important;padding:14px 22px !important;font-size:14px !important;font-weight:600 !important;" +
+        "cursor:pointer !important;box-shadow:0 4px 16px " + cfg.primaryColor + "40 !important;white-space:nowrap !important;" +
+        "transition:all 0.2s ease !important;display:flex !important;align-items:center !important;gap:8px !important;animation:zcc-pulse 2s infinite !important" +
       "}" +
-      "#" + WID + "-trigger:hover{opacity:.9 !important}";
+      "#" + WID + "-trigger:hover{transform:scale(1.03) !important;box-shadow:0 6px 20px " + cfg.primaryColor + "50 !important}" +
+      "@media(max-width:420px){#" + WID + "-panel{width:calc(100vw - 32px) !important;max-width:none !important}#" + WID + "-float{left:16px !important;right:16px !important;align-items:stretch !important}}";
 
     var floatStyle = document.createElement("style");
     floatStyle.textContent = floatCss;
@@ -593,15 +806,19 @@
     floatEl.innerHTML =
       '<div id="' + WID + '-panel" class="zcc-hidden">' +
         '<div class="zcc-panel-header">' +
-          '<span style="font-size:13px;font-weight:600;color:' + cfg.textColor + '">Delivery Check</span>' +
-          '<button class="zcc-panel-close" id="' + WID + '-close" type="button" aria-label="Close">&times;</button>' +
+          '<span class="zcc-panel-title">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="' + escAttr(cfg.primaryColor) + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
+            ' Delivery Check</span>' +
+          '<button class="zcc-panel-close" id="' + WID + '-close" type="button" aria-label="Close">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>' +
+          '</button>' +
         '</div>' +
-        '<div id="' + WID + '" data-zcc-widget="true">' +
+        '<div id="' + WID + '" data-zcc-widget="true" style="border:none !important;box-shadow:none !important;max-width:none !important">' +
           buildWidgetInner(WID, cfg, cfg.buttonText) +
         '</div>' +
       '</div>' +
       '<button id="' + WID + '-trigger" type="button">' +
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:6px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
         esc(cfg.buttonText || "Check Delivery") +
       '</button>';
 
@@ -638,26 +855,33 @@
 
     var popupCss =
       "#" + WID + "-overlay{" +
-        "display:none !important;position:fixed !important;inset:0 !important;background:rgba(0,0,0,.55) !important;" +
+        "display:none !important;position:fixed !important;inset:0 !important;" +
+        "background:rgba(0,0,0,.5) !important;backdrop-filter:blur(4px) !important;-webkit-backdrop-filter:blur(4px) !important;" +
         "z-index:9999 !important;align-items:center !important;justify-content:center !important;padding:16px !important" +
       "}" +
       "#" + WID + "-overlay.zcc-open{display:flex !important}" +
       "#" + WID + "-modal{" +
-        "background:" + cfg.backgroundColor + " !important;border-radius:" + rad + " !important;" +
+        "background:" + cfg.backgroundColor + " !important;border-radius:16px !important;" +
         "max-width:480px !important;width:100% !important;position:relative !important;" +
-        "box-shadow:0 20px 60px rgba(0,0,0,.3) !important" +
+        "box-shadow:0 24px 48px rgba(0,0,0,.2) !important;animation:zcc-slide-in 0.3s ease !important" +
       "}" +
+      "#" + WID + "-modal .zcc-modal-header{" +
+        "display:flex !important;align-items:center !important;justify-content:space-between !important;" +
+        "padding:20px 24px 0 !important" +
+      "}" +
+      "#" + WID + "-modal .zcc-modal-title{font-size:15px !important;font-weight:700 !important;color:" + cfg.textColor + " !important;display:flex !important;align-items:center !important;gap:8px !important}" +
       "#" + WID + "-modal .zcc-modal-close{" +
-        "position:absolute !important;top:10px !important;right:14px !important;background:none !important;border:none !important;" +
-        "font-size:22px !important;line-height:1 !important;cursor:pointer !important;color:" + cfg.textColor + " !important;opacity:.5" +
+        "background:none !important;border:none !important;" +
+        "cursor:pointer !important;color:" + cfg.textColor + " !important;opacity:.5 !important;" +
+        "padding:4px !important;border-radius:6px !important;transition:all 0.15s !important;line-height:1 !important" +
       "}" +
-      "#" + WID + "-modal .zcc-modal-close:hover{opacity:1 !important}" +
+      "#" + WID + "-modal .zcc-modal-close:hover{opacity:1 !important;background:#f6f6f7 !important}" +
       "#" + WID + "-popup-trigger{" +
         "background:" + cfg.primaryColor + " !important;color:#fff !important;border:none !important;" +
-        "border-radius:" + rad + " !important;padding:10px 24px !important;font-size:14px !important;font-weight:600 !important;" +
-        "cursor:pointer !important" +
+        "border-radius:" + rad + " !important;padding:12px 28px !important;font-size:14px !important;font-weight:600 !important;" +
+        "cursor:pointer !important;transition:all 0.2s ease !important;display:inline-flex !important;align-items:center !important;gap:8px !important" +
       "}" +
-      "#" + WID + "-popup-trigger:hover{opacity:.9 !important}";
+      "#" + WID + "-popup-trigger:hover{filter:brightness(1.08) !important;transform:translateY(-1px) !important;box-shadow:0 4px 12px " + cfg.primaryColor + "30 !important}";
 
     var popupStyle = document.createElement("style");
     popupStyle.textContent = popupCss;
@@ -666,6 +890,7 @@
     // Trigger button renders in-place (inside the block)
     container.innerHTML =
       '<button id="' + WID + '-popup-trigger" type="button">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
         esc(cfg.heading) +
       '</button>';
 
@@ -674,8 +899,15 @@
     overlay.id = WID + "-overlay";
     overlay.innerHTML =
       '<div id="' + WID + '-modal">' +
-        '<button class="zcc-modal-close" id="' + WID + '-modal-close" type="button" aria-label="Close">&times;</button>' +
-        '<div id="' + WID + '" data-zcc-widget="true">' +
+        '<div class="zcc-modal-header">' +
+          '<span class="zcc-modal-title">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="' + escAttr(cfg.primaryColor) + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
+            ' ' + esc(cfg.heading) + '</span>' +
+          '<button class="zcc-modal-close" id="' + WID + '-modal-close" type="button" aria-label="Close">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>' +
+          '</button>' +
+        '</div>' +
+        '<div id="' + WID + '" data-zcc-widget="true" style="border:none !important;box-shadow:none !important;max-width:none !important">' +
           buildWidgetInner(WID, cfg, cfg.buttonText) +
         '</div>' +
       '</div>';

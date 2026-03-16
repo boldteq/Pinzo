@@ -67,10 +67,30 @@
 
 <script>
 (function () {
-  // Respect app embed toggle — if app embed block is not enabled in this theme,
-  // window.__zccAppEnabled will be undefined/falsy and we exit early.
-  if (!window.__zccAppEnabled) return;
+  // Wait for app embed to set window.__zccAppEnabled.
+  // App embed (target: body) may load after this section block, so we poll briefly.
+  var maxWait = 3000; // ms
+  var interval = 50;  // ms
+  var elapsed = 0;
 
+  function tryInit() {
+    if (window.__zccAppEnabled) {
+      init();
+    } else if (elapsed < maxWait) {
+      elapsed += interval;
+      setTimeout(tryInit, interval);
+    }
+    // If app embed is not enabled after 3s, do nothing (merchant hasn't enabled it)
+  }
+
+  // Start checking — if already set, runs immediately
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', tryInit);
+  } else {
+    tryInit();
+  }
+
+  function init() {
   var ROOT_ID = "zcc-widget-{{ block.id }}";
   var container = document.getElementById(ROOT_ID);
   if (!container) return;
@@ -596,6 +616,7 @@
   function escAttr(str) {
     return String(str).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
   }
+  } // end init()
 })();
 </script>
 

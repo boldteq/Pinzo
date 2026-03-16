@@ -104,11 +104,22 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           ([key, block]) => {
             const b = block as { type?: string; disabled?: boolean };
             const typeStr = b.type ?? "";
+            const keyStr = key ?? "";
             const isAppEmbed =
               typeStr.includes("app-embed") ||
               typeStr.includes("app_embed");
             if (!isAppEmbed || b.disabled === true) return false;
-            if (apiKey && (key.includes(apiKey) || typeStr.includes(apiKey))) {
+            // Match by API key (client_id) or app handle in key/type
+            if (apiKey && (keyStr.includes(apiKey) || typeStr.includes(apiKey))) {
+              return true;
+            }
+            // Also match by app handle patterns (e.g. "zip-code-checker", "zip-code-widget")
+            if (
+              keyStr.includes("zip-code") ||
+              typeStr.includes("zip-code") ||
+              keyStr.includes("zip_code") ||
+              typeStr.includes("zip_code")
+            ) {
               return true;
             }
             return false;

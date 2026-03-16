@@ -29,7 +29,6 @@ import {
   Banner,
   Badge,
   Modal,
-  Tabs,
 } from "@shopify/polaris";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -146,7 +145,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       blockCheckoutInCart: formData.get("blockCheckoutInCart") === "true",
       showSocialProof: formData.get("showSocialProof") === "true",
       borderRadius: String(formData.get("borderRadius") || "8"),
-      widgetStyle: String(formData.get("widgetStyle") || "minimal"),
       customCss: String(formData.get("customCss") || "") || null,
     };
 
@@ -186,7 +184,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       blockCheckoutInCart: false,
       showSocialProof: true,
       borderRadius: "8",
-      widgetStyle: "minimal",
       customCss: null,
     };
 
@@ -228,7 +225,6 @@ type WidgetConfig = {
   blockCheckoutInCart: boolean;
   showSocialProof: boolean;
   borderRadius: string;
-  widgetStyle: string;
   customCss: string | null;
 };
 
@@ -257,7 +253,6 @@ const DEFAULTS = {
   blockCheckoutInCart: false,
   showSocialProof: true,
   borderRadius: "8",
-  widgetStyle: "minimal",
   customCss: "",
 };
 
@@ -306,95 +301,31 @@ function buildSharedMetaCss(W: string, cfg: WidgetConfig): string {
   );
 }
 
-function buildMinimalCss(wid: string, cfg: WidgetConfig): string {
-  const W = "#" + wid;
-  return (
-    "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
-    W + "{background:transparent;color:" + cfg.textColor + ";padding:0;border:none;box-shadow:none;max-width:500px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-sizing:border-box}" +
-    W + " *{box-sizing:border-box}" +
-    W + " .zcc-heading{font-size:22px;font-weight:900;letter-spacing:-0.03em;margin:0 0 14px;color:" + cfg.textColor + ";display:flex;align-items:center;gap:10px}" +
-    W + " .zcc-heading-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:" + cfg.primaryColor + ";flex-shrink:0}" +
-    W + " .zcc-heading-icon svg{width:16px;height:16px}" +
-    W + " .zcc-search-bar{display:flex;background:#fff;border:2px solid #e5e7eb;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);transition:box-shadow 0.2s,border-color 0.2s}" +
-    W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + ";box-shadow:0 0 0 4px " + cfg.primaryColor + "22}" +
-    W + " .zcc-input{padding:15px 18px;font-size:16px;border:none;outline:none;flex:1;background:transparent;color:" + cfg.textColor + ";min-width:0}" +
-    W + " .zcc-input::placeholder{color:#9ca3af}" +
-    W + " .zcc-btn{margin:6px;border-radius:10px;padding:10px 22px;background:" + cfg.primaryColor + ";color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.2s}" +
-    W + " .zcc-btn:hover{box-shadow:0 4px 12px " + cfg.primaryColor + "55;transform:translateY(-1px)}" +
-    W + " .zcc-btn:active{transform:scale(0.97) translateY(0)}" +
-    W + " .zcc-btn:disabled{opacity:.6;cursor:not-allowed;filter:none}" +
-    W + " .zcc-result{margin-top:16px;padding:14px 18px;border-radius:12px;font-size:14px;line-height:1.6;animation:zcc-slide-in 0.3s ease;display:flex;gap:12px;align-items:flex-start;border:1px solid transparent}" +
-    W + " .zcc-result.ok{background:" + cfg.successColor + "10;border-color:" + cfg.successColor + "30;color:" + cfg.successColor + "}" +
-    W + " .zcc-result.fail{background:" + cfg.errorColor + "10;border-color:" + cfg.errorColor + "30;color:" + cfg.errorColor + "}" +
-    W + " .zcc-wl{margin-top:14px;padding:16px;background:#f8f9fa;border-radius:12px;border:1px solid #e9ecef}" +
-    W + " .zcc-wl-input{border-radius:10px;border:1.5px solid #dee2e6;padding:11px 14px;width:100%;display:block;margin-bottom:8px;outline:none;font-size:13px;transition:border-color 0.2s}" +
-    W + " .zcc-wl-btn{border-radius:10px;background:" + cfg.primaryColor + ";color:#fff;padding:12px;width:100%;font-weight:700;border:none;cursor:pointer;font-size:13px;transition:all 0.2s}" +
-    buildSharedMetaCss(W, cfg)
-  );
-}
-
-function buildBoldCss(wid: string, cfg: WidgetConfig): string {
-  const W = "#" + wid;
-  return (
-    "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
-    W + "{background:#fff;border-radius:16px;overflow:hidden;padding:0 0 24px;border:none;box-shadow:0 8px 30px rgba(0,0,0,0.12);max-width:500px;width:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-sizing:border-box;transition:all 0.25s ease}" +
-    W + ":hover{box-shadow:0 12px 40px rgba(0,0,0,0.16);transform:translateY(-2px)}" +
-    W + " *{box-sizing:border-box}" +
-    W + " .zcc-heading{margin:0;padding:22px 24px 20px;background:" + cfg.primaryColor + ";color:#fff;font-size:18px;font-weight:800;letter-spacing:-0.02em;display:flex;align-items:center;gap:10px}" +
-    W + " .zcc-heading-icon{background:rgba(255,255,255,0.2);border-radius:8px;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}" +
-    W + " .zcc-heading-icon svg{width:16px;height:16px}" +
-    W + " .zcc-search-bar{margin:20px 24px 0;display:flex;background:#f8f9fa;border:1.5px solid #e9ecef;border-radius:10px;overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s}" +
-    W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + ";box-shadow:0 0 0 3px " + cfg.primaryColor + "18;background:#fff}" +
-    W + " .zcc-input{flex:1;padding:13px 16px;border:none;font-size:14px;outline:none;background:transparent;color:" + cfg.textColor + ";min-width:0}" +
-    W + " .zcc-input::placeholder{color:#9ca3af}" +
-    W + " .zcc-btn{background:" + cfg.primaryColor + ";color:#fff;border:none;padding:13px 24px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;border-radius:0 8px 8px 0;transition:all 0.2s}" +
-    W + " .zcc-btn:hover{filter:brightness(1.1)}" +
-    W + " .zcc-btn:disabled{opacity:.6;cursor:not-allowed;filter:none}" +
-    W + " .zcc-result{margin:14px 24px 0;padding:14px 16px;border-radius:10px;font-size:14px;line-height:1.6;animation:zcc-slide-in 0.3s ease;display:flex;gap:10px;align-items:flex-start}" +
-    W + " .zcc-result.ok{background:" + cfg.successColor + "0e;border-left:3px solid " + cfg.successColor + ";color:" + cfg.successColor + "}" +
-    W + " .zcc-result.fail{background:" + cfg.errorColor + "0e;border-left:3px solid " + cfg.errorColor + ";color:" + cfg.errorColor + "}" +
-    W + " .zcc-wl{margin:12px 24px 0;padding:14px;background:#f8f9fa;border-radius:10px;border:1px solid #e9ecef}" +
-    W + " .zcc-wl-input{border-radius:8px;border:1.5px solid #dee2e6;padding:10px 14px;width:100%;display:block;margin-bottom:8px;outline:none;transition:border-color 0.2s;font-size:13px}" +
-    W + " .zcc-wl-btn{border-radius:8px;background:" + cfg.primaryColor + ";color:#fff;padding:11px;width:100%;font-weight:700;border:none;cursor:pointer;font-size:13px;transition:all 0.2s}" +
-    buildSharedMetaCss(W, cfg)
-  );
-}
-
-function buildCardCss(wid: string, cfg: WidgetConfig): string {
-  const W = "#" + wid;
-  return (
-    "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
-    W + "{background:linear-gradient(150deg,#ffffff 0%," + cfg.primaryColor + "05 100%);color:" + cfg.textColor + ";border-radius:20px;padding:28px;border-top:4px solid " + cfg.primaryColor + ";border-left:none;border-right:none;border-bottom:none;box-shadow:0 4px 6px rgba(0,0,0,0.04),0 10px 40px rgba(0,0,0,0.08);max-width:500px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-sizing:border-box;position:relative;transition:box-shadow 0.3s ease}" +
-    W + ":hover{box-shadow:0 4px 6px rgba(0,0,0,0.06),0 20px 60px rgba(0,0,0,0.12)}" +
-    W + " *{box-sizing:border-box}" +
-    W + " .zcc-heading{font-size:20px;font-weight:900;letter-spacing:-0.03em;margin:0 0 20px;color:" + cfg.textColor + ";display:flex;align-items:center;gap:10px;line-height:1.2}" +
-    W + " .zcc-heading-icon{background:" + cfg.primaryColor + ";border-radius:10px;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px " + cfg.primaryColor + "55}" +
-    W + " .zcc-heading-icon svg{width:18px;height:18px}" +
-    W + " .zcc-search-bar{display:flex;background:#fff;border:2px solid #f0f0f0;border-radius:12px;overflow:hidden;transition:border-color 0.2s ease,box-shadow 0.2s ease;box-shadow:0 1px 3px rgba(0,0,0,0.06)}" +
-    W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + ";box-shadow:0 0 0 4px " + cfg.primaryColor + "18,0 2px 8px rgba(0,0,0,0.08)}" +
-    W + " .zcc-input{flex:1;padding:15px 18px;border:none;font-size:15px;outline:none;background:transparent;color:" + cfg.textColor + ";min-width:0}" +
-    W + " .zcc-input::placeholder{color:#9ca3af}" +
-    W + " .zcc-btn{background:" + cfg.primaryColor + ";color:#fff;border:none;padding:15px 28px;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;border-radius:0 10px 10px 0;transition:all 0.2s;letter-spacing:0.01em}" +
-    W + " .zcc-btn:hover{filter:brightness(1.1);box-shadow:inset 0 -3px 0 rgba(0,0,0,0.15)}" +
-    W + " .zcc-btn:active{transform:scale(0.98)}" +
-    W + " .zcc-btn:disabled{opacity:.6;cursor:not-allowed;filter:none}" +
-    W + " .zcc-result{margin-top:18px;padding:16px 18px;border-radius:14px;font-size:14px;line-height:1.6;animation:zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1);display:flex;gap:12px;align-items:flex-start;border:1px solid transparent}" +
-    W + " .zcc-result.ok{background:linear-gradient(135deg," + cfg.successColor + "08," + cfg.successColor + "14);border-color:" + cfg.successColor + "25;color:" + cfg.successColor + ";box-shadow:0 2px 8px " + cfg.successColor + "18}" +
-    W + " .zcc-result.fail{background:linear-gradient(135deg," + cfg.errorColor + "08," + cfg.errorColor + "14);border-color:" + cfg.errorColor + "25;color:" + cfg.errorColor + ";box-shadow:0 2px 8px " + cfg.errorColor + "18}" +
-    W + " .zcc-wl{margin-top:16px;padding:18px;background:rgba(255,255,255,0.8);border-radius:14px;border:1px solid " + cfg.primaryColor + "15}" +
-    W + " .zcc-wl-input{border-radius:10px;border:1.5px solid #e5e7eb;padding:12px 16px;width:100%;display:block;margin-bottom:10px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;font-size:13px;background:#fff}" +
-    W + " .zcc-wl-btn{border-radius:10px;background:" + cfg.primaryColor + ";color:#fff;padding:13px;width:100%;font-weight:700;border:none;cursor:pointer;font-size:13px;transition:all 0.2s;letter-spacing:0.01em}" +
-    buildSharedMetaCss(W, cfg)
-  );
-}
-
 function buildWidgetCss(wid: string, cfg: WidgetConfig): string {
-  const style = cfg.widgetStyle || "minimal";
-  const baseCss =
-    style === "bold" ? buildBoldCss(wid, cfg) :
-    style === "card" ? buildCardCss(wid, cfg) :
-    buildMinimalCss(wid, cfg);
-  return baseCss + scopeAdminCss(cfg.customCss, wid);
+  const W = "#" + wid;
+  const base =
+    "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
+    W + "{background:transparent;color:" + cfg.textColor + ";padding:0;border:none;box-shadow:none;max-width:480px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-sizing:border-box}" +
+    W + " *{box-sizing:border-box}" +
+    W + " .zcc-heading{font-size:17px;font-weight:600;margin:0 0 14px;color:" + cfg.textColor + ";display:flex;align-items:center;gap:8px}" +
+    W + " .zcc-heading-icon{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:" + cfg.primaryColor + "15;flex-shrink:0}" +
+    W + " .zcc-heading-icon svg{width:15px;height:15px}" +
+    W + " .zcc-search-bar{display:flex;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s}" +
+    W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + ";box-shadow:0 0 0 3px " + cfg.primaryColor + "18}" +
+    W + " .zcc-input{padding:13px 16px;font-size:14px;border:none;outline:none;flex:1;background:transparent;color:" + cfg.textColor + ";min-width:0}" +
+    W + " .zcc-input::placeholder{color:#9ca3af}" +
+    W + " .zcc-btn{background:" + cfg.primaryColor + ";color:#fff;border:none;padding:13px 24px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;border-radius:0 8px 8px 0;transition:filter 0.2s}" +
+    W + " .zcc-btn:hover{filter:brightness(1.08)}" +
+    W + " .zcc-btn:active{filter:brightness(0.95)}" +
+    W + " .zcc-btn:disabled{opacity:.6;cursor:not-allowed;filter:none}" +
+    W + " .zcc-result{margin-top:14px;padding:12px 16px;border-radius:8px;font-size:14px;line-height:1.6;animation:zcc-slide-in 0.3s ease;display:flex;gap:10px;align-items:flex-start;border-left:3px solid transparent}" +
+    W + " .zcc-result.ok{background:" + cfg.successColor + "0c;border-left-color:" + cfg.successColor + ";color:" + cfg.successColor + "}" +
+    W + " .zcc-result.fail{background:" + cfg.errorColor + "0c;border-left-color:" + cfg.errorColor + ";color:" + cfg.errorColor + "}" +
+    W + " .zcc-wl{margin-top:12px;padding:14px;background:#f8f9fa;border-radius:8px;border:1px solid #e9ecef}" +
+    W + " .zcc-wl-input{border-radius:8px;border:1.5px solid #dee2e6;padding:10px 14px;width:100%;display:block;margin-bottom:8px;outline:none;font-size:13px;transition:border-color 0.2s}" +
+    W + " .zcc-wl-btn{border-radius:8px;background:" + cfg.primaryColor + ";color:#fff;padding:11px;width:100%;font-weight:600;border:none;cursor:pointer;font-size:13px;transition:filter 0.2s}" +
+    buildSharedMetaCss(W, cfg);
+  return base + scopeAdminCss(cfg.customCss, wid);
 }
 
 // ── Live Preview component (defined outside WidgetPage to avoid remounting) ─
@@ -419,7 +350,7 @@ const WidgetPreview = memo(function WidgetPreview({
 
   // SVG icons as inline JSX
   const pinIcon = (
-    <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:16,height:16}}>
+    <svg viewBox="0 0 24 24" fill="none" stroke={cfg.primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:16,height:16}}>
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
     </svg>
   );
@@ -752,7 +683,6 @@ export default function WidgetPage() {
   const [blockCheckoutInCart, setBlockCheckoutInCart] = useState(c.blockCheckoutInCart ?? false);
   const [showSocialProof, setShowSocialProof] = useState(c.showSocialProof ?? true);
   const [borderRadius, setBorderRadius] = useState(c.borderRadius);
-  const [widgetStyle, setWidgetStyle] = useState((c as unknown as { widgetStyle?: string }).widgetStyle || "minimal");
   const [customCss, setCustomCss] = useState(c.customCss || "");
 
   // Unsaved changes tracking
@@ -808,7 +738,6 @@ export default function WidgetPage() {
   const handleBlockCheckoutInCartChange = useCallback((v: boolean) => { setBlockCheckoutInCart(v); mark(); }, [mark]);
   const handleShowSocialProofChange = useCallback((v: boolean) => { setShowSocialProof(v); mark(); }, [mark]);
   const handleBorderRadiusChange = useCallback((v: string) => { setBorderRadius(v); mark(); }, [mark]);
-  const handleWidgetStyleChange = useCallback((v: string) => { setWidgetStyle(v); mark(); }, [mark]);
   const handleCustomCssChange = useCallback((v: string) => { setCustomCss(v); mark(); }, [mark]);
 
   const handleSave = useCallback(() => {
@@ -837,7 +766,6 @@ export default function WidgetPage() {
     fd.set("blockCheckoutInCart", String(blockCheckoutInCart));
     fd.set("showSocialProof", String(showSocialProof));
     fd.set("borderRadius", borderRadius);
-    fd.set("widgetStyle", widgetStyle);
     fd.set("customCss", customCss);
     fetcher.submit(fd, { method: "POST" });
     shopify.toast.show("Widget settings saved");
@@ -846,7 +774,7 @@ export default function WidgetPage() {
     textColor, heading, placeholder, buttonText, successMessage, errorMessage,
     notFoundMessage, showEta, showZone, showWaitlistOnFailure, showCod,
     showReturnPolicy, showCutoffTime, showDeliveryDays, blockCartOnInvalid,
-    blockCheckoutInCart, showSocialProof, borderRadius, widgetStyle, customCss,
+    blockCheckoutInCart, showSocialProof, borderRadius, customCss,
     fetcher, shopify,
   ]);
 
@@ -877,7 +805,6 @@ export default function WidgetPage() {
     setBlockCheckoutInCart(DEFAULTS.blockCheckoutInCart);
     setShowSocialProof(DEFAULTS.showSocialProof);
     setBorderRadius(DEFAULTS.borderRadius);
-    setWidgetStyle(DEFAULTS.widgetStyle);
     setCustomCss(DEFAULTS.customCss);
     setPreviewState("idle");
     setIsDirty(false);
@@ -897,13 +824,13 @@ export default function WidgetPage() {
     textColor, heading, placeholder, buttonText, successMessage, errorMessage,
     notFoundMessage, showEta, showZone, showWaitlistOnFailure, showCod,
     showReturnPolicy, showCutoffTime, showDeliveryDays, blockCartOnInvalid,
-    blockCheckoutInCart, showSocialProof, borderRadius, widgetStyle, customCss,
+    blockCheckoutInCart, showSocialProof, borderRadius, customCss,
   }), [
     position, primaryColor, successColor, errorColor, backgroundColor,
     textColor, heading, placeholder, buttonText, successMessage, errorMessage,
     notFoundMessage, showEta, showZone, showWaitlistOnFailure, showCod,
     showReturnPolicy, showCutoffTime, showDeliveryDays, blockCartOnInvalid,
-    blockCheckoutInCart, showSocialProof, borderRadius, widgetStyle, customCss,
+    blockCheckoutInCart, showSocialProof, borderRadius, customCss,
   ]);
 
   const handleDiscard = useCallback(() => {
@@ -930,7 +857,6 @@ export default function WidgetPage() {
     setBlockCheckoutInCart(c.blockCheckoutInCart ?? false);
     setShowSocialProof(c.showSocialProof ?? true);
     setBorderRadius(c.borderRadius);
-    setWidgetStyle((c as unknown as { widgetStyle?: string }).widgetStyle || "minimal");
     setCustomCss(c.customCss || "");
     setIsDirty(false);
     setPreviewState("idle");
@@ -1010,84 +936,6 @@ export default function WidgetPage() {
                         </Text>
                       </Banner>
                     )}
-                  </BlockStack>
-                </Card>
-
-                {/* Widget Style — Horizontal Tabs */}
-                <Card>
-                  <BlockStack gap="300">
-                    <Text as="h2" variant="headingMd">Widget Style</Text>
-                    <Tabs
-                      tabs={[
-                        { id: "clean", content: "Clean" },
-                        { id: "branded", content: "Branded" },
-                        { id: "premium", content: "Premium" },
-                      ]}
-                      selected={widgetStyle === "bold" ? 1 : widgetStyle === "card" ? 2 : 0}
-                      onSelect={(i) => handleWidgetStyleChange(["minimal", "bold", "card"][i])}
-                      fitted
-                    />
-                    {/* Mini preview + description for selected style */}
-                    <Box padding="300" background="bg-surface-secondary" borderRadius="200">
-                      {widgetStyle === "minimal" && (
-                        <BlockStack gap="200">
-                          {/* Clean mini preview */}
-                          <div style={{ pointerEvents: "none", userSelect: "none", padding: "4px 0" }}>
-                            <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: "-0.03em", color: "#111", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-                              <div style={{ width: 20, height: 20, borderRadius: 5, background: primaryColor, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                                <svg viewBox="0 0 24 24" fill="none" width="11" height="11"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                              </div>
-                              Check delivery
-                            </div>
-                            <div style={{ display: "flex", border: "2px solid #e5e7eb", borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", alignItems: "center" }}>
-                              <div style={{ flex: 1, height: 34 }} />
-                              <div style={{ background: primaryColor, margin: 4, borderRadius: 7, padding: "0 12px", height: 26, display: "flex", alignItems: "center", fontSize: 10, color: "#fff", fontWeight: 700 }}>Check</div>
-                            </div>
-                          </div>
-                          <Text as="p" variant="bodySm" tone="subdued">Frameless, oversized heading, inset button inside a floating search bar.</Text>
-                        </BlockStack>
-                      )}
-                      {widgetStyle === "bold" && (
-                        <BlockStack gap="200">
-                          {/* Branded mini preview */}
-                          <div style={{ pointerEvents: "none", userSelect: "none", borderRadius: 10, overflow: "hidden", boxShadow: "0 4px 14px rgba(0,0,0,0.1)" }}>
-                            <div style={{ background: primaryColor, padding: "8px 12px", display: "flex", alignItems: "center", gap: 6 }}>
-                              <div style={{ width: 16, height: 16, borderRadius: 4, background: "rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                <svg viewBox="0 0 24 24" fill="none" width="9" height="9"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                              </div>
-                              <div style={{ flex: 1, height: 9, background: "rgba(255,255,255,0.35)", borderRadius: 3 }} />
-                            </div>
-                            <div style={{ background: "#fff", padding: "8px 10px" }}>
-                              <div style={{ display: "flex", background: "#f8f9fa", border: "1.5px solid #e9ecef", borderRadius: 7, overflow: "hidden", height: 28 }}>
-                                <div style={{ flex: 1 }} />
-                                <div style={{ background: primaryColor, padding: "0 10px", display: "flex", alignItems: "center", borderRadius: "0 5px 5px 0", fontSize: 10, color: "#fff", fontWeight: 700 }}>Check</div>
-                              </div>
-                            </div>
-                          </div>
-                          <Text as="p" variant="bodySm" tone="subdued">Two-tone header band with white card body. Bold, branded feel.</Text>
-                        </BlockStack>
-                      )}
-                      {widgetStyle === "card" && (
-                        <BlockStack gap="200">
-                          {/* Premium mini preview */}
-                          <div style={{ pointerEvents: "none", userSelect: "none" }}>
-                            <div style={{ background: "linear-gradient(150deg,#fff 0%," + primaryColor + "08 100%)", borderRadius: 12, padding: "10px 12px", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", borderTop: "3px solid " + primaryColor }}>
-                              <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: "-0.03em", color: "#111", marginBottom: 7, display: "flex", alignItems: "center", gap: 5 }}>
-                                <div style={{ width: 18, height: 18, borderRadius: 5, background: primaryColor, display: "inline-flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px " + primaryColor + "55" }}>
-                                  <svg viewBox="0 0 24 24" fill="none" width="10" height="10"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                                </div>
-                                Check delivery
-                              </div>
-                              <div style={{ display: "flex", border: "2px solid #f0f0f0", borderRadius: 8, overflow: "hidden", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", height: 28 }}>
-                                <div style={{ flex: 1 }} />
-                                <div style={{ background: primaryColor, padding: "0 12px", display: "flex", alignItems: "center", borderRadius: "0 6px 6px 0", fontSize: 10, color: "#fff", fontWeight: 700 }}>Check</div>
-                              </div>
-                            </div>
-                          </div>
-                          <Text as="p" variant="bodySm" tone="subdued">Gradient card with colored top border, deep shadow, spring-bounce animations.</Text>
-                        </BlockStack>
-                      )}
-                    </Box>
                   </BlockStack>
                 </Card>
 

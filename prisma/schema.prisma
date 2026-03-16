@@ -119,8 +119,6 @@ model WidgetConfig {
   showSocialProof       Boolean @default(true)
   // Border
   borderRadius          String  @default("8")
-  // Widget Style Preset
-  widgetStyle           String  @default("minimal") // minimal, bold, card
   // Custom CSS
   customCss             String?
 

@@ -187,7 +187,6 @@
       customCss: "",
       blockCartOnInvalid: false,
       showSocialProof: true,
-      widgetStyle: "minimal",
     };
     Object.keys(D).forEach(function (k) {
       if (cfg[k] === undefined || cfg[k] === null || cfg[k] === "") cfg[k] = D[k];
@@ -354,100 +353,38 @@
     );
   }
 
-  // ── Style: Clean (frameless Apple-style, inset button) ───────────────────
-  function buildMinimalCss(wid, cfg, rad) {
+  // ── Widget CSS ─────────────────────────────────────────────────────────────
+  function buildWidgetCss(wid, cfg, rad) {
     var W = "#" + wid;
     return (
       "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
-      W + "{background:transparent !important;color:" + cfg.textColor + " !important;padding:0 !important;border:none !important;box-shadow:none !important;max-width:500px !important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important;box-sizing:border-box !important}" +
+      W + "{background:transparent !important;color:" + cfg.textColor + " !important;padding:0 !important;border:none !important;box-shadow:none !important;max-width:480px !important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important;box-sizing:border-box !important}" +
       W + " *{box-sizing:border-box !important}" +
-      W + " .zcc-heading{font-size:22px !important;font-weight:900 !important;letter-spacing:-0.03em !important;margin:0 0 14px !important;color:" + cfg.textColor + " !important;display:flex !important;align-items:center !important;gap:10px !important}" +
-      W + " .zcc-heading-icon{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:32px !important;height:32px !important;border-radius:8px !important;background:" + cfg.primaryColor + " !important;flex-shrink:0 !important}" +
-      W + " .zcc-heading-icon svg{width:16px !important;height:16px !important}" +
-      W + " .zcc-search-bar{display:flex !important;background:#fff !important;border:2px solid #e5e7eb !important;border-radius:14px !important;overflow:hidden !important;box-shadow:0 1px 4px rgba(0,0,0,0.06) !important;transition:box-shadow 0.2s,border-color 0.2s !important}" +
-      W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + " !important;box-shadow:0 0 0 4px " + cfg.primaryColor + "22 !important}" +
-      W + " .zcc-input{padding:15px 18px !important;font-size:16px !important;border:none !important;outline:none !important;flex:1 !important;background:transparent !important;color:" + cfg.textColor + " !important;min-width:0 !important}" +
+      W + " .zcc-heading{font-size:17px !important;font-weight:600 !important;margin:0 0 14px !important;color:" + cfg.textColor + " !important;display:flex !important;align-items:center !important;gap:8px !important}" +
+      W + " .zcc-heading-icon{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:28px !important;height:28px !important;border-radius:50% !important;background:" + cfg.primaryColor + "15 !important;flex-shrink:0 !important}" +
+      W + " .zcc-heading-icon svg{width:15px !important;height:15px !important}" +
+      W + " .zcc-search-bar{display:flex !important;background:#fff !important;border:1.5px solid #e5e7eb !important;border-radius:10px !important;overflow:hidden !important;transition:border-color 0.2s,box-shadow 0.2s !important}" +
+      W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + " !important;box-shadow:0 0 0 3px " + cfg.primaryColor + "18 !important}" +
+      W + " .zcc-input{padding:13px 16px !important;font-size:14px !important;border:none !important;outline:none !important;flex:1 !important;background:transparent !important;color:" + cfg.textColor + " !important;min-width:0 !important}" +
       W + " .zcc-input::placeholder{color:#9ca3af !important}" +
-      W + " .zcc-btn{margin:6px !important;border-radius:10px !important;padding:10px 22px !important;background:" + cfg.primaryColor + " !important;color:#fff !important;border:none !important;font-size:14px !important;font-weight:700 !important;cursor:pointer !important;white-space:nowrap !important;flex-shrink:0 !important;transition:all 0.2s !important}" +
-      W + " .zcc-btn:hover{box-shadow:0 4px 12px " + cfg.primaryColor + "55 !important;transform:translateY(-1px) !important}" +
-      W + " .zcc-btn:active{transform:scale(0.97) translateY(0) !important}" +
+      W + " .zcc-btn{background:" + cfg.primaryColor + " !important;color:#fff !important;border:none !important;padding:13px 24px !important;font-size:14px !important;font-weight:600 !important;cursor:pointer !important;white-space:nowrap !important;flex-shrink:0 !important;border-radius:0 8px 8px 0 !important;transition:filter 0.2s !important}" +
+      W + " .zcc-btn:hover{filter:brightness(1.08) !important}" +
+      W + " .zcc-btn:active{filter:brightness(0.95) !important}" +
       W + " .zcc-btn:disabled{opacity:.6 !important;cursor:not-allowed !important;filter:none !important}" +
-      W + " .zcc-result{margin-top:16px !important;padding:14px 18px !important;border-radius:12px !important;font-size:14px !important;line-height:1.6 !important;animation:zcc-slide-in 0.3s ease !important;display:flex !important;gap:12px !important;align-items:flex-start !important;border:1px solid transparent !important}" +
-      W + " .zcc-result.ok{background:" + cfg.successColor + "10 !important;border-color:" + cfg.successColor + "30 !important;color:" + cfg.successColor + " !important}" +
-      W + " .zcc-result.fail{background:" + cfg.errorColor + "10 !important;border-color:" + cfg.errorColor + "30 !important;color:" + cfg.errorColor + " !important}" +
-      W + " .zcc-wl{margin-top:14px !important;padding:16px !important;background:#f8f9fa !important;border-radius:12px !important;border:1px solid #e9ecef !important}" +
-      W + " .zcc-wl-input{border-radius:10px !important;border:1.5px solid #dee2e6 !important;padding:11px 14px !important;width:100% !important;display:block !important;margin-bottom:8px !important;outline:none !important;font-size:13px !important;transition:border-color 0.2s !important}" +
-      W + " .zcc-wl-btn{border-radius:10px !important;background:" + cfg.primaryColor + " !important;color:#fff !important;padding:12px !important;width:100% !important;font-weight:700 !important;border:none !important;cursor:pointer !important;font-size:13px !important;transition:all 0.2s !important}" +
-      "@media(max-width:480px){" + W + " .zcc-search-bar{flex-direction:column !important}" + W + " .zcc-btn{margin:0 6px 6px !important;border-radius:10px !important;width:calc(100% - 12px) !important}" + "}" +
+      W + " .zcc-result{margin-top:14px !important;padding:12px 16px !important;border-radius:8px !important;font-size:14px !important;line-height:1.6 !important;animation:zcc-slide-in 0.3s ease !important;display:flex !important;gap:10px !important;align-items:flex-start !important;border-left:3px solid transparent !important}" +
+      W + " .zcc-result.ok{background:" + cfg.successColor + "0c !important;border-left-color:" + cfg.successColor + " !important;color:" + cfg.successColor + " !important}" +
+      W + " .zcc-result.fail{background:" + cfg.errorColor + "0c !important;border-left-color:" + cfg.errorColor + " !important;color:" + cfg.errorColor + " !important}" +
+      W + " .zcc-wl{margin-top:12px !important;padding:14px !important;background:#f8f9fa !important;border-radius:8px !important;border:1px solid #e9ecef !important}" +
+      W + " .zcc-wl-input{border-radius:8px !important;border:1.5px solid #dee2e6 !important;padding:10px 14px !important;width:100% !important;display:block !important;margin-bottom:8px !important;outline:none !important;font-size:13px !important;transition:border-color 0.2s !important}" +
+      W + " .zcc-wl-btn{border-radius:8px !important;background:" + cfg.primaryColor + " !important;color:#fff !important;padding:11px !important;width:100% !important;font-weight:600 !important;border:none !important;cursor:pointer !important;font-size:13px !important;transition:filter 0.2s !important}" +
+      "@media(max-width:480px){" + W + " .zcc-search-bar{flex-direction:column !important}" + W + " .zcc-btn{border-radius:0 0 8px 8px !important}" + "}" +
       buildSharedCss(W, cfg)
     );
   }
 
-  // ── Style: Branded (two-tone header — colored band + white body) ──────────
-  function buildBoldCss(wid, cfg, rad) {
-    var W = "#" + wid;
-    return (
-      "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
-      W + "{background:#fff !important;border-radius:16px !important;overflow:hidden !important;padding:0 0 24px !important;border:none !important;box-shadow:0 8px 30px rgba(0,0,0,0.12) !important;max-width:500px !important;width:100% !important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important;box-sizing:border-box !important;transition:all 0.25s ease !important}" +
-      W + ":hover{box-shadow:0 12px 40px rgba(0,0,0,0.16) !important;transform:translateY(-2px) !important}" +
-      W + " *{box-sizing:border-box !important}" +
-      W + " .zcc-heading{margin:0 !important;padding:22px 24px 20px !important;background:" + cfg.primaryColor + " !important;color:#fff !important;font-size:18px !important;font-weight:800 !important;letter-spacing:-0.02em !important;display:flex !important;align-items:center !important;gap:10px !important}" +
-      W + " .zcc-heading-icon{background:rgba(255,255,255,0.2) !important;border-radius:8px !important;width:32px !important;height:32px !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;flex-shrink:0 !important}" +
-      W + " .zcc-heading-icon svg{width:16px !important;height:16px !important}" +
-      W + " .zcc-search-bar{margin:20px 24px 0 !important;display:flex !important;background:#f8f9fa !important;border:1.5px solid #e9ecef !important;border-radius:10px !important;overflow:hidden !important;transition:border-color 0.2s,box-shadow 0.2s !important}" +
-      W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + " !important;box-shadow:0 0 0 3px " + cfg.primaryColor + "18 !important;background:#fff !important}" +
-      W + " .zcc-input{flex:1 !important;padding:13px 16px !important;border:none !important;font-size:14px !important;outline:none !important;background:transparent !important;color:" + cfg.textColor + " !important;min-width:0 !important}" +
-      W + " .zcc-input::placeholder{color:#9ca3af !important}" +
-      W + " .zcc-btn{background:" + cfg.primaryColor + " !important;color:#fff !important;border:none !important;padding:13px 24px !important;font-size:14px !important;font-weight:700 !important;cursor:pointer !important;white-space:nowrap !important;flex-shrink:0 !important;border-radius:0 8px 8px 0 !important;transition:all 0.2s !important}" +
-      W + " .zcc-btn:hover{filter:brightness(1.1) !important}" +
-      W + " .zcc-btn:disabled{opacity:.6 !important;cursor:not-allowed !important;filter:none !important}" +
-      W + " .zcc-result{margin:14px 24px 0 !important;padding:14px 16px !important;border-radius:10px !important;font-size:14px !important;line-height:1.6 !important;animation:zcc-slide-in 0.3s ease !important;display:flex !important;gap:10px !important;align-items:flex-start !important}" +
-      W + " .zcc-result.ok{background:" + cfg.successColor + "0e !important;border-left:3px solid " + cfg.successColor + " !important;color:" + cfg.successColor + " !important}" +
-      W + " .zcc-result.fail{background:" + cfg.errorColor + "0e !important;border-left:3px solid " + cfg.errorColor + " !important;color:" + cfg.errorColor + " !important}" +
-      W + " .zcc-wl{margin:12px 24px 0 !important;padding:14px !important;background:#f8f9fa !important;border-radius:10px !important;border:1px solid #e9ecef !important}" +
-      W + " .zcc-wl-input{border-radius:8px !important;border:1.5px solid #dee2e6 !important;padding:10px 14px !important;width:100% !important;display:block !important;margin-bottom:8px !important;outline:none !important;transition:border-color 0.2s !important;font-size:13px !important}" +
-      W + " .zcc-wl-btn{border-radius:8px !important;background:" + cfg.primaryColor + " !important;color:#fff !important;padding:11px !important;width:100% !important;font-weight:700 !important;border:none !important;cursor:pointer !important;font-size:13px !important;transition:all 0.2s !important}" +
-      "@media(max-width:480px){" + W + " .zcc-search-bar{margin:16px 16px 0 !important;flex-direction:column !important}" + W + " .zcc-btn{border-radius:0 0 8px 8px !important}" + W + " .zcc-result{margin:12px 16px 0 !important}" + W + " .zcc-wl{margin:10px 16px 0 !important}" + "}" +
-      buildSharedCss(W, cfg)
-    );
-  }
-
-  // ── Style: Premium (gradient card with accent border + spring animation) ──
-  function buildCardCss(wid, cfg, rad) {
-    var W = "#" + wid;
-    return (
-      "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
-      W + "{background:linear-gradient(150deg,#ffffff 0%," + cfg.primaryColor + "05 100%) !important;color:" + cfg.textColor + " !important;border-radius:20px !important;padding:28px !important;border-top:4px solid " + cfg.primaryColor + " !important;border-left:none !important;border-right:none !important;border-bottom:none !important;box-shadow:0 4px 6px rgba(0,0,0,0.04),0 10px 40px rgba(0,0,0,0.08) !important;max-width:500px !important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important;box-sizing:border-box !important;position:relative !important;transition:box-shadow 0.3s ease !important}" +
-      W + ":hover{box-shadow:0 4px 6px rgba(0,0,0,0.06),0 20px 60px rgba(0,0,0,0.12) !important}" +
-      W + " *{box-sizing:border-box !important}" +
-      W + " .zcc-heading{font-size:20px !important;font-weight:900 !important;letter-spacing:-0.03em !important;margin:0 0 20px !important;color:" + cfg.textColor + " !important;display:flex !important;align-items:center !important;gap:10px !important;line-height:1.2 !important}" +
-      W + " .zcc-heading-icon{background:" + cfg.primaryColor + " !important;border-radius:10px !important;width:36px !important;height:36px !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;flex-shrink:0 !important;box-shadow:0 4px 12px " + cfg.primaryColor + "55 !important}" +
-      W + " .zcc-heading-icon svg{width:18px !important;height:18px !important}" +
-      W + " .zcc-search-bar{display:flex !important;background:#fff !important;border:2px solid #f0f0f0 !important;border-radius:12px !important;overflow:hidden !important;transition:border-color 0.2s ease,box-shadow 0.2s ease !important;box-shadow:0 1px 3px rgba(0,0,0,0.06) !important}" +
-      W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + " !important;box-shadow:0 0 0 4px " + cfg.primaryColor + "18,0 2px 8px rgba(0,0,0,0.08) !important}" +
-      W + " .zcc-input{flex:1 !important;padding:15px 18px !important;border:none !important;font-size:15px !important;outline:none !important;background:transparent !important;color:" + cfg.textColor + " !important;min-width:0 !important}" +
-      W + " .zcc-input::placeholder{color:#9ca3af !important}" +
-      W + " .zcc-btn{background:" + cfg.primaryColor + " !important;color:#fff !important;border:none !important;padding:15px 28px !important;font-size:15px !important;font-weight:700 !important;cursor:pointer !important;white-space:nowrap !important;flex-shrink:0 !important;border-radius:0 10px 10px 0 !important;transition:all 0.2s !important;letter-spacing:0.01em !important}" +
-      W + " .zcc-btn:hover{filter:brightness(1.1) !important;box-shadow:inset 0 -3px 0 rgba(0,0,0,0.15) !important}" +
-      W + " .zcc-btn:active{transform:scale(0.98) !important}" +
-      W + " .zcc-btn:disabled{opacity:.6 !important;cursor:not-allowed !important;filter:none !important}" +
-      W + " .zcc-result{margin-top:18px !important;padding:16px 18px !important;border-radius:14px !important;font-size:14px !important;line-height:1.6 !important;animation:zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1) !important;display:flex !important;gap:12px !important;align-items:flex-start !important;border:1px solid transparent !important}" +
-      W + " .zcc-result.ok{background:linear-gradient(135deg," + cfg.successColor + "08," + cfg.successColor + "14) !important;border-color:" + cfg.successColor + "25 !important;color:" + cfg.successColor + " !important;box-shadow:0 2px 8px " + cfg.successColor + "18 !important}" +
-      W + " .zcc-result.fail{background:linear-gradient(135deg," + cfg.errorColor + "08," + cfg.errorColor + "14) !important;border-color:" + cfg.errorColor + "25 !important;color:" + cfg.errorColor + " !important;box-shadow:0 2px 8px " + cfg.errorColor + "18 !important}" +
-      W + " .zcc-wl{margin-top:16px !important;padding:18px !important;background:rgba(255,255,255,0.8) !important;border-radius:14px !important;border:1px solid " + cfg.primaryColor + "15 !important;backdrop-filter:blur(4px) !important}" +
-      W + " .zcc-wl-input{border-radius:10px !important;border:1.5px solid #e5e7eb !important;padding:12px 16px !important;width:100% !important;display:block !important;margin-bottom:10px !important;outline:none !important;transition:border-color 0.2s,box-shadow 0.2s !important;font-size:13px !important;background:#fff !important}" +
-      W + " .zcc-wl-btn{border-radius:10px !important;background:" + cfg.primaryColor + " !important;color:#fff !important;padding:13px !important;width:100% !important;font-weight:700 !important;border:none !important;cursor:pointer !important;font-size:13px !important;transition:all 0.2s !important;letter-spacing:0.01em !important}" +
-      "@media(max-width:480px){" + W + "{padding:20px !important;border-radius:16px !important}" + W + " .zcc-heading{font-size:18px !important}" + W + " .zcc-search-bar{flex-direction:column !important}" + W + " .zcc-btn{border-radius:0 0 10px 10px !important}" + "}" +
-      buildSharedCss(W, cfg)
-    );
-  }
-
-  // ── Shared: inject CSS — dispatches to style-specific builder ───────────────
+  // ── Inject CSS ────────────────────────────────────────────────────────────────
   function injectCss(wid, cfg, rad) {
-    var style = cfg.widgetStyle || "minimal";
-    var css = style === "bold" ? buildBoldCss(wid, cfg, rad) :
-              style === "card" ? buildCardCss(wid, cfg, rad) :
-              buildMinimalCss(wid, cfg, rad);
+    var css = buildWidgetCss(wid, cfg, rad);
     css += scopeCustomCss(cfg.customCss, wid);
     var styleEl = document.createElement("style");
     styleEl.textContent = css;
@@ -459,7 +396,7 @@
     return (
       '<div class="zcc-heading">' +
         '<span class="zcc-heading-icon">' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="' + escAttr(cfg.primaryColor) + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
         '</span>' +
         '<span>' + esc(cfg.heading) + '</span>' +
       "</div>" +

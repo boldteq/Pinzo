@@ -87,6 +87,12 @@
     var SHOP = {{ shop_domain | json }};
     var META_RAW = {{ metafield_value | default: 'null' | json }};
 
+    function escapeHtml(str) {
+      var d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
     var cfg = { blockCheckoutInCart: false };
     try {
       var meta = META_RAW ? JSON.parse(META_RAW) : null;
@@ -114,7 +120,7 @@
           + '<span class="zcc-cv-icon">⚠️</span>'
           + '<div class="zcc-cv-content">'
           + '<p class="zcc-cv-title">Delivery Not Available for Your Area</p>'
-          + '<p class="zcc-cv-msg">Your ZIP code <span class="zcc-cv-zip">' + zip + '</span> is outside our current delivery area. Please remove restricted items or check a different ZIP code.</p>'
+          + '<p class="zcc-cv-msg">Your ZIP code <span class="zcc-cv-zip">' + escapeHtml(zip) + '</span> is outside our current delivery area. Please remove restricted items or check a different ZIP code.</p>'
           + '<div class="zcc-cv-actions">'
           + '<button class="zcc-cv-dismiss" onclick="document.getElementById(\'zcc-cart-validator\').style.display=\'none\'">Dismiss</button>'
           + '</div>'
@@ -139,7 +145,7 @@
               document.querySelectorAll(sel).forEach(function(el) {
                 el.classList.add('zcc-checkout-blocked');
                 el.setAttribute('data-zcc-checkout-blocked', 'true');
-                el.setAttribute('title', 'Delivery is not available for ZIP code ' + zip + '. Please update your ZIP code.');
+                el.setAttribute('title', 'Delivery is not available for ZIP code ' + escapeHtml(zip) + '. Please update your ZIP code.');
               });
             } catch(e) {}
           });

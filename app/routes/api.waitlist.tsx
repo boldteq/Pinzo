@@ -15,6 +15,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import db from "../db.server";
 import { getShopSubscription } from "../billing.server";
+import { UNLIMITED } from "../plans";
 import { normalizeZipCode } from "../utils/zip";
 
 const CORS_HEADERS = {
@@ -105,7 +106,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       );
     }
     // Enforce entry limit for Starter plan
-    if (subscription.limits.maxWaitlist !== Infinity) {
+    if (subscription.limits.maxWaitlist < UNLIMITED) {
       const currentCount = await db.waitlistEntry.count({ where: { shop } });
       if (currentCount >= subscription.limits.maxWaitlist) {
         return new Response(
@@ -115,7 +116,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
     }
   } catch {
-    // Non-fatal — allow waitlist signup if subscription check fails
+    // If subscription check fails, deny the request to prevent plan bypass
+    return new Response(
+      JSON.stringify({ error: "Unable to verify subscription. Please try again later." }),
+      { status: 503, headers: CORS_HEADERS },
+    );
   }
 
   try {

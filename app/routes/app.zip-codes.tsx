@@ -10,7 +10,7 @@ import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { getShopSubscription } from "../billing.server";
-import { PLAN_LIMITS } from "../plans";
+import { PLAN_LIMITS, UNLIMITED } from "../plans";
 import {
   Page,
   Layout,
@@ -145,7 +145,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     const currentCount = await db.zipCode.count({ where: { shop } });
-    if (limits.maxZipCodes !== Infinity && currentCount >= limits.maxZipCodes) {
+    if (limits.maxZipCodes < UNLIMITED && currentCount >= limits.maxZipCodes) {
       const upgradeTarget =
         subscription.planTier === "free" ? "Starter" : "Pro";
       return {
@@ -177,6 +177,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (intent === "delete") {
     const id = String(formData.get("id"));
     try {
+      const existing = await db.zipCode.findFirst({ where: { id, shop } });
+      if (!existing) return { error: "Zip code not found." };
       await db.zipCode.delete({ where: { id } });
       return { success: true, action: "deleted" };
     } catch {
@@ -204,6 +206,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!zipCode) return { error: "Zip code is required." };
 
     try {
+      const existing = await db.zipCode.findFirst({ where: { id, shop } });
+      if (!existing) return { error: "Zip code not found." };
       await db.zipCode.update({
         where: { id },
         data: {
@@ -228,6 +232,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const id = String(formData.get("id"));
     const isActive = formData.get("isActive") === "true";
     try {
+      const existing = await db.zipCode.findFirst({ where: { id, shop } });
+      if (!existing) return { error: "Zip code not found." };
       await db.zipCode.update({
         where: { id },
         data: { isActive: !isActive },
@@ -308,7 +314,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
 
       if (
-        limits.maxZipCodes !== Infinity &&
+        limits.maxZipCodes < UNLIMITED &&
         currentCount + imported >= limits.maxZipCodes
       ) {
         const upgradeTarget =
@@ -434,7 +440,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     const currentCount = await db.zipCode.count({ where: { shop } });
-    if (limits.maxZipCodes !== Infinity && currentCount + rangeSize > limits.maxZipCodes) {
+    if (limits.maxZipCodes < UNLIMITED && currentCount + rangeSize > limits.maxZipCodes) {
       const upgradeTarget =
         subscription.planTier === "free" ? "Starter" : "Pro";
       return {
@@ -490,7 +496,7 @@ export default function ZipCodeCheckerPage() {
   const isFreePlan = subscription.planTier === "free";
   const isStarterPlan = subscription.planTier === "starter";
   const atZipLimit =
-    limits.maxZipCodes !== Infinity && stats.total >= limits.maxZipCodes;
+    limits.maxZipCodes < UNLIMITED && stats.total >= limits.maxZipCodes;
 
   // Search & filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -953,7 +959,7 @@ export default function ZipCodeCheckerPage() {
                   <Text as="p" variant="headingXl" fontWeight="bold">
                     {stats.total}
                   </Text>
-                  {limits.maxZipCodes !== Infinity && (
+                  {limits.maxZipCodes < UNLIMITED && (
                     <Text as="p" tone="subdued" variant="bodySm">
                       / {limits.maxZipCodes}
                     </Text>

@@ -19,20 +19,24 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // Look up any data stored for this customer.
   // For this app, the only customer PII stored is waitlist entries (email + zip).
   // Shopify does not auto-send the data — you must respond within 30 days.
-  if (customerEmail) {
-    const customerData = await db.waitlistEntry.findMany({
-      where: { shop, email: customerEmail },
-      select: { zipCode: true, status: true, createdAt: true },
-    });
+  try {
+    if (customerEmail) {
+      const customerData = await db.waitlistEntry.findMany({
+        where: { shop, email: customerEmail },
+        select: { zipCode: true, status: true, createdAt: true },
+      });
 
-    // Log customer data for manual GDPR response within 30 days.
-    // In production, integrate with an email service to send data directly.
-    if (customerData.length > 0) {
-      console.log(
-        `[GDPR] Data request for ${customerEmail} at ${shop}:`,
-        JSON.stringify(customerData),
-      );
+      // Log customer data for manual GDPR response within 30 days.
+      // In production, integrate with an email service to send data directly.
+      if (customerData.length > 0) {
+        console.log(
+          `[GDPR] Data request for ${customerEmail} at ${shop}:`,
+          JSON.stringify(customerData),
+        );
+      }
     }
+  } catch {
+    // Shopify requires a 200 response regardless of errors
   }
 
   return new Response();

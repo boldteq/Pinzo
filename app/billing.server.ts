@@ -26,18 +26,16 @@ export interface ShopSubscription {
 export async function getShopSubscription(
   shop: string,
 ): Promise<ShopSubscription> {
-  let sub = await db.subscription.findUnique({ where: { shop } });
-
-  if (!sub) {
-    sub = await db.subscription.create({
-      data: {
-        shop,
-        planId: PLAN_FREE,
-        billingInterval: "monthly",
-        status: "active",
-      },
-    });
-  }
+  const sub = await db.subscription.upsert({
+    where: { shop },
+    update: {},
+    create: {
+      shop,
+      planId: PLAN_FREE,
+      billingInterval: "monthly",
+      status: "active",
+    },
+  });
 
   const planTier = getPlanTier(sub.planId) ;
   return {
@@ -60,16 +58,26 @@ export async function syncSubscriptionFromShopify(
   appSubscriptions: Array<{ id: string; name: string; status: string }>,
 ): Promise<ShopSubscription> {
   const activeSub = appSubscriptions.find((s) => s.status === "ACTIVE");
+  const frozenSub = !activeSub
+    ? appSubscriptions.find((s) => s.status === "FROZEN")
+    : undefined;
+  const pendingSub = !activeSub && !frozenSub
+    ? appSubscriptions.find((s) => s.status === "PENDING")
+    : undefined;
+
+  const matchedSub = activeSub ?? frozenSub ?? pendingSub ?? null;
 
   let planId = PLAN_FREE;
   let billingInterval = "monthly";
   let shopifySubscriptionId: string | null = null;
   let status = "active";
 
-  if (activeSub) {
-    planId = activeSub.name;
-    shopifySubscriptionId = activeSub.id;
-    status = activeSub.status.toLowerCase();
+  if (matchedSub) {
+    // For FROZEN/PENDING keep the plan but reflect the real status.
+    // For ACTIVE, this is the normal path.
+    planId = matchedSub.name;
+    shopifySubscriptionId = matchedSub.id;
+    status = matchedSub.status.toLowerCase();
     billingInterval =
       planId.toLowerCase().includes("annual") ? "annual" : "monthly";
   }

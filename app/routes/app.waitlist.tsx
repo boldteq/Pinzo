@@ -10,7 +10,7 @@ import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { getShopSubscription } from "../billing.server";
-import { PLAN_LIMITS } from "../plans";
+import { PLAN_LIMITS, UNLIMITED } from "../plans";
 import {
   Page,
   Layout,
@@ -88,7 +88,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return { error: "Your current plan does not include waitlist access. Upgrade to Starter or higher." };
     }
 
-    if (isFinite(limits.maxWaitlist)) {
+    if (limits.maxWaitlist < UNLIMITED) {
       const currentCount = await db.waitlistEntry.count({ where: { shop } });
       if (currentCount >= limits.maxWaitlist) {
         return { error: `You have reached the ${limits.maxWaitlist}-entry waitlist limit on your ${limits.label} plan. Upgrade to Pro for unlimited entries.` };
@@ -107,15 +107,27 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === "delete") {
     const id = String(formData.get("id"));
-    await db.waitlistEntry.delete({ where: { id } });
-    return { success: true, action: "deleted" };
+    try {
+      const existing = await db.waitlistEntry.findFirst({ where: { id, shop } });
+      if (!existing) return { error: "Entry not found." };
+      await db.waitlistEntry.delete({ where: { id } });
+      return { success: true, action: "deleted" };
+    } catch {
+      return { error: "Failed to delete entry." };
+    }
   }
 
   if (intent === "update-status") {
     const id = String(formData.get("id"));
     const status = String(formData.get("status"));
-    await db.waitlistEntry.update({ where: { id }, data: { status } });
-    return { success: true, action: "updated" };
+    try {
+      const existing = await db.waitlistEntry.findFirst({ where: { id, shop } });
+      if (!existing) return { error: "Entry not found." };
+      await db.waitlistEntry.update({ where: { id }, data: { status } });
+      return { success: true, action: "updated" };
+    } catch {
+      return { error: "Failed to update entry status." };
+    }
   }
 
   if (intent === "bulk-notify") {
@@ -125,7 +137,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!zipCode) return { error: "Zip code is required." };
 
     const bulkNotifySub = await getShopSubscription(shop);
-    if (isFinite(PLAN_LIMITS[bulkNotifySub.planTier].maxWaitlist)) {
+    if (PLAN_LIMITS[bulkNotifySub.planTier].maxWaitlist < UNLIMITED) {
       return { error: "Bulk notify is only available on Pro or Ultimate plans. Please upgrade." };
     }
 
@@ -147,7 +159,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!zipCode) return { error: "No ZIP code specified." };
 
     const notifyZipSub = await getShopSubscription(shop);
-    if (isFinite(PLAN_LIMITS[notifyZipSub.planTier].maxWaitlist)) {
+    if (PLAN_LIMITS[notifyZipSub.planTier].maxWaitlist < UNLIMITED) {
       return { error: "Bulk notify is only available on Pro or Ultimate plans. Please upgrade." };
     }
 
@@ -210,11 +222,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === "reject") {
     const id = String(formData.get("id"));
-    await db.waitlistEntry.update({
-      where: { id },
-      data: { status: "rejected" },
-    });
-    return { success: true, action: "rejected" };
+    try {
+      const existing = await db.waitlistEntry.findFirst({ where: { id, shop } });
+      if (!existing) return { error: "Entry not found." };
+      await db.waitlistEntry.update({
+        where: { id },
+        data: { status: "rejected" },
+      });
+      return { success: true, action: "rejected" };
+    } catch {
+      return { error: "Failed to reject entry." };
+    }
   }
 
   return null;
@@ -238,7 +256,7 @@ export default function WaitlistPage() {
 
   const limits = PLAN_LIMITS[subscription.planTier];
   const isFreePlan = limits.maxWaitlist === 0;
-  const isStarterPlan = isFinite(limits.maxWaitlist) && limits.maxWaitlist > 0;
+  const isStarterPlan = limits.maxWaitlist < UNLIMITED && limits.maxWaitlist > 0;
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -320,12 +338,7 @@ export default function WaitlistPage() {
     fd.set("zipCode", newZipCode);
     fd.set("note", newNote);
     fetcher.submit(fd, { method: "POST" });
-    setNewEmail("");
-    setNewZipCode("");
-    setNewNote("");
-    setAddModalOpen(false);
-    shopify.toast.show("Added to waitlist");
-  }, [newEmail, newZipCode, newNote, fetcher, shopify]);
+  }, [newEmail, newZipCode, newNote, fetcher]);
 
   const handleDelete = useCallback(
     (id: string) => {
@@ -333,9 +346,8 @@ export default function WaitlistPage() {
       fd.set("intent", "delete");
       fd.set("id", id);
       fetcher.submit(fd, { method: "POST" });
-      shopify.toast.show("Entry removed");
     },
-    [fetcher, shopify],
+    [fetcher],
   );
 
   const handleStatusChange = useCallback(
@@ -348,6 +360,32 @@ export default function WaitlistPage() {
     },
     [fetcher],
   );
+
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data) {
+      if ("success" in fetcher.data && fetcher.data.success) {
+        const fetcherAction =
+          "action" in fetcher.data ? fetcher.data.action : "";
+        if (fetcherAction === "added") {
+          shopify.toast.show("Added to waitlist");
+          setAddModalOpen(false);
+          setNewEmail("");
+          setNewZipCode("");
+          setNewNote("");
+        } else if (fetcherAction === "deleted") {
+          shopify.toast.show("Entry removed");
+        } else if (fetcherAction === "updated") {
+          shopify.toast.show("Status updated");
+        } else if (fetcherAction === "accepted") {
+          shopify.toast.show("ZIP code accepted and added to allowed list");
+        } else if (fetcherAction === "rejected") {
+          shopify.toast.show("Request rejected");
+        } else if (fetcherAction === "deleted-notified") {
+          shopify.toast.show("Notified entries cleared");
+        }
+      }
+    }
+  }, [fetcher.state, fetcher.data, shopify]);
 
   const handleBulkNotify = useCallback(() => {
     if (!notifyZip.trim()) return;
@@ -371,8 +409,7 @@ export default function WaitlistPage() {
     const fd = new FormData();
     fd.set("intent", "delete-all-notified");
     fetcher.submit(fd, { method: "POST" });
-    shopify.toast.show("Notified entries cleared");
-  }, [fetcher, shopify]);
+  }, [fetcher]);
 
   const handleAccept = useCallback(
     (id: string) => {
@@ -380,9 +417,8 @@ export default function WaitlistPage() {
       fd.set("intent", "accept");
       fd.set("id", id);
       fetcher.submit(fd, { method: "POST" });
-      shopify.toast.show("ZIP code accepted and added to allowed list");
     },
-    [fetcher, shopify],
+    [fetcher],
   );
 
   const handleReject = useCallback(
@@ -391,9 +427,8 @@ export default function WaitlistPage() {
       fd.set("intent", "reject");
       fd.set("id", id);
       fetcher.submit(fd, { method: "POST" });
-      shopify.toast.show("Request rejected");
     },
-    [fetcher, shopify],
+    [fetcher],
   );
 
   // Compute per-ZIP waiting counts for the "Notify Waitlist" section
@@ -433,11 +468,11 @@ export default function WaitlistPage() {
               title="Waitlist requires Starter plan or higher"
               action={{ content: "View pricing plans", url: "/app/pricing" }}
             >
-              <p>
+              <Text as="p">
                 The customer waitlist feature is not available on the Free plan.
                 Upgrade to Starter to collect up to 25 waitlist entries, or upgrade
                 to Pro or Ultimate for unlimited entries and bulk notify.
-              </p>
+              </Text>
             </Banner>
           </Layout.Section>
         </Layout>
@@ -483,7 +518,7 @@ export default function WaitlistPage() {
     <Text as="span" fontWeight="bold" key={`zip-${entry.id}`}>
       {entry.zipCode}
     </Text>,
-    <div key={`status-${entry.id}`} style={{ minWidth: "120px" }}>
+    <Box key={`status-${entry.id}`} minWidth="120px">
       <Select
         label="Status"
         labelHidden
@@ -491,7 +526,7 @@ export default function WaitlistPage() {
         value={entry.status}
         onChange={(val) => handleStatusChange(entry.id, val)}
       />
-    </div>,
+    </Box>,
     formatDate(entry.createdAt),
     <InlineStack gap="200" key={`actions-${entry.id}`} wrap={false}>
       {entry.status === "waiting" && (
@@ -658,11 +693,11 @@ export default function WaitlistPage() {
                   : undefined
               }
             >
-              <p>
+              <Text as="p">
                 {stats.total >= limits.maxWaitlist
                   ? "You have reached your Starter plan waitlist limit. Upgrade to Pro or Ultimate for unlimited entries and bulk notify."
                   : `You are on the Starter plan with a limit of ${limits.maxWaitlist} waitlist entries. Bulk notify is available on Pro and Ultimate plans.`}
-              </p>
+              </Text>
             </Banner>
           </Layout.Section>
         )}
@@ -726,7 +761,7 @@ export default function WaitlistPage() {
                 wrap
               >
                 <InlineStack gap="300" blockAlign="center" wrap>
-                  <div style={{ minWidth: "260px" }}>
+                  <Box minWidth="260px">
                     <TextField
                       label="Search"
                       labelHidden
@@ -738,8 +773,8 @@ export default function WaitlistPage() {
                       clearButton
                       onClearButtonClick={() => handleSearchChange("")}
                     />
-                  </div>
-                  <div style={{ minWidth: "120px" }}>
+                  </Box>
+                  <Box minWidth="120px">
                     <Select
                       label="Status"
                       labelHidden
@@ -747,7 +782,7 @@ export default function WaitlistPage() {
                       value={statusFilter}
                       onChange={handleFilterChange}
                     />
-                  </div>
+                  </Box>
                 </InlineStack>
                 <InlineStack gap="200">
                   {stats.notified > 0 && (
@@ -780,12 +815,12 @@ export default function WaitlistPage() {
                   onAction: () => setAddModalOpen(true),
                 }}
               >
-                <p>
+                <Text as="p">
                   When customers enter a zip code that isn&apos;t in your delivery
                   area, they can join the waitlist. You can also manually add
                   entries here. Enable the waitlist on blocked zip codes in your
                   Widget settings.
-                </p>
+                </Text>
               </EmptyState>
             ) : filteredEntries.length === 0 ? (
               <Box padding="600">

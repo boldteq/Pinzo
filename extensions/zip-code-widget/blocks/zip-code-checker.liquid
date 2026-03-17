@@ -101,7 +101,7 @@
   data-shop="{{ shop.permanent_domain }}"
   data-api="https://{{ shop.permanent_domain }}/apps/zipcheck"
   data-block="{{ block.id }}"
-  {% if zcc_config %}data-config="{{ zcc_config | json | escape }}"{% endif %}
+  {% if zcc_config %}data-config='{{ zcc_config | json }}'{% endif %}
   {{ block.shopify_attributes }}
 ></div>
 
@@ -189,7 +189,7 @@
       showSocialProof: true,
     };
     Object.keys(D).forEach(function (k) {
-      if (cfg[k] === undefined || cfg[k] === null || cfg[k] === "") cfg[k] = D[k];
+      if (cfg[k] === undefined || cfg[k] === null) cfg[k] = D[k];
     });
 
     var rad = cfg.borderRadius + "px";
@@ -597,7 +597,8 @@
           btn.innerHTML = btnOrigHtml;
           res.innerHTML = '<div class="zcc-result fail"><div class="zcc-result-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></div><div class="zcc-result-content">Something went wrong. Please try again.</div></div>';
           try {
-            sessionStorage.setItem('zcc:valid', 'false');
+            sessionStorage.removeItem('zcc:valid');
+            sessionStorage.removeItem('zcc:zip');
             window.dispatchEvent(new CustomEvent('zcc:validated', { detail: { valid: false, zip: zip } }));
           } catch(e) {}
         });

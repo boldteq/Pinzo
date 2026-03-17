@@ -5,7 +5,7 @@ import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { getShopSubscription } from "../billing.server";
-import { PLAN_LIMITS } from "../plans";
+import { PLAN_LIMITS, UNLIMITED } from "../plans";
 import {
   Page,
   Card,
@@ -27,17 +27,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session, admin } = await authenticate.admin(request);
   const shop = session.shop;
 
-  const zipCodes = await db.zipCode.findMany({ where: { shop } });
-  const [deliveryRulesCount, waitlistCount, subscription] = await Promise.all([
+  const [totalZips, allowedZips, blockedZips, deliveryRulesCount, waitlistCount, subscription] = await Promise.all([
+    db.zipCode.count({ where: { shop } }),
+    db.zipCode.count({ where: { shop, type: "allowed" } }),
+    db.zipCode.count({ where: { shop, type: "blocked" } }),
     db.deliveryRule.count({ where: { shop } }),
     db.waitlistEntry.count({ where: { shop } }),
     getShopSubscription(shop),
   ]);
 
   const stats = {
-    total: zipCodes.length,
-    allowed: zipCodes.filter((z) => z.type === "allowed").length,
-    blocked: zipCodes.filter((z) => z.type === "blocked").length,
+    total: totalZips,
+    allowed: allowedZips,
+    blocked: blockedZips,
     deliveryRules: deliveryRulesCount,
     waitlist: waitlistCount,
   };
@@ -194,11 +196,11 @@ export default function DashboardPage() {
     }
   }, []);
   const isFreePlan = subscription.planTier === "free";
-  const hasZipLimit = limits.maxZipCodes !== Infinity;
+  const hasZipLimit = limits.maxZipCodes < UNLIMITED;
   const isEmpty = stats.total === 0;
 
   const usagePercent =
-    limits.maxZipCodes !== Infinity
+    limits.maxZipCodes < UNLIMITED
       ? Math.min(100, Math.round((stats.total / limits.maxZipCodes) * 100))
       : 0;
 
@@ -270,7 +272,7 @@ export default function DashboardPage() {
                   <BlockStack gap="100">
                     <Text as="p" variant="headingXl" fontWeight="bold">
                       {stats.total}
-                      {limits.maxZipCodes !== Infinity && (
+                      {limits.maxZipCodes < UNLIMITED && (
                         <Text as="span" variant="bodySm" tone="subdued" fontWeight="regular">
                           {" "}/ {limits.maxZipCodes}
                         </Text>

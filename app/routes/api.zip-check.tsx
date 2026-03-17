@@ -23,11 +23,18 @@ const CORS_HEADERS = {
   "Content-Type": "application/json",
 };
 
-// Applied only to successful ZIP check responses (200) to reduce DB load
+// Applied only to successful (allowed) ZIP check responses to reduce DB load
 // for repeated lookups of the same ZIP code from the same storefront visitor.
 const SUCCESS_HEADERS = {
   ...CORS_HEADERS,
   "Cache-Control": "public, max-age=60, stale-while-revalidate=120",
+};
+
+// Short cache for denied/not-found responses so merchants see changes quickly
+// (e.g. when they add a new ZIP code it takes effect within 5 seconds).
+const DENY_HEADERS = {
+  ...CORS_HEADERS,
+  "Cache-Control": "no-cache, max-age=5",
 };
 
 const SHOP_DOMAIN_RE = /^[a-zA-Z0-9][a-zA-Z0-9-]*\.myshopify\.com$/;
@@ -116,7 +123,7 @@ async function handleZipCheck(shop: string | null, zip: string | null) {
           showWaitlist: widgetConfig?.showWaitlistOnFailure ?? false,
           waitlistCount,
         }),
-        { status: 200, headers: SUCCESS_HEADERS },
+        { status: 200, headers: DENY_HEADERS },
       );
     }
 
@@ -129,7 +136,7 @@ async function handleZipCheck(shop: string | null, zip: string | null) {
         showWaitlist: widgetConfig?.showWaitlistOnFailure ?? false,
         waitlistCount,
       }),
-      { status: 200, headers: SUCCESS_HEADERS },
+      { status: 200, headers: DENY_HEADERS },
     );
   }
 
@@ -156,7 +163,7 @@ async function handleZipCheck(shop: string | null, zip: string | null) {
         showWaitlist: widgetConfig?.showWaitlistOnFailure ?? false,
         waitlistCount,
       }),
-      { status: 200, headers: SUCCESS_HEADERS },
+      { status: 200, headers: DENY_HEADERS },
     );
   }
 

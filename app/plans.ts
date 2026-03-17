@@ -1,5 +1,13 @@
 // Shared plan constants — safe for both client and server
 
+/**
+ * Sentinel value used in place of Infinity for "unlimited" plan limits.
+ * Infinity cannot be serialized to JSON (becomes null), so we use this
+ * large number as the canonical "no limit" value. All limit comparisons
+ * should use isUnlimited() or compare against UNLIMITED.
+ */
+export const UNLIMITED = 999999;
+
 export const PLAN_FREE = "free";
 export const PLAN_STARTER_MONTHLY = "Starter Monthly";
 export const PLAN_STARTER_ANNUAL = "Starter Annual";
@@ -64,10 +72,10 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     label: "Starter",
   },
   pro: {
-    maxZipCodes: Infinity,
+    maxZipCodes: UNLIMITED,
     allowBlocked: true,
-    maxDeliveryRules: Infinity,
-    maxWaitlist: Infinity,
+    maxDeliveryRules: UNLIMITED,
+    maxWaitlist: UNLIMITED,
     csvImport: true,
     csvExport: true,
     widgetFullCustom: true,
@@ -78,10 +86,10 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     label: "Pro",
   },
   ultimate: {
-    maxZipCodes: Infinity,
+    maxZipCodes: UNLIMITED,
     allowBlocked: true,
-    maxDeliveryRules: Infinity,
-    maxWaitlist: Infinity,
+    maxDeliveryRules: UNLIMITED,
+    maxWaitlist: UNLIMITED,
     csvImport: true,
     csvExport: true,
     widgetFullCustom: true,

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type {
   ActionFunctionArgs,
   HeadersFunction,
@@ -10,7 +10,7 @@ import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { getShopSubscription } from "../billing.server";
-import { PLAN_LIMITS } from "../plans";
+import { PLAN_LIMITS, UNLIMITED } from "../plans";
 import {
   Page,
   Layout,
@@ -112,8 +112,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     };
 
     if (intent === "update" && id) {
-      await db.deliveryRule.update({ where: { id }, data });
-      return { success: true, action: "updated" };
+      try {
+        const existing = await db.deliveryRule.findFirst({ where: { id, shop } });
+        if (!existing) return { error: "Rule not found." };
+        await db.deliveryRule.update({ where: { id }, data });
+        return { success: true, action: "updated" };
+      } catch {
+        return { error: "Failed to update rule." };
+      }
     } else {
       // Plan-gating: check limits before creating a new rule
       const subscription = await getShopSubscription(shop);
@@ -126,7 +132,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         };
       }
 
-      if (isFinite(maxDeliveryRules)) {
+      if (maxDeliveryRules < UNLIMITED) {
         const currentCount = await db.deliveryRule.count({ where: { shop } });
         if (currentCount >= maxDeliveryRules) {
           return {
@@ -142,18 +148,30 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === "delete") {
     const id = String(formData.get("id"));
-    await db.deliveryRule.delete({ where: { id } });
-    return { success: true, action: "deleted" };
+    try {
+      const existing = await db.deliveryRule.findFirst({ where: { id, shop } });
+      if (!existing) return { error: "Rule not found." };
+      await db.deliveryRule.delete({ where: { id } });
+      return { success: true, action: "deleted" };
+    } catch {
+      return { error: "Failed to delete rule." };
+    }
   }
 
   if (intent === "toggle") {
     const id = String(formData.get("id"));
     const isActive = formData.get("isActive") === "true";
-    await db.deliveryRule.update({
-      where: { id },
-      data: { isActive: !isActive },
-    });
-    return { success: true, action: "toggled" };
+    try {
+      const existing = await db.deliveryRule.findFirst({ where: { id, shop } });
+      if (!existing) return { error: "Rule not found." };
+      await db.deliveryRule.update({
+        where: { id },
+        data: { isActive: !isActive },
+      });
+      return { success: true, action: "toggled" };
+    } catch {
+      return { error: "Failed to toggle rule." };
+    }
   }
 
   return null;
@@ -178,7 +196,7 @@ export default function DeliveryRulesPage() {
   const { rules, zones, subscription } = useLoaderData<typeof loader>();
   const limits = PLAN_LIMITS[subscription.planTier];
   const isFreePlan = limits.maxDeliveryRules === 0;
-  const hasFiniteLimit = isFinite(limits.maxDeliveryRules) && !isFreePlan;
+  const hasFiniteLimit = limits.maxDeliveryRules < UNLIMITED && !isFreePlan;
   const fetcher = useFetcher<typeof action>();
   const shopify = useAppBridge();
   const navigate = useNavigate();
@@ -258,9 +276,6 @@ export default function DeliveryRulesPage() {
     fd.set("daysOfWeek", selectedDays.join(","));
     fd.set("priority", priority);
     fetcher.submit(fd, { method: "POST" });
-    setModalOpen(false);
-    resetForm();
-    shopify.toast.show(editingRule ? "Rule updated" : "Rule created");
   }, [
     editingRule,
     name,
@@ -274,8 +289,6 @@ export default function DeliveryRulesPage() {
     selectedDays,
     priority,
     fetcher,
-    resetForm,
-    shopify,
   ]);
 
   const handleDelete = useCallback(
@@ -284,10 +297,31 @@ export default function DeliveryRulesPage() {
       fd.set("intent", "delete");
       fd.set("id", id);
       fetcher.submit(fd, { method: "POST" });
-      shopify.toast.show("Rule deleted");
     },
-    [fetcher, shopify],
+    [fetcher],
   );
+
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data) {
+      if ("success" in fetcher.data && fetcher.data.success) {
+        const fetcherAction =
+          "action" in fetcher.data ? fetcher.data.action : "";
+        if (fetcherAction === "created") {
+          shopify.toast.show("Rule created");
+          setModalOpen(false);
+          resetForm();
+        } else if (fetcherAction === "updated") {
+          shopify.toast.show("Rule updated");
+          setModalOpen(false);
+          resetForm();
+        } else if (fetcherAction === "deleted") {
+          shopify.toast.show("Rule deleted");
+        } else if (fetcherAction === "toggled") {
+          shopify.toast.show("Rule status updated");
+        }
+      }
+    }
+  }, [fetcher.state, fetcher.data, shopify, resetForm]);
 
   const handleToggle = useCallback(
     (id: string, isActive: boolean) => {
@@ -388,10 +422,10 @@ export default function DeliveryRulesPage() {
                 url: "/app/pricing",
               }}
             >
-              <p>
+              <Text as="p">
                 Upgrade to the Starter plan or higher to create delivery rules
                 with custom fees, schedules, and zone conditions.
-              </p>
+              </Text>
             </Banner>
           </Layout.Section>
         )}
@@ -416,16 +450,23 @@ export default function DeliveryRulesPage() {
               <EmptyState
                 heading="No delivery rules yet"
                 image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
-                action={{
-                  content: "Create your first rule",
-                  onAction: openCreate,
-                }}
+                action={
+                  isFreePlan
+                    ? {
+                        content: "Upgrade to create rules",
+                        url: "/app/pricing",
+                      }
+                    : {
+                        content: "Create your first rule",
+                        onAction: openCreate,
+                      }
+                }
               >
-                <p>
+                <Text as="p">
                   Delivery rules let you set fees, minimum order amounts,
                   estimated delivery times, and delivery schedules for different
                   zones. Rules are evaluated by priority order.
-                </p>
+                </Text>
               </EmptyState>
             ) : (
               <DataTable

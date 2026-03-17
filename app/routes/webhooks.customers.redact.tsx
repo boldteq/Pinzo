@@ -18,11 +18,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const customerEmail = payload?.customer?.email;
 
-  if (customerEmail) {
-    // Delete all PII for this customer: waitlist entries contain email addresses
-    await db.waitlistEntry.deleteMany({
-      where: { shop, email: customerEmail },
-    });
+  try {
+    if (customerEmail) {
+      // Delete all PII for this customer: waitlist entries contain email addresses
+      await db.waitlistEntry.deleteMany({
+        where: { shop, email: customerEmail },
+      });
+    }
+  } catch {
+    // Shopify requires a 200 response regardless of errors
   }
 
   return new Response();

@@ -99,99 +99,117 @@ async function syncConfigMetafield(
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { session, admin } = await authenticate.admin(request);
-  const shop = session.shop;
-  const formData = await request.formData();
-  const intent = formData.get("intent");
+  try {
+    const { session, admin } = await authenticate.admin(request);
+    const shop = session.shop;
+    const formData = await request.formData();
+    const intent = formData.get("intent");
 
-  if (intent === "save") {
-    const data = {
-      position: String(formData.get("position") || "inline"),
-      primaryColor: String(formData.get("primaryColor") || "#008060"),
-      successColor: String(formData.get("successColor") || "#008060"),
-      errorColor: String(formData.get("errorColor") || "#D72C0D"),
-      backgroundColor: String(formData.get("backgroundColor") || "#FFFFFF"),
-      textColor: String(formData.get("textColor") || "#202223"),
-      heading: String(formData.get("heading") || "Check Delivery Availability"),
-      placeholder: String(formData.get("placeholder") || "Enter your zip code"),
-      buttonText: String(formData.get("buttonText") || "Check"),
-      successMessage: String(
-        formData.get("successMessage") ||
-          "Great news! We deliver to your area.",
-      ),
-      errorMessage: String(
-        formData.get("errorMessage") ||
-          "Sorry, we don't deliver to this area yet.",
-      ),
-      notFoundMessage: String(
-        formData.get("notFoundMessage") ||
-          "We currently do not ship to this ZIP code.",
-      ),
-      showEta: formData.get("showEta") === "true",
-      showZone: formData.get("showZone") === "true",
-      showWaitlistOnFailure: formData.get("showWaitlistOnFailure") === "true",
-      showCod: formData.get("showCod") === "true",
-      showReturnPolicy: formData.get("showReturnPolicy") === "true",
-      showCutoffTime: formData.get("showCutoffTime") === "true",
-      showDeliveryDays: formData.get("showDeliveryDays") === "true",
-      blockCartOnInvalid: formData.get("blockCartOnInvalid") === "true",
-      blockCheckoutInCart: formData.get("blockCheckoutInCart") === "true",
-      showSocialProof: formData.get("showSocialProof") === "true",
-      borderRadius: String(formData.get("borderRadius") || "8"),
-      customCss: String(formData.get("customCss") || "") || null,
-    };
+    if (intent === "save") {
+      const data = {
+        position: String(formData.get("position") || "inline"),
+        primaryColor: String(formData.get("primaryColor") || "#008060"),
+        successColor: String(formData.get("successColor") || "#008060"),
+        errorColor: String(formData.get("errorColor") || "#D72C0D"),
+        backgroundColor: String(formData.get("backgroundColor") || "#FFFFFF"),
+        textColor: String(formData.get("textColor") || "#202223"),
+        heading: String(formData.get("heading") || "Check Delivery Availability"),
+        placeholder: String(formData.get("placeholder") || "Enter your zip code"),
+        buttonText: String(formData.get("buttonText") || "Check"),
+        successMessage: String(
+          formData.get("successMessage") ||
+            "Great news! We deliver to your area.",
+        ),
+        errorMessage: String(
+          formData.get("errorMessage") ||
+            "Sorry, we don't deliver to this area yet.",
+        ),
+        notFoundMessage: String(
+          formData.get("notFoundMessage") ||
+            "We currently do not ship to this ZIP code.",
+        ),
+        showEta: formData.get("showEta") === "true",
+        showZone: formData.get("showZone") === "true",
+        showWaitlistOnFailure: formData.get("showWaitlistOnFailure") === "true",
+        showCod: formData.get("showCod") === "true",
+        showReturnPolicy: formData.get("showReturnPolicy") === "true",
+        showCutoffTime: formData.get("showCutoffTime") === "true",
+        showDeliveryDays: formData.get("showDeliveryDays") === "true",
+        blockCartOnInvalid: formData.get("blockCartOnInvalid") === "true",
+        blockCheckoutInCart: formData.get("blockCheckoutInCart") === "true",
+        showSocialProof: formData.get("showSocialProof") === "true",
+        borderRadius: String(formData.get("borderRadius") || "8"),
+        customCss: String(formData.get("customCss") || "") || null,
+      };
 
-    await db.widgetConfig.upsert({
-      where: { shop },
-      create: { shop, ...data },
-      update: data,
+      // Server-side plan gating: strip premium fields the shop's plan doesn't allow
+      const subscription = await getShopSubscription(shop);
+      const limits = PLAN_LIMITS[subscription.planTier];
+      if (!limits.customCss) {
+        data.customCss = null;
+      }
+      if (!limits.cartBlocking) {
+        data.blockCartOnInvalid = false;
+        data.blockCheckoutInCart = false;
+      }
+
+      await db.widgetConfig.upsert({
+        where: { shop },
+        create: { shop, ...data },
+        update: data,
+      });
+
+      await syncConfigMetafield(admin, data);
+
+      return { success: true };
+    }
+
+    if (intent === "reset") {
+      const resetData = {
+        position: "inline",
+        primaryColor: "#008060",
+        successColor: "#008060",
+        errorColor: "#D72C0D",
+        backgroundColor: "#FFFFFF",
+        textColor: "#202223",
+        heading: "Check Delivery Availability",
+        placeholder: "Enter your zip code",
+        buttonText: "Check",
+        successMessage: "Great news! We deliver to your area.",
+        errorMessage: "Sorry, we don't deliver to this area yet.",
+        notFoundMessage: "We currently do not ship to this ZIP code.",
+        showEta: true,
+        showZone: false,
+        showWaitlistOnFailure: false,
+        showCod: true,
+        showReturnPolicy: true,
+        showCutoffTime: true,
+        showDeliveryDays: true,
+        blockCartOnInvalid: false,
+        blockCheckoutInCart: false,
+        showSocialProof: true,
+        borderRadius: "8",
+        customCss: null,
+      };
+
+      await db.widgetConfig.upsert({
+        where: { shop },
+        create: { shop },
+        update: resetData,
+      });
+
+      await syncConfigMetafield(admin, resetData);
+
+      return { success: true, action: "reset" };
+    }
+
+    return null;
+  } catch {
+    return new Response(JSON.stringify({ error: "Failed to save widget settings." }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
     });
-
-    await syncConfigMetafield(admin, data);
-
-    return { success: true };
   }
-
-  if (intent === "reset") {
-    const resetData = {
-      position: "inline",
-      primaryColor: "#008060",
-      successColor: "#008060",
-      errorColor: "#D72C0D",
-      backgroundColor: "#FFFFFF",
-      textColor: "#202223",
-      heading: "Check Delivery Availability",
-      placeholder: "Enter your zip code",
-      buttonText: "Check",
-      successMessage: "Great news! We deliver to your area.",
-      errorMessage: "Sorry, we don't deliver to this area yet.",
-      notFoundMessage: "We currently do not ship to this ZIP code.",
-      showEta: true,
-      showZone: false,
-      showWaitlistOnFailure: false,
-      showCod: true,
-      showReturnPolicy: true,
-      showCutoffTime: true,
-      showDeliveryDays: true,
-      blockCartOnInvalid: false,
-      blockCheckoutInCart: false,
-      showSocialProof: true,
-      borderRadius: "8",
-      customCss: null,
-    };
-
-    await db.widgetConfig.upsert({
-      where: { shop },
-      create: { shop },
-      update: resetData,
-    });
-
-    await syncConfigMetafield(admin, resetData);
-
-    return { success: true, action: "reset" };
-  }
-
-  return null;
 };
 
 type WidgetConfig = {

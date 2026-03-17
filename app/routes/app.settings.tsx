@@ -9,7 +9,7 @@ import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { getShopSubscription } from "../billing.server";
-import { PLAN_LIMITS } from "../plans";
+import { PLAN_LIMITS, UNLIMITED } from "../plans";
 import db from "../db.server";
 import {
   Page,
@@ -24,6 +24,7 @@ import {
   Box,
   Select,
   TextField,
+  Banner,
 } from "@shopify/polaris";
 
 // ---------------------------------------------------------------------------
@@ -272,9 +273,9 @@ export default function SettingsPage() {
                 {behaviorFetcher.data &&
                   "error" in behaviorFetcher.data &&
                   behaviorFetcher.data.error && (
-                    <Text as="p" tone="critical" variant="bodyMd">
+                    <Banner tone="critical">
                       {behaviorFetcher.data.error}
-                    </Text>
+                    </Banner>
                   )}
                 <Select
                   label="Behavior for unlisted zip codes"
@@ -308,9 +309,9 @@ export default function SettingsPage() {
                 {notificationFetcher.data &&
                   "error" in notificationFetcher.data &&
                   notificationFetcher.data.error && (
-                    <Text as="p" tone="critical" variant="bodyMd">
+                    <Banner tone="critical">
                       {notificationFetcher.data.error}
-                    </Text>
+                    </Banner>
                   )}
                 <TextField
                   label="Notification email"
@@ -343,7 +344,7 @@ export default function SettingsPage() {
                   </Text>
                   <Text as="p" fontWeight="semibold">
                     {zipCount}
-                    {limits.maxZipCodes !== Infinity
+                    {limits.maxZipCodes < UNLIMITED
                       ? ` / ${limits.maxZipCodes}`
                       : " (Unlimited)"}
                   </Text>
@@ -361,7 +362,7 @@ export default function SettingsPage() {
                     Delivery Rules
                   </Text>
                   <Text as="p" fontWeight="semibold">
-                    {limits.maxDeliveryRules === Infinity
+                    {limits.maxDeliveryRules >= UNLIMITED
                       ? "Unlimited"
                       : limits.maxDeliveryRules === 0
                         ? "Not Available"
@@ -373,7 +374,7 @@ export default function SettingsPage() {
                     Waitlist
                   </Text>
                   <Text as="p" fontWeight="semibold">
-                    {limits.maxWaitlist === Infinity
+                    {limits.maxWaitlist >= UNLIMITED
                       ? "Unlimited"
                       : limits.maxWaitlist === 0
                         ? "Not Available"
@@ -404,7 +405,7 @@ export default function SettingsPage() {
                 <Divider />
                 <InlineStack gap="300" wrap>
                   <Button onClick={() => navigate("/app/zip-codes")}>
-                    Export Zip Codes
+                    Manage Zip Codes
                   </Button>
                   <Button onClick={() => navigate("/app/waitlist")}>
                     View Waitlist

@@ -485,9 +485,6 @@ export default function PricingPage() {
             )}
 
             {/* Action feedback banners */}
-            {data && "error" in data && data.error && (
-              <Banner tone="critical">{String(data.error)}</Banner>
-            )}
             {data && "success" in data && data.success && (
               <Banner tone="success">
                 {data && "message" in data

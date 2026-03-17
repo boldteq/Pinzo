@@ -56,14 +56,17 @@ const DEFAULTS = {
  */
 function sanitizeCss(css: string): string {
   return css
-    // Break out of <style> blocks
+    // Break out of <style> blocks — strip both opening and closing tags
+    .replace(/<style\b[^>]*>/gi, "")
     .replace(/<\/style>/gi, "")
     // External stylesheet loading
     .replace(/@import\b[^;]*(;|$)/gi, "")
     // IE expression() — JS execution inside CSS property values
     .replace(/\bexpression\s*\(/gi, "")
     // javascript: protocol inside url() references
-    .replace(/url\s*\(\s*['"]?\s*javascript\s*:/gi, "url(");
+    .replace(/url\s*\(\s*['"]?\s*javascript\s*:/gi, "url(")
+    // data: URIs inside url() — can embed arbitrary content including scripts
+    .replace(/url\s*\(\s*['"]?\s*data\s*:/gi, "url(");
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

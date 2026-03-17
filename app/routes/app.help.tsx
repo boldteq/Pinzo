@@ -43,7 +43,7 @@ export default function HelpPage() {
     {
       question: "How many ZIP codes can I add?",
       answer:
-        "Depends on your plan. Free: 25 allowed zones. Pro+: Unlimited.",
+        "Depends on your plan. Free: 20 allowed ZIP codes. Starter: 500. Pro+: Unlimited.",
     },
     {
       question: "Can I restrict delivery to specific products?",

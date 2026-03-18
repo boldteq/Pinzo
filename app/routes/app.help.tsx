@@ -14,6 +14,7 @@ import {
   Divider,
   Box,
   Banner,
+  Badge,
 } from "@shopify/polaris";
 
 // ---------------------------------------------------------------------------
@@ -31,13 +32,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export default function HelpPage() {
   const navigate = useNavigate();
-
-  const gettingStartedItems = [
-    "How to add ZIP codes",
-    "Setting up delivery rules",
-    "Customizing the storefront widget",
-    "Managing your waitlist",
-  ];
 
   const faqs: Array<{ question: string; answer: string }> = [
     {
@@ -76,30 +70,113 @@ export default function HelpPage() {
         <Layout>
 
           {/* ----------------------------------------------------------------
-              Section 1: Getting Started
+              Section 1: Setup Guide
           ---------------------------------------------------------------- */}
           <Layout.Section>
             <Card>
-              <BlockStack gap="400">
+              <BlockStack gap="600">
                 <Text as="h2" variant="headingMd">
-                  Getting Started
+                  Setup Guide
                 </Text>
-                <Divider />
                 <Text as="p" tone="subdued" variant="bodyMd">
-                  New to Zip Code Checker? These guides will help you get up and
-                  running quickly.
+                  Follow these steps to get Zip Code Checker fully working on your storefront. The widget uses Shopify Theme App Extensions — no code changes required.
                 </Text>
-                <List type="bullet">
-                  {gettingStartedItems.map((item) => (
-                    <List.Item key={item}>{item}</List.Item>
-                  ))}
-                  <List.Item>
-                    <Text as="span" fontWeight="bold">Step 4 (Optional) — </Text>
-                    Go to your Theme Editor, navigate to the Cart page, click Add block, and add the{" "}
-                    <Text as="span" fontWeight="bold">Cart Validator</Text> block. This shows a warning
-                    to customers with unserviceable ZIP codes before they check out.
-                  </List.Item>
-                </List>
+
+                {/* ---- A. Add the widget ---- */}
+                <BlockStack gap="300">
+                  <Divider />
+                  <Text as="h3" variant="headingSm">
+                    A. How to Add the Widget to Your Store
+                  </Text>
+                  <Text as="p" tone="subdued" variant="bodyMd">
+                    The widget is a native Theme App Extension block. You add it directly inside the Shopify Theme Editor with no code required.
+                  </Text>
+                  <List type="number">
+                    <List.Item>
+                      Go to your Shopify Admin, then <Text as="span" fontWeight="semibold">Online Store → Themes</Text>.
+                    </List.Item>
+                    <List.Item>
+                      Click <Text as="span" fontWeight="semibold">Customize</Text> on your active theme.
+                    </List.Item>
+                    <List.Item>
+                      In the left sidebar, click <Text as="span" fontWeight="semibold">App Embeds</Text> and toggle on <Text as="span" fontWeight="semibold">Zip Code Checker</Text>.
+                    </List.Item>
+                    <List.Item>
+                      Navigate to the page where you want the widget to appear (for example, a Product page).
+                    </List.Item>
+                    <List.Item>
+                      Click <Text as="span" fontWeight="semibold">Add block</Text>, then under the Apps section select <Text as="span" fontWeight="semibold">Zip Code Checker</Text>.
+                    </List.Item>
+                    <List.Item>
+                      Drag the block to your preferred position, then click <Text as="span" fontWeight="semibold">Save</Text>.
+                    </List.Item>
+                  </List>
+                </BlockStack>
+
+                {/* ---- B. Cart page validation ---- */}
+                <BlockStack gap="300">
+                  <Divider />
+                  <InlineStack gap="200" align="start" blockAlign="center">
+                    <Text as="h3" variant="headingSm">
+                      B. How to Enable Cart Page Validation
+                    </Text>
+                    <Badge tone="attention">Pro Feature</Badge>
+                  </InlineStack>
+                  <Text as="p" tone="subdued" variant="bodyMd">
+                    Cart validation blocks the checkout button when a customer has an unserviceable ZIP code. It requires the Pro plan and the Cart Validator block in your theme.
+                  </Text>
+                  <List type="number">
+                    <List.Item>
+                      In the Zip Code Checker app, go to <Text as="span" fontWeight="semibold">Widget Settings</Text>.
+                    </List.Item>
+                    <List.Item>
+                      Enable the <Text as="span" fontWeight="semibold">Block checkout in cart for unserviceable ZIP codes</Text> toggle. This requires a Pro plan or higher.
+                    </List.Item>
+                    <List.Item>
+                      Open your Shopify Theme Editor and navigate to the <Text as="span" fontWeight="semibold">Cart page</Text> template.
+                    </List.Item>
+                    <List.Item>
+                      Click <Text as="span" fontWeight="semibold">Add block</Text>, then under the Apps section select <Text as="span" fontWeight="semibold">Cart Validator</Text>.
+                    </List.Item>
+                    <List.Item>
+                      Click <Text as="span" fontWeight="semibold">Save</Text>. The cart will now block checkout for customers with an unvalidated or invalid ZIP code.
+                    </List.Item>
+                  </List>
+                  <Banner tone="warning">
+                    <Text as="p" variant="bodySm">
+                      If the toggle is greyed out, upgrade to the Pro plan first from the Pricing page.
+                    </Text>
+                  </Banner>
+                </BlockStack>
+
+                {/* ---- C. How it works ---- */}
+                <BlockStack gap="300">
+                  <Divider />
+                  <Text as="h3" variant="headingSm">
+                    C. How It Works
+                  </Text>
+                  <Text as="p" tone="subdued" variant="bodyMd">
+                    Understanding the flow helps you troubleshoot and explain the experience to customers.
+                  </Text>
+                  <List type="bullet">
+                    <List.Item>
+                      Customer enters their ZIP code on the product page — the result is saved in their browser session.
+                    </List.Item>
+                    <List.Item>
+                      When the customer navigates to the cart page, the Cart Validator block reads the saved result.
+                    </List.Item>
+                    <List.Item>
+                      If the ZIP was invalid or unserviceable, the checkout button is disabled and a warning banner is shown.
+                    </List.Item>
+                    <List.Item>
+                      If the ZIP was valid, everything works normally and checkout proceeds as usual.
+                    </List.Item>
+                    <List.Item>
+                      The session result is cleared when the customer checks out or starts a new browsing session.
+                    </List.Item>
+                  </List>
+                </BlockStack>
+
               </BlockStack>
             </Card>
           </Layout.Section>

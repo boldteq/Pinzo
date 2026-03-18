@@ -875,12 +875,16 @@ const PositionTile = memo(function PositionTile({
   onSelect: (v: string) => void;
   children: React.ReactNode;
 }) {
+  const handleClick = useCallback(() => {
+    if (!disabled) onSelect(value);
+  }, [disabled, onSelect, value]);
+
   return (
-    <div
-      role="button"
-      tabIndex={0}
+    <button
+      type="button"
       aria-pressed={selected}
-      onClick={() => !disabled && onSelect(value)}
+      onClick={handleClick}
+      disabled={disabled}
       onKeyDown={(e) => {
         if ((e.key === "Enter" || e.key === " ") && !disabled) {
           e.preventDefault();
@@ -890,19 +894,25 @@ const PositionTile = memo(function PositionTile({
       style={{
         flex: 1,
         minWidth: 100,
-        border: selected
-          ? "2px solid var(--p-color-border-emphasis)"
-          : "2px solid var(--p-color-border-secondary)",
-        borderRadius: 10,
-        padding: "12px 10px",
+        appearance: "none",
+        WebkitAppearance: "none",
+        border: "none",
+        borderRadius: "var(--p-border-radius-200)",
+        padding: "var(--p-space-300)",
         cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.5 : 1,
+        textAlign: "center",
+        outline: "none",
+        transition: "box-shadow 0.15s ease, background 0.15s ease",
         background: selected
           ? "var(--p-color-bg-surface-selected)"
           : "var(--p-color-bg-surface)",
-        textAlign: "center" as const,
-        opacity: disabled ? 0.5 : 1,
-        transition: "border-color 0.15s ease, background 0.15s ease",
-        outline: "none",
+        boxShadow: selected
+          ? "0 0 0 2px var(--p-color-border-emphasis)"
+          : "0 0 0 1px var(--p-color-border)",
+        fontFamily: "inherit",
+        color: "inherit",
+        fontSize: "inherit",
       }}
     >
       <BlockStack gap="100" inlineAlign="center">
@@ -911,7 +921,7 @@ const PositionTile = memo(function PositionTile({
           {label}
         </Text>
       </BlockStack>
-    </div>
+    </button>
   );
 });
 

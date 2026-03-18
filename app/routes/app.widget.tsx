@@ -21,7 +21,6 @@ import {
   InlineGrid,
   Text,
   Button,
-  ButtonGroup,
   TextField,
   Checkbox,
   Divider,
@@ -296,46 +295,66 @@ function scopeAdminCss(rawCss: string | null | undefined, wid: string): string {
 
 // ── CSS generators — one per style preset, mirrors the Liquid block CSS ─────
 
-function buildSharedMetaCss(W: string): string {
+function buildSharedMetaCss(W: string, cfg: WidgetConfig): string {
+  const primaryColor = cfg.primaryColor;
+  const successColor = cfg.successColor;
   return (
     W + " .zcc-result-icon{flex-shrink:0;width:24px;height:24px;display:flex;align-items:center;justify-content:center}" +
     W + " .zcc-result-icon svg{width:22px;height:22px}" +
     W + " .zcc-result-content{flex:1;min-width:0}" +
-    W + " .zcc-meta{margin-top:6px;font-size:13px;opacity:.85;display:flex;align-items:center;gap:6px}" +
-    W + " .zcc-meta svg{width:14px;height:14px;flex-shrink:0}" +
-    W + " .zcc-cutoff{margin-top:6px;font-size:0.85em;color:#6d7175;display:flex;align-items:center;gap:6px}" +
-    W + " .zcc-days{margin-top:6px;font-size:0.85em;color:#6d7175;display:flex;align-items:center;gap:6px}" +
-    W + " .zcc-cod{margin-top:6px;font-size:0.85em;font-weight:500;display:flex;align-items:center;gap:6px}" +
-    W + " .zcc-cod--available{color:#008060}" +
-    W + " .zcc-cod--unavailable{color:#d72c0d}" +
-    W + " .zcc-return-policy{margin-top:6px;font-size:0.85em;color:#6d7175;display:flex;align-items:center;gap:6px}"
+    W + " .zcc-meta{padding:8px 0;font-size:13.5px;display:flex;align-items:center;gap:8px;color:" + cfg.textColor + "}" +
+    W + " .zcc-meta+.zcc-meta{border-top:1px solid rgba(0,0,0,0.05);padding-top:10px;margin-top:2px}" +
+    W + " .zcc-meta>span:first-child{color:" + primaryColor + ";opacity:0.8}" +
+    W + " .zcc-cutoff{padding:8px 0;font-size:13.5px;display:flex;align-items:center;gap:8px}" +
+    W + " .zcc-days{padding:8px 0;font-size:13.5px;display:flex;align-items:center;gap:8px}" +
+    W + " .zcc-cod{margin-top:8px;display:inline-flex;align-items:center;gap:6px;border-radius:20px;padding:4px 12px;font-size:12.5px;font-weight:600}" +
+    W + " .zcc-cod--available{background:" + successColor + "10;border:1px solid " + successColor + "20;color:" + successColor + "}" +
+    W + " .zcc-cod--unavailable{background:#d72c0d10;border:1px solid #d72c0d20;color:#d72c0d}" +
+    W + " .zcc-return-policy{padding:8px 0;font-size:13.5px;display:flex;align-items:center;gap:8px;color:" + cfg.textColor + "}" +
+    W + " .zcc-wl-title{font-size:13px;font-weight:700;color:" + cfg.textColor + ";margin-bottom:10px}" +
+    W + " .zcc-confirmed-header{display:flex;align-items:center;gap:8px;padding:12px 16px;background:" + successColor + "06;border:1px solid " + successColor + "15;border-radius:12px;font-size:14px;font-weight:500;color:" + cfg.textColor + "}" +
+    W + " .zcc-change-link{margin-left:auto;color:" + primaryColor + ";font-size:13px;cursor:pointer;font-weight:600}" +
+    W + " .zcc-timeline{display:flex;align-items:center;margin-top:16px;padding:16px;background:" + primaryColor + "06;border-radius:14px;gap:0}" +
+    W + " .zcc-timeline-step{display:flex;flex-direction:column;align-items:center;flex:1;gap:4px}" +
+    W + " .zcc-timeline-icon{font-size:20px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.06)}" +
+    W + " .zcc-timeline-step--active .zcc-timeline-icon{box-shadow:0 2px 8px " + primaryColor + "20}" +
+    W + " .zcc-timeline-label{font-size:11px;font-weight:700;color:" + cfg.textColor + ";text-transform:uppercase;letter-spacing:0.5px}" +
+    W + " .zcc-timeline-date{font-size:12px;color:#6b7280}" +
+    W + " .zcc-timeline-line{height:2px;width:20px;background:" + primaryColor + "30;flex-shrink:0}"
   );
 }
 
 function buildWidgetCss(wid: string, cfg: WidgetConfig): string {
   const W = "#" + wid;
+  const p = cfg.primaryColor;
+  const s = cfg.successColor;
+  const e = cfg.errorColor;
   const base =
-    "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}" +
+    "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}" +
+    "@keyframes zcc-scale-in{from{transform:scale(0.92);opacity:0}to{transform:scale(1);opacity:1}}" +
+    "@keyframes zcc-pulse-ring{0%{transform:scale(1);opacity:.5}50%{transform:scale(1.2);opacity:0}100%{transform:scale(1.2);opacity:0}}" +
     W + "{background:transparent;color:" + cfg.textColor + ";padding:0;border:none;box-shadow:none;max-width:480px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-sizing:border-box}" +
     W + " *{box-sizing:border-box}" +
-    W + " .zcc-heading{font-size:17px;font-weight:600;margin:0 0 14px;color:" + cfg.textColor + ";display:flex;align-items:center;gap:8px}" +
-    W + " .zcc-heading-icon{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:" + cfg.primaryColor + "15;flex-shrink:0}" +
-    W + " .zcc-heading-icon svg{width:15px;height:15px}" +
-    W + " .zcc-search-bar{display:flex;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s}" +
-    W + " .zcc-search-bar:focus-within{border-color:" + cfg.primaryColor + ";box-shadow:0 0 0 3px " + cfg.primaryColor + "18}" +
-    W + " .zcc-input{padding:13px 16px;font-size:14px;border:none;outline:none;flex:1;background:transparent;color:" + cfg.textColor + ";min-width:0}" +
+    W + " .zcc-heading{font-size:16px;font-weight:700;letter-spacing:-0.01em;margin:0 0 0;color:" + cfg.textColor + ";display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid rgba(0,0,0,0.06);margin-bottom:16px}" +
+    W + " .zcc-heading-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg," + p + "18," + p + "08);flex-shrink:0}" +
+    W + " .zcc-heading-icon svg{width:16px;height:16px}" +
+    W + " .zcc-search-bar{display:flex;background:#f8f9fa;border:1px solid #e8e8e8;border-radius:50px;overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s}" +
+    W + " .zcc-search-bar:focus-within{border-color:" + p + ";box-shadow:0 0 0 3px " + p + "15}" +
+    W + " .zcc-input{padding:14px 20px;font-size:14px;border:none;outline:none;flex:1;background:transparent;color:" + cfg.textColor + ";min-width:0}" +
     W + " .zcc-input::placeholder{color:#9ca3af}" +
-    W + " .zcc-btn{background:" + cfg.primaryColor + ";color:#fff;border:none;padding:13px 24px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;border-radius:0 8px 8px 0;transition:filter 0.2s}" +
-    W + " .zcc-btn:hover{filter:brightness(1.08)}" +
-    W + " .zcc-btn:active{filter:brightness(0.95)}" +
-    W + " .zcc-btn:disabled{opacity:.6;cursor:not-allowed;filter:none}" +
-    W + " .zcc-result{margin-top:14px;padding:12px 16px;border-radius:8px;font-size:14px;line-height:1.6;animation:zcc-slide-in 0.3s ease;display:flex;gap:10px;align-items:flex-start;border-left:3px solid transparent}" +
-    W + " .zcc-result.ok{background:" + cfg.successColor + "0c;border-left-color:" + cfg.successColor + ";color:" + cfg.successColor + "}" +
-    W + " .zcc-result.fail{background:" + cfg.errorColor + "0c;border-left-color:" + cfg.errorColor + ";color:" + cfg.errorColor + "}" +
-    W + " .zcc-wl{margin-top:12px;padding:14px;background:#f8f9fa;border-radius:8px;border:1px solid #e9ecef}" +
-    W + " .zcc-wl-input{border-radius:8px;border:1.5px solid #dee2e6;padding:10px 14px;width:100%;display:block;margin-bottom:8px;outline:none;font-size:13px;transition:border-color 0.2s}" +
-    W + " .zcc-wl-btn{border-radius:8px;background:" + cfg.primaryColor + ";color:#fff;padding:11px;width:100%;font-weight:600;border:none;cursor:pointer;font-size:13px;transition:filter 0.2s}" +
-    buildSharedMetaCss(W);
+    W + " .zcc-btn{background:" + p + ";color:#fff;border:none;padding:14px 28px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;cursor:pointer;white-space:nowrap;flex-shrink:0;border-radius:0 50px 50px 0;box-shadow:0 2px 8px " + p + "25;transition:transform 0.2s ease,box-shadow 0.2s ease,filter 0.2s}" +
+    W + " .zcc-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px " + p + "40;filter:brightness(1.06)}" +
+    W + " .zcc-btn:active{transform:translateY(0);filter:brightness(0.95)}" +
+    W + " .zcc-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none;filter:none}" +
+    W + " .zcc-btn--error{background:" + e + "10;color:" + e + ";font-weight:700;box-shadow:none}" +
+    W + " .zcc-result{margin-top:14px;padding:14px 16px;border-radius:14px;font-size:14px;line-height:1.6;animation:zcc-slide-in 0.4s cubic-bezier(0.34,1.56,0.64,1);display:flex;gap:12px;align-items:flex-start;justify-content:space-between}" +
+    W + " .zcc-result.ok{background:" + s + "08;border:1px solid " + s + "18;box-shadow:0 2px 8px " + s + "08}" +
+    W + " .zcc-result.fail{background:" + e + "08;border:1px solid " + e + "18;box-shadow:0 2px 8px " + e + "08}" +
+    W + " .zcc-wl{margin-top:12px;padding:18px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:14px;border:1px solid #e2e8f0}" +
+    W + " .zcc-wl-input{border-radius:10px;border:1.5px solid #dee2e6;padding:12px 16px;width:100%;display:block;margin-bottom:8px;outline:none;font-size:13px;transition:border-color 0.2s;background:#fff}" +
+    W + " .zcc-wl-btn{border-radius:50px;background:" + p + ";color:#fff;padding:12px;width:100%;font-weight:600;border:none;cursor:pointer;font-size:13px;transition:filter 0.2s,transform 0.2s}" +
+    W + " .zcc-wl-btn:hover{filter:brightness(1.06);transform:translateY(-1px)}" +
+    buildSharedMetaCss(W, cfg);
   return base + scopeAdminCss(cfg.customCss, wid);
 }
 
@@ -369,14 +388,24 @@ function FloatingPreview({
           overflow: "hidden",
         }}
       >
-        {/* Fake page content lines */}
-        <div style={{ padding: "20px 16px" }}>
-          <div style={{ width: "60%", height: 10, background: "#e0e0e0", borderRadius: 4, marginBottom: 10 }} />
-          <div style={{ width: "80%", height: 8, background: "#ebebeb", borderRadius: 4, marginBottom: 8 }} />
-          <div style={{ width: "70%", height: 8, background: "#ebebeb", borderRadius: 4, marginBottom: 8 }} />
-          <div style={{ width: "45%", height: 8, background: "#ebebeb", borderRadius: 4, marginBottom: 16 }} />
-          <div style={{ width: "100%", height: 60, background: "#e8e8e8", borderRadius: 6, marginBottom: 12 }} />
-          <div style={{ width: "50%", height: 8, background: "#ebebeb", borderRadius: 4 }} />
+        {/* Realistic product page skeleton */}
+        <div style={{ padding: "16px", display: "flex", gap: "14px" }}>
+          {/* Product image placeholder */}
+          <div style={{ width: 120, height: 120, borderRadius: 10, background: "linear-gradient(135deg, #f0f0f0, #e8e8e8)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" style={{ width: 32, height: 32 }}>
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-3.086-3.086a2 2 0 00-2.828 0L6 21"/>
+            </svg>
+          </div>
+          {/* Product details */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ width: "85%", height: 12, background: "#e0e0e0", borderRadius: 4, marginBottom: 8 }} />
+            <div style={{ width: "40%", height: 10, background: "#d4d4d4", borderRadius: 4, marginBottom: 6 }} />
+            <div style={{ display: "flex", gap: 3, marginBottom: 12 }}>
+              {[1,2,3,4,5].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: i <= 4 ? "#fbbf24" : "#e5e7eb" }} />)}
+            </div>
+            <div style={{ height: 36, background: "#222", borderRadius: 8, marginBottom: 8 }} />
+            <div style={{ height: 32, border: "1.5px solid #ddd", borderRadius: 8 }} />
+          </div>
         </div>
 
         {/* Floating UI anchored bottom-right */}
@@ -397,12 +426,12 @@ function FloatingPreview({
             <div
               style={{
                 background: cfg.backgroundColor,
-                borderRadius: 14,
-                boxShadow: "0 12px 40px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.06)",
+                borderRadius: 16,
+                boxShadow: "0 16px 48px rgba(0,0,0,.14), 0 4px 16px rgba(0,0,0,.06)",
                 width: 320,
                 maxWidth: "calc(100% - 16px)",
                 overflow: "hidden",
-                animation: "zcc-slide-in 0.25s ease",
+                animation: "zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1)",
               }}
             >
               {/* Panel header */}
@@ -411,7 +440,9 @@ function FloatingPreview({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "14px 16px 0",
+                  padding: "14px 16px",
+                  background: `linear-gradient(135deg, ${cfg.primaryColor}08, ${cfg.primaryColor}03)`,
+                  borderBottom: "1px solid rgba(0,0,0,0.06)",
                 }}
               >
                 <div
@@ -428,10 +459,10 @@ function FloatingPreview({
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    width: 24,
-                    height: 24,
+                    width: 28,
+                    height: 28,
                     borderRadius: "50%",
-                    background: cfg.primaryColor + "15",
+                    background: cfg.primaryColor + "18",
                   }}>
                     {pinIcon}
                   </span>
@@ -441,31 +472,33 @@ function FloatingPreview({
                   type="button"
                   onClick={() => setPanelOpen(false)}
                   style={{
-                    background: "none",
+                    background: "rgba(0,0,0,0.05)",
                     border: "none",
                     cursor: "pointer",
                     color: cfg.textColor,
-                    opacity: 0.45,
-                    padding: 4,
-                    borderRadius: 6,
-                    lineHeight: 1,
+                    borderRadius: 8,
+                    width: 28,
+                    height: 28,
                     display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: 0,
                   }}
                 >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
                     <path d="M18 6L6 18" /><path d="M6 6l12 12" />
                   </svg>
                 </button>
               </div>
               {/* Panel body — widget with heading hidden (panel header shows it) */}
-              <div style={{ padding: "12px 16px 16px" }}>
+              <div style={{ padding: "14px 16px 16px" }}>
                 <style dangerouslySetInnerHTML={{ __html: `#${wid} .zcc-heading{display:none}` }} />
                 {widgetHtml}
               </div>
             </div>
           )}
 
-          {/* Trigger button */}
+          {/* Trigger button — circular icon only */}
           <button
             type="button"
             onClick={() => setPanelOpen(!panelOpen)}
@@ -473,23 +506,22 @@ function FloatingPreview({
               background: cfg.primaryColor,
               color: "#fff",
               border: "none",
-              borderRadius: 50,
-              padding: "12px 20px",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              boxShadow: `0 4px 16px ${cfg.primaryColor}40`,
+              borderRadius: "50%",
+              width: 52,
+              height: 52,
+              padding: 0,
               display: "flex",
               alignItems: "center",
-              gap: 8,
-              transition: "transform 0.15s ease, box-shadow 0.15s ease",
-              whiteSpace: "nowrap" as const,
+              justifyContent: "center",
+              cursor: "pointer",
+              boxShadow: `0 6px 20px ${cfg.primaryColor}40, 0 2px 6px rgba(0,0,0,0.1)`,
+              transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              position: "relative" as const,
             }}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 22, height: 22 }}>
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
             </svg>
-            Check Delivery
           </button>
         </div>
       </div>
@@ -518,7 +550,7 @@ function PopupPreview({
       {/* eslint-disable-next-line react/no-danger */}
       <style dangerouslySetInnerHTML={{ __html: css }} />
       <div style={{ position: "relative" }}>
-        {/* Trigger button (always visible) */}
+        {/* Trigger button (always visible) — pill with shadow */}
         <div style={{ marginBottom: modalOpen ? 16 : 0 }}>
           <button
             type="button"
@@ -527,15 +559,16 @@ function PopupPreview({
               background: cfg.primaryColor,
               color: "#fff",
               border: "none",
-              borderRadius: cfg.borderRadius + "px",
-              padding: "12px 24px",
+              borderRadius: 50,
+              padding: "13px 28px",
               fontSize: 14,
               fontWeight: 600,
               cursor: "pointer",
               display: "inline-flex",
               alignItems: "center",
               gap: 8,
-              transition: "filter 0.15s ease",
+              boxShadow: "0 2px 10px " + cfg.primaryColor + "25",
+              transition: "filter 0.15s ease, transform 0.15s ease",
             }}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
@@ -545,12 +578,12 @@ function PopupPreview({
           </button>
         </div>
 
-        {/* Simulated modal overlay */}
+        {/* Simulated modal overlay — glassmorphism */}
         {modalOpen && (
           <div
             style={{
-              background: "rgba(0,0,0,.35)",
-              backdropFilter: "blur(2px)",
+              background: "rgba(0,0,0,.4)",
+              backdropFilter: "blur(6px)",
               borderRadius: 10,
               padding: 20,
               display: "flex",
@@ -563,21 +596,24 @@ function PopupPreview({
             <div
               style={{
                 background: cfg.backgroundColor,
-                borderRadius: 14,
-                boxShadow: "0 24px 48px rgba(0,0,0,.15), 0 8px 16px rgba(0,0,0,.08)",
+                borderRadius: 18,
+                boxShadow: "0 32px 64px rgba(0,0,0,.18), 0 8px 24px rgba(0,0,0,.08)",
                 width: "100%",
                 maxWidth: 420,
                 overflow: "hidden",
-                animation: "zcc-slide-in 0.3s ease",
+                animation: "zcc-scale-in 0.3s cubic-bezier(0.34,1.56,0.64,1)",
+                border: "1px solid rgba(255,255,255,0.08)",
               }}
             >
-              {/* Modal header */}
+              {/* Modal header — frosted */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "18px 20px 0",
+                  padding: "14px 20px",
+                  background: `linear-gradient(135deg, ${cfg.primaryColor}08, ${cfg.primaryColor}03)`,
+                  borderBottom: "1px solid rgba(0,0,0,0.06)",
                 }}
               >
                 <div
@@ -594,10 +630,10 @@ function PopupPreview({
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    width: 26,
-                    height: 26,
+                    width: 28,
+                    height: 28,
                     borderRadius: "50%",
-                    background: cfg.primaryColor + "15",
+                    background: cfg.primaryColor + "18",
                   }}>
                     {pinIcon}
                   </span>
@@ -607,24 +643,26 @@ function PopupPreview({
                   type="button"
                   onClick={() => setModalOpen(false)}
                   style={{
-                    background: "none",
+                    background: "rgba(0,0,0,0.05)",
                     border: "none",
                     cursor: "pointer",
                     color: cfg.textColor,
-                    opacity: 0.45,
-                    padding: 4,
-                    borderRadius: 6,
-                    lineHeight: 1,
+                    borderRadius: 8,
+                    width: 28,
+                    height: 28,
                     display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: 0,
                   }}
                 >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
                     <path d="M18 6L6 18" /><path d="M6 6l12 12" />
                   </svg>
                 </button>
               </div>
               {/* Modal body — widget with heading hidden (modal header shows it) */}
-              <div style={{ padding: "12px 20px 20px" }}>
+              <div style={{ padding: "14px 20px 20px" }}>
                 <style dangerouslySetInnerHTML={{ __html: `#${wid} .zcc-heading{display:none}` }} />
                 {widgetHtml}
               </div>
@@ -647,10 +685,6 @@ const WidgetPreview = memo(function WidgetPreview({
   const wid = "zcc-admin-preview";
   const css = useMemo(() => buildWidgetCss(wid, cfg), [wid, cfg]);
 
-  const resultClass =
-    previewState === "success" ? "ok" :
-    (previewState === "error" || previewState === "notfound") ? "fail" : "";
-
   const resultMessage =
     previewState === "success" ? cfg.successMessage :
     previewState === "error" ? cfg.errorMessage :
@@ -662,98 +696,147 @@ const WidgetPreview = memo(function WidgetPreview({
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
     </svg>
   );
-  const checkIcon = (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/>
-    </svg>
-  );
-  const xIcon = (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>
-    </svg>
-  );
-  const truckIcon = (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,flexShrink:0}}>
-      <path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-    </svg>
-  );
-  const calendarIcon = (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,flexShrink:0}}>
-      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-    </svg>
-  );
-  const clockIcon = (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,flexShrink:0}}>
-      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-    </svg>
-  );
-
   const widgetHtml = (
     <div id={wid}>
       <div className="zcc-heading">
         <span className="zcc-heading-icon">{pinIcon}</span>
         <span>{cfg.heading}</span>
       </div>
-      <div className="zcc-search-bar">
-        <input
-          className="zcc-input"
-          type="text"
-          placeholder={cfg.placeholder}
-          readOnly
-        />
-        <button className="zcc-btn" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,verticalAlign:"middle",marginRight:3,flexShrink:0}}>
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
-          </svg>
-          {cfg.buttonText}
-        </button>
-      </div>
-      {resultMessage && (
-        <div className={`zcc-result ${resultClass}`}>
-          <div className="zcc-result-icon">
-            {previewState === "success" ? checkIcon : xIcon}
+
+      {/* Success state: show "Delivering to" confirmed view instead of search bar */}
+      {previewState === "success" ? (
+        <div className="zcc-confirmed">
+          <div className="zcc-confirmed-header">
+            <span style={{ fontSize: 18 }}>✅</span>
+            <span>Delivering to <strong>10001</strong></span>
+            <span className="zcc-change-link">Change</span>
           </div>
+        </div>
+      ) : (
+        /* All other states: show search bar */
+        <div className="zcc-search-bar">
+          {(previewState === "error" || previewState === "notfound") ? (
+            <input
+              className="zcc-input"
+              type="text"
+              value="380007"
+              readOnly
+              style={{ color: cfg.errorColor }}
+            />
+          ) : (
+            <input
+              className="zcc-input"
+              type="text"
+              placeholder={cfg.placeholder}
+              readOnly
+            />
+          )}
+          {(previewState === "error" || previewState === "notfound") ? (
+            <button className="zcc-btn zcc-btn--error" type="button">
+              {cfg.buttonText.toUpperCase()} ✗
+            </button>
+          ) : (
+            <button className="zcc-btn" type="button">
+              {cfg.buttonText}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Success result */}
+      {previewState === "success" && (
+        <div className="zcc-result ok">
           <div className="zcc-result-content">
-            <div>{resultMessage}</div>
-            {previewState === "success" && cfg.showEta && (
-              <div className="zcc-meta">{truckIcon} Estimated delivery: 2–3 business days</div>
+            <div style={{ fontWeight: 600, color: cfg.successColor }}>
+              {cfg.successMessage}
+            </div>
+            {cfg.showEta && (
+              <div className="zcc-meta">
+                <span style={{ fontSize: 16 }}>🚚</span>
+                <span>Get it by <strong>Thursday, Mar 20</strong></span>
+              </div>
             )}
-            {previewState === "success" && cfg.showZone && (
-              <div className="zcc-meta">Zone: Manhattan</div>
+            {cfg.showCutoffTime && (
+              <div className="zcc-meta">
+                <span style={{ fontSize: 16 }}>⏰</span>
+                <span>Order within <strong>5h 30m</strong> for same-day</span>
+              </div>
             )}
-            {previewState === "success" && cfg.showDeliveryDays && (
-              <div className="zcc-meta zcc-days">{calendarIcon} Mon &middot; Tue &middot; Wed &middot; Thu &middot; Fri</div>
+            {cfg.showDeliveryDays && (
+              <div className="zcc-meta">
+                <span style={{ fontSize: 16 }}>📅</span>
+                <span>Mon &middot; Tue &middot; Wed &middot; Thu &middot; Fri</span>
+              </div>
             )}
-            {previewState === "success" && cfg.showCutoffTime && (
-              <div className="zcc-meta zcc-cutoff">{clockIcon} Order by 2:00 PM for same-day</div>
+            {cfg.showCod && (
+              <div className="zcc-cod zcc-cod--available">
+                <span style={{ fontSize: 14 }}>💰</span> Cash on Delivery Available
+              </div>
             )}
-            {previewState === "success" && cfg.showCod && (
-              <div className="zcc-cod zcc-cod--available">Cash on Delivery Available</div>
+            {cfg.showReturnPolicy && (
+              <div className="zcc-meta">
+                <span style={{ fontSize: 16 }}>↩️</span>
+                <span>Returns available for this zipcode</span>
+              </div>
             )}
-            {previewState === "success" && cfg.showReturnPolicy && (
-              <div className="zcc-return-policy">30-day returns accepted. Exchange within 7 days.</div>
-            )}
-            {(previewState === "error" || previewState === "notfound") &&
-              cfg.showWaitlistOnFailure && (
-                <div className="zcc-wl">
-                  <input
-                    className="zcc-wl-input"
-                    type="text"
-                    placeholder="Your name"
-                    readOnly
-                  />
-                  <input
-                    className="zcc-wl-input"
-                    type="email"
-                    placeholder="Your email"
-                    readOnly
-                  />
-                  <button className="zcc-wl-btn" type="button">
-                    Submit Request
-                  </button>
-                </div>
-              )}
           </div>
+          <span style={{ fontSize: 32, lineHeight: 1, flexShrink: 0 }}>🚚</span>
+        </div>
+      )}
+
+      {/* Delivery timeline — shown in success state when ETA is enabled */}
+      {previewState === "success" && cfg.showEta && (
+        <div className="zcc-timeline">
+          <div className="zcc-timeline-step zcc-timeline-step--active">
+            <div className="zcc-timeline-icon">🛍️</div>
+            <div className="zcc-timeline-label">Order</div>
+            <div className="zcc-timeline-date">Today</div>
+          </div>
+          <div className="zcc-timeline-line" />
+          <div className="zcc-timeline-step zcc-timeline-step--active">
+            <div className="zcc-timeline-icon">🚛</div>
+            <div className="zcc-timeline-label">Ships</div>
+            <div className="zcc-timeline-date">Mar 19</div>
+          </div>
+          <div className="zcc-timeline-line" />
+          <div className="zcc-timeline-step">
+            <div className="zcc-timeline-icon">📦</div>
+            <div className="zcc-timeline-label">Delivered</div>
+            <div className="zcc-timeline-date">Mar 21</div>
+          </div>
+        </div>
+      )}
+
+      {/* Error / Not Found result */}
+      {(previewState === "error" || previewState === "notfound") && (
+        <div className="zcc-result fail">
+          <div className="zcc-result-content">
+            <div>
+              <strong style={{ color: cfg.errorColor }}>Sorry,</strong>{" "}
+              {resultMessage ? resultMessage.replace(/^Sorry,?\s*/i, "") : "We don't deliver to this area yet."}
+            </div>
+            {cfg.showWaitlistOnFailure && (
+              <div className="zcc-wl">
+                <div className="zcc-wl-title">Get notified when we deliver here</div>
+                <input
+                  className="zcc-wl-input"
+                  type="text"
+                  placeholder="Your name"
+                  readOnly
+                />
+                <input
+                  className="zcc-wl-input"
+                  type="email"
+                  placeholder="Your email"
+                  readOnly
+                />
+                <button className="zcc-wl-btn" type="button">
+                  Join Waitlist
+                </button>
+              </div>
+            )}
+          </div>
+          <span style={{ fontSize: 32, lineHeight: 1, flexShrink: 0 }}>😞</span>
         </div>
       )}
     </div>
@@ -1542,46 +1625,86 @@ export default function WidgetPage() {
                     </InlineStack>
                     <Divider />
 
-                    {/* Preview state toggle */}
-                    <ButtonGroup variant="segmented">
-                      <Button
-                        size="slim"
-                        pressed={previewState === "idle"}
-                        onClick={() => setPreviewState("idle")}
-                      >
-                        Default
-                      </Button>
-                      <Button
-                        size="slim"
-                        pressed={previewState === "success"}
-                        onClick={() => setPreviewState("success")}
-                      >
-                        Success
-                      </Button>
-                      <Button
-                        size="slim"
-                        pressed={previewState === "error"}
-                        onClick={() => setPreviewState("error")}
-                      >
-                        Blocked
-                      </Button>
-                      <Button
-                        size="slim"
-                        pressed={previewState === "notfound"}
-                        onClick={() => setPreviewState("notfound")}
-                      >
-                        Not Found
-                      </Button>
-                    </ButtonGroup>
+                    {/* Preview state toggle — custom pill tabs */}
+                    <div style={{
+                      display: "flex",
+                      background: "#f1f5f9",
+                      borderRadius: 10,
+                      padding: 3,
+                      gap: 2,
+                    }}>
+                      {([
+                        { key: "idle", label: "Default", color: "#94a3b8" },
+                        { key: "success", label: "Success", color: "#22c55e" },
+                        { key: "error", label: "Blocked", color: "#ef4444" },
+                        { key: "notfound", label: "Not Found", color: "#f59e0b" },
+                      ] as const).map(s => (
+                        <button
+                          key={s.key}
+                          type="button"
+                          onClick={() => setPreviewState(s.key)}
+                          style={{
+                            flex: 1,
+                            padding: "8px 0",
+                            borderRadius: 8,
+                            border: "none",
+                            fontSize: 12,
+                            fontWeight: previewState === s.key ? 600 : 500,
+                            background: previewState === s.key ? "#fff" : "transparent",
+                            boxShadow: previewState === s.key ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                            color: previewState === s.key ? s.color : "#64748b",
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 6,
+                          }}
+                        >
+                          <span style={{
+                            width: 7,
+                            height: 7,
+                            borderRadius: "50%",
+                            background: previewState === s.key ? s.color : "#cbd5e1",
+                            transition: "background 0.15s ease",
+                            flexShrink: 0,
+                          }} />
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
 
-                    {/* Preview widget */}
-                    <Box
-                      padding="400"
-                      background="bg-surface-secondary"
-                      borderRadius="200"
-                    >
-                      <WidgetPreview cfg={previewCfg} previewState={previewState} />
-                    </Box>
+                    {/* Preview widget — device frame + dot-grid */}
+                    <div style={{
+                      border: "1px solid #e2e8f0",
+                      borderRadius: 12,
+                      overflow: "hidden",
+                      background: "#fff",
+                    }}>
+                      {/* Browser chrome */}
+                      <div style={{
+                        height: 32,
+                        background: "#f8fafc",
+                        borderBottom: "1px solid #e2e8f0",
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "0 12px",
+                        gap: 6,
+                      }}>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ff5f57" }} />
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#febc2e" }} />
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#28c840" }} />
+                      </div>
+                      {/* Dot-grid preview area */}
+                      <div style={{
+                        padding: 20,
+                        background: "radial-gradient(circle, #e2e8f0 1px, transparent 1px)",
+                        backgroundSize: "20px 20px",
+                        backgroundColor: "#f8fafc",
+                      }}>
+                        <WidgetPreview cfg={previewCfg} previewState={previewState} />
+                      </div>
+                    </div>
                   </BlockStack>
                 </Card>
               </div>

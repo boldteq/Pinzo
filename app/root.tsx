@@ -18,19 +18,24 @@ export default function App() {
         <Outlet />
         <ScrollRestoration />
         <Scripts />
-        {/* Tawk.to Live Chat Widget */}
+        {/* Chatwoot Live Chat Widget */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-              (function(){
-                var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-                s1.async=true;
-                s1.src='https://embed.tawk.to/69552db0442844197c21effe/1jdqbkv3k';
-                s1.charset='UTF-8';
-                s1.setAttribute('crossorigin','*');
-                s0.parentNode.insertBefore(s1,s0);
-              })();
+              window.chatwootSettings = {"position":"right","type":"standard","launcherTitle":""};
+              (function(d,t) {
+                var BASE_URL="https://app.chatwoot.com";
+                var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+                g.src=BASE_URL+"/packs/js/sdk.js";
+                g.async = true;
+                s.parentNode.insertBefore(g,s);
+                g.onload=function(){
+                  window.chatwootSDK.run({
+                    websiteToken: 'F2gCECkLD25SAkJ92AcVui4x',
+                    baseUrl: BASE_URL
+                  })
+                }
+              })(document,"script");
             `,
           }}
         />

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import type {
   ActionFunctionArgs,
   HeadersFunction,
@@ -31,6 +31,9 @@ import {
 import { PlusIcon, DeleteIcon, ChevronUpIcon } from "@shopify/polaris-icons";
 
 const PAGE_SIZE = 10;
+const ADMIN_SHOP = "zipcodechecker.myshopify.com";
+const MAX_REQUESTS_PER_SHOP = 20;
+const MAX_DESCRIPTION_LENGTH = 2000;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -48,146 +51,45 @@ type FeatureRequestRecord = {
   updatedAt: string | Date;
 };
 
+type VoteResult = {
+  success: true;
+  intent: "vote";
+  featureId: string;
+  newCount: number;
+  voted: boolean;
+};
+type SubmitResult = { success: true; intent: "submit" };
+type DeleteResult = { success: true; intent: "delete" };
+type StatusResult = { success: true; intent: "update-status" };
+type ErrorResult = { error: string };
+
 type ActionResult =
-  | { success: true; intent: string; featureId?: string; newCount?: number; voted?: boolean }
-  | { error: string };
+  | VoteResult
+  | SubmitResult
+  | DeleteResult
+  | StatusResult
+  | ErrorResult;
 
 // ---------------------------------------------------------------------------
-// Loader
+// Constants
 // ---------------------------------------------------------------------------
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
-  const shop = session.shop;
+const VALID_CATEGORIES = new Set([
+  "General",
+  "UI & Design",
+  "Data & Export",
+  "API & Integration",
+  "Performance",
+  "Billing",
+]);
 
-  const [features, myVotes] = await Promise.all([
-    db.featureRequest.findMany({
-      orderBy: { votesCount: "desc" },
-    }),
-    db.featureVote.findMany({
-      where: { shop },
-      select: { featureRequestId: true },
-    }),
-  ]);
-
-  const votedIds = myVotes.map((v) => v.featureRequestId);
-
-  const stats = {
-    total: features.length,
-    under_review: features.filter((f) => f.status === "under_review").length,
-    planned: features.filter((f) => f.status === "planned").length,
-    in_progress: features.filter((f) => f.status === "in_progress").length,
-    done: features.filter(
-      (f) => f.status === "done" || f.status === "shipped",
-    ).length,
-  };
-
-  return { features, votedIds, shop, stats };
-};
-
-// ---------------------------------------------------------------------------
-// Action
-// ---------------------------------------------------------------------------
-
-export const action = async ({
-  request,
-}: ActionFunctionArgs): Promise<ActionResult> => {
-  const { session } = await authenticate.admin(request);
-  const shop = session.shop;
-  const formData = await request.formData();
-  const intent = String(formData.get("intent") ?? "");
-
-  try {
-    switch (intent) {
-      case "submit": {
-        const title = String(formData.get("title") ?? "").trim();
-        const description = String(formData.get("description") ?? "").trim();
-        const category = String(formData.get("category") ?? "General").trim();
-
-        if (!title || !description) {
-          return { error: "Title and description are required." };
-        }
-        if (title.length > 150) {
-          return { error: "Title must be 150 characters or fewer." };
-        }
-
-        await db.featureRequest.create({
-          data: { title, description, category, shop },
-        });
-
-        return { success: true, intent: "submit" };
-      }
-
-      case "vote": {
-        const featureId = String(formData.get("featureId") ?? "").trim();
-        if (!featureId) return { error: "Feature ID is required." };
-
-        const feature = await db.featureRequest.findUnique({
-          where: { id: featureId },
-        });
-        if (!feature) return { error: "Feature request not found." };
-
-        const existing = await db.featureVote.findUnique({
-          where: {
-            featureRequestId_shop: { featureRequestId: featureId, shop },
-          },
-        });
-
-        let newCount: number;
-        let voted: boolean;
-
-        if (existing) {
-          await db.featureVote.delete({ where: { id: existing.id } });
-          newCount = Math.max(0, feature.votesCount - 1);
-          await db.featureRequest.update({
-            where: { id: featureId },
-            data: { votesCount: newCount },
-          });
-          voted = false;
-        } else {
-          await db.featureVote.create({
-            data: { featureRequestId: featureId, shop },
-          });
-          newCount = feature.votesCount + 1;
-          await db.featureRequest.update({
-            where: { id: featureId },
-            data: { votesCount: newCount },
-          });
-          voted = true;
-        }
-
-        return { success: true, intent: "vote", featureId, newCount, voted };
-      }
-
-      case "delete": {
-        const deleteId = String(formData.get("id") ?? "").trim();
-        if (!deleteId) return { error: "Feature ID is required." };
-
-        const toDelete = await db.featureRequest.findUnique({
-          where: { id: deleteId },
-        });
-        if (!toDelete) return { error: "Feature request not found." };
-        if (toDelete.shop !== shop) {
-          return { error: "You can only delete your own feature requests." };
-        }
-
-        await db.featureRequest.delete({ where: { id: deleteId } });
-        return { success: true, intent: "delete" };
-      }
-
-      default:
-        return { error: "Unknown action." };
-    }
-  } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "An unexpected error occurred.";
-    return { error: message };
-  }
-};
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+const VALID_STATUSES = new Set([
+  "under_review",
+  "planned",
+  "in_progress",
+  "done",
+  "shipped",
+]);
 
 const STATUS_LABELS: Record<string, string> = {
   under_review: "Under Review",
@@ -222,6 +124,14 @@ const CATEGORY_OPTIONS = [
   { label: "Billing", value: "Billing" },
 ];
 
+const STATUS_OPTIONS = [
+  { label: "Under Review", value: "under_review" },
+  { label: "Planned", value: "planned" },
+  { label: "In Progress", value: "in_progress" },
+  { label: "Done", value: "done" },
+  { label: "Shipped", value: "shipped" },
+];
+
 const TAB_FILTERS = [
   "all",
   "under_review",
@@ -251,6 +161,188 @@ function truncateText(text: string, maxChars: number): string {
 }
 
 // ---------------------------------------------------------------------------
+// Loader
+// ---------------------------------------------------------------------------
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const { session } = await authenticate.admin(request);
+  const shop = session.shop;
+
+  const [features, myVotes] = await Promise.all([
+    db.featureRequest.findMany({
+      orderBy: { votesCount: "desc" },
+      take: 500,
+    }),
+    db.featureVote.findMany({
+      where: { shop },
+      select: { featureRequestId: true },
+    }),
+  ]);
+
+  const votedIds = myVotes.map((v) => v.featureRequestId);
+
+  const stats = {
+    total: features.length,
+    under_review: features.filter((f) => f.status === "under_review").length,
+    planned: features.filter((f) => f.status === "planned").length,
+    in_progress: features.filter((f) => f.status === "in_progress").length,
+    done: features.filter(
+      (f) => f.status === "done" || f.status === "shipped",
+    ).length,
+  };
+
+  const isAdmin = shop === ADMIN_SHOP;
+
+  return { features, votedIds, shop, stats, isAdmin };
+};
+
+// ---------------------------------------------------------------------------
+// Action
+// ---------------------------------------------------------------------------
+
+export const action = async ({
+  request,
+}: ActionFunctionArgs): Promise<ActionResult> => {
+  const { session } = await authenticate.admin(request);
+  const shop = session.shop;
+  const isAdmin = shop === ADMIN_SHOP;
+  const formData = await request.formData();
+  const intent = String(formData.get("intent") ?? "");
+
+  try {
+    switch (intent) {
+      case "submit": {
+        const title = String(formData.get("title") ?? "").trim();
+        const description = String(formData.get("description") ?? "").trim();
+        const rawCategory = String(formData.get("category") ?? "General").trim();
+        const category = VALID_CATEGORIES.has(rawCategory) ? rawCategory : "General";
+
+        if (!title || !description) {
+          return { error: "Title and description are required." };
+        }
+        if (title.length > 150) {
+          return { error: "Title must be 150 characters or fewer." };
+        }
+        if (description.length > MAX_DESCRIPTION_LENGTH) {
+          return { error: `Description must be ${MAX_DESCRIPTION_LENGTH} characters or fewer.` };
+        }
+
+        // Per-shop submission limit
+        const existingCount = await db.featureRequest.count({ where: { shop } });
+        if (existingCount >= MAX_REQUESTS_PER_SHOP) {
+          return { error: `You can submit up to ${MAX_REQUESTS_PER_SHOP} feature requests. Delete an existing one to submit a new one.` };
+        }
+
+        await db.featureRequest.create({
+          data: { title, description, category, shop },
+        });
+
+        return { success: true, intent: "submit" };
+      }
+
+      case "vote": {
+        const featureId = String(formData.get("featureId") ?? "").trim();
+        if (!featureId) return { error: "Feature ID is required." };
+
+        const feature = await db.featureRequest.findUnique({
+          where: { id: featureId },
+        });
+        if (!feature) return { error: "Feature request not found." };
+
+        const existing = await db.featureVote.findUnique({
+          where: {
+            featureRequestId_shop: { featureRequestId: featureId, shop },
+          },
+        });
+
+        let voted: boolean;
+
+        if (existing) {
+          await db.featureVote.delete({ where: { id: existing.id } });
+          // Atomic decrement
+          const updated = await db.featureRequest.update({
+            where: { id: featureId },
+            data: { votesCount: { decrement: 1 } },
+          });
+          // Ensure count doesn't go below 0
+          if (updated.votesCount < 0) {
+            await db.featureRequest.update({
+              where: { id: featureId },
+              data: { votesCount: 0 },
+            });
+          }
+          voted = false;
+          const finalCount = Math.max(0, updated.votesCount);
+          return { success: true, intent: "vote", featureId, newCount: finalCount, voted };
+        } else {
+          await db.featureVote.create({
+            data: { featureRequestId: featureId, shop },
+          });
+          // Atomic increment
+          const updated = await db.featureRequest.update({
+            where: { id: featureId },
+            data: { votesCount: { increment: 1 } },
+          });
+          voted = true;
+          return { success: true, intent: "vote", featureId, newCount: updated.votesCount, voted };
+        }
+      }
+
+      case "delete": {
+        const deleteId = String(formData.get("id") ?? "").trim();
+        if (!deleteId) return { error: "Feature ID is required." };
+
+        const toDelete = await db.featureRequest.findUnique({
+          where: { id: deleteId },
+        });
+        if (!toDelete) return { error: "Feature request not found." };
+
+        // Admin can delete any, regular users only their own
+        if (!isAdmin && toDelete.shop !== shop) {
+          return { error: "You can only delete your own feature requests." };
+        }
+
+        await db.featureRequest.delete({ where: { id: deleteId } });
+        return { success: true, intent: "delete" };
+      }
+
+      case "update-status": {
+        if (!isAdmin) {
+          return { error: "Only the app admin can change request statuses." };
+        }
+
+        const statusId = String(formData.get("id") ?? "").trim();
+        const newStatus = String(formData.get("status") ?? "").trim();
+
+        if (!statusId) return { error: "Feature ID is required." };
+        if (!VALID_STATUSES.has(newStatus)) {
+          return { error: "Invalid status value." };
+        }
+
+        const toUpdate = await db.featureRequest.findUnique({
+          where: { id: statusId },
+        });
+        if (!toUpdate) return { error: "Feature request not found." };
+
+        await db.featureRequest.update({
+          where: { id: statusId },
+          data: { status: newStatus },
+        });
+
+        return { success: true, intent: "update-status" };
+      }
+
+      default:
+        return { error: "Unknown action." };
+    }
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "An unexpected error occurred.";
+    return { error: message };
+  }
+};
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -260,17 +352,17 @@ export default function FeatureRequestsPage() {
     votedIds: initialVotedIds,
     shop,
     stats,
+    isAdmin,
   } = useLoaderData<typeof loader>();
 
-  const fetcher = useFetcher<typeof action>();
+  // Separate fetchers for independent actions (Fix #6)
+  const voteFetcher = useFetcher<typeof action>();
+  const deleteFetcher = useFetcher<typeof action>();
+  const submitFetcher = useFetcher<typeof action>();
+  const statusFetcher = useFetcher<typeof action>();
+
   const shopify = useAppBridge();
   const navigate = useNavigate();
-
-  // Track the pending operation details so we can use them inside useEffect
-  // without relying on fetcher.formData (which has a narrow type in generics)
-  const pendingIntentRef = useRef<string | null>(null);
-  const pendingFeatureIdRef = useRef<string | null>(null);
-  const pendingDeleteIdRef = useRef<string | null>(null);
 
   // ------------------------------------------------------------------
   // Local state — optimistic votes
@@ -285,7 +377,6 @@ export default function FeatureRequestsPage() {
   // Per-card loading indicators
   const [pendingVoteId, setPendingVoteId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ------------------------------------------------------------------
   // UI state
@@ -314,62 +405,95 @@ export default function FeatureRequestsPage() {
   }, [rawFeatures, optimisticVotes]);
 
   // ------------------------------------------------------------------
-  // Handle fetcher responses
+  // Handle vote fetcher responses
   // ------------------------------------------------------------------
   useEffect(() => {
-    if (fetcher.state !== "idle" || !fetcher.data) return;
-
-    const data = fetcher.data;
-    const lastIntent = pendingIntentRef.current;
+    if (voteFetcher.state !== "idle" || !voteFetcher.data) return;
+    const data = voteFetcher.data;
 
     if ("error" in data) {
-      if (lastIntent === "submit") {
-        setModalError(data.error);
-      } else {
-        shopify.toast.show(data.error, { isError: true });
-      }
+      shopify.toast.show(data.error, { isError: true });
       setPendingVoteId(null);
-      setPendingDeleteId(null);
-      setIsSubmitting(false);
       return;
     }
 
-    if ("success" in data && data.success) {
-      if (data.intent === "submit") {
-        shopify.toast.show("Feature request submitted! Thank you.");
-        setModalOpen(false);
-        setNewTitle("");
-        setNewDescription("");
-        setNewCategory("General");
-        setModalError(null);
-        setIsSubmitting(false);
-      } else if (data.intent === "vote") {
-        const fid = data.featureId;
-        if (fid !== undefined) {
-          setOptimisticVotes((prev) => {
-            const next = new Map(prev);
-            if (data.newCount !== undefined) {
-              next.set(fid, {
-                count: data.newCount,
-                voted: data.voted ?? false,
-              });
-            }
-            return next;
-          });
-          setVotedIds((prev) => {
-            const next = new Set(prev);
-            if (data.voted) next.add(fid);
-            else next.delete(fid);
-            return next;
-          });
-        }
-        setPendingVoteId(null);
-      } else if (data.intent === "delete") {
-        shopify.toast.show("Feature request deleted.");
-        setPendingDeleteId(null);
-      }
+    if ("success" in data && data.success && data.intent === "vote") {
+      const voteData = data as VoteResult;
+      setOptimisticVotes((prev) => {
+        const next = new Map(prev);
+        next.set(voteData.featureId, {
+          count: voteData.newCount,
+          voted: voteData.voted,
+        });
+        return next;
+      });
+      setVotedIds((prev) => {
+        const next = new Set(prev);
+        if (voteData.voted) next.add(voteData.featureId);
+        else next.delete(voteData.featureId);
+        return next;
+      });
+      setPendingVoteId(null);
     }
-  }, [fetcher.state, fetcher.data, shopify]);
+  }, [voteFetcher.state, voteFetcher.data, shopify]);
+
+  // ------------------------------------------------------------------
+  // Handle delete fetcher responses
+  // ------------------------------------------------------------------
+  useEffect(() => {
+    if (deleteFetcher.state !== "idle" || !deleteFetcher.data) return;
+    const data = deleteFetcher.data;
+
+    if ("error" in data) {
+      shopify.toast.show(data.error, { isError: true });
+      setPendingDeleteId(null);
+      return;
+    }
+
+    if ("success" in data && data.success && data.intent === "delete") {
+      shopify.toast.show("Feature request deleted.");
+      setPendingDeleteId(null);
+    }
+  }, [deleteFetcher.state, deleteFetcher.data, shopify]);
+
+  // ------------------------------------------------------------------
+  // Handle submit fetcher responses
+  // ------------------------------------------------------------------
+  useEffect(() => {
+    if (submitFetcher.state !== "idle" || !submitFetcher.data) return;
+    const data = submitFetcher.data;
+
+    if ("error" in data) {
+      setModalError(data.error);
+      return;
+    }
+
+    if ("success" in data && data.success && data.intent === "submit") {
+      shopify.toast.show("Feature request submitted! Thank you.");
+      setModalOpen(false);
+      setNewTitle("");
+      setNewDescription("");
+      setNewCategory("General");
+      setModalError(null);
+    }
+  }, [submitFetcher.state, submitFetcher.data, shopify]);
+
+  // ------------------------------------------------------------------
+  // Handle status fetcher responses
+  // ------------------------------------------------------------------
+  useEffect(() => {
+    if (statusFetcher.state !== "idle" || !statusFetcher.data) return;
+    const data = statusFetcher.data;
+
+    if ("error" in data) {
+      shopify.toast.show(data.error, { isError: true });
+      return;
+    }
+
+    if ("success" in data && data.success && data.intent === "update-status") {
+      shopify.toast.show("Status updated.");
+    }
+  }, [statusFetcher.state, statusFetcher.data, shopify]);
 
   // ------------------------------------------------------------------
   // Filter + sort
@@ -452,30 +576,26 @@ export default function FeatureRequestsPage() {
         return next;
       });
 
-      pendingIntentRef.current = "vote";
-      pendingFeatureIdRef.current = featureId;
       setPendingVoteId(featureId);
 
       const fd = new FormData();
       fd.set("intent", "vote");
       fd.set("featureId", featureId);
-      fetcher.submit(fd, { method: "POST" });
+      voteFetcher.submit(fd, { method: "POST" });
     },
-    [features, votedIds, optimisticVotes, fetcher],
+    [features, votedIds, optimisticVotes, voteFetcher],
   );
 
   const handleDelete = useCallback(
     (id: string) => {
-      pendingIntentRef.current = "delete";
-      pendingDeleteIdRef.current = id;
       setPendingDeleteId(id);
 
       const fd = new FormData();
       fd.set("intent", "delete");
       fd.set("id", id);
-      fetcher.submit(fd, { method: "POST" });
+      deleteFetcher.submit(fd, { method: "POST" });
     },
-    [fetcher],
+    [deleteFetcher],
   );
 
   const handleSubmitFeature = useCallback(() => {
@@ -483,17 +603,30 @@ export default function FeatureRequestsPage() {
       setModalError("Title and description are required.");
       return;
     }
+    if (newDescription.trim().length > MAX_DESCRIPTION_LENGTH) {
+      setModalError(`Description must be ${MAX_DESCRIPTION_LENGTH} characters or fewer.`);
+      return;
+    }
     setModalError(null);
-    pendingIntentRef.current = "submit";
-    setIsSubmitting(true);
 
     const fd = new FormData();
     fd.set("intent", "submit");
     fd.set("title", newTitle.trim());
     fd.set("description", newDescription.trim());
     fd.set("category", newCategory);
-    fetcher.submit(fd, { method: "POST" });
-  }, [newTitle, newDescription, newCategory, fetcher]);
+    submitFetcher.submit(fd, { method: "POST" });
+  }, [newTitle, newDescription, newCategory, submitFetcher]);
+
+  const handleStatusChange = useCallback(
+    (id: string, newStatus: string) => {
+      const fd = new FormData();
+      fd.set("intent", "update-status");
+      fd.set("id", id);
+      fd.set("status", newStatus);
+      statusFetcher.submit(fd, { method: "POST" });
+    },
+    [statusFetcher],
+  );
 
   const handleToggleExpand = useCallback((id: string) => {
     setExpandedIds((prev) => {
@@ -536,6 +669,9 @@ export default function FeatureRequestsPage() {
         icon: PlusIcon,
         onAction: () => setModalOpen(true),
       }}
+      titleMetadata={
+        isAdmin ? <Badge tone="info">Admin</Badge> : undefined
+      }
     >
       <Box paddingBlockEnd="1600">
         <Layout>
@@ -684,6 +820,7 @@ export default function FeatureRequestsPage() {
                   {paginatedFeatures.map((feature, index) => {
                     const isVoted = votedIds.has(feature.id);
                     const isOwner = feature.shop === shop;
+                    const canDelete = isOwner || isAdmin;
                     const isExpanded = expandedIds.has(feature.id);
                     const needsTruncation = feature.description.length > 160;
                     const displayDescription = isExpanded
@@ -710,7 +847,7 @@ export default function FeatureRequestsPage() {
                                   onClick={() => handleVote(feature.id)}
                                   loading={
                                     pendingVoteId === feature.id &&
-                                    fetcher.state !== "idle"
+                                    voteFetcher.state !== "idle"
                                   }
                                   accessibilityLabel={
                                     isVoted
@@ -750,12 +887,27 @@ export default function FeatureRequestsPage() {
                                     blockAlign="center"
                                     wrap
                                   >
-                                    <Badge
-                                      tone={STATUS_TONES[feature.status]}
-                                    >
-                                      {STATUS_LABELS[feature.status] ??
-                                        feature.status}
-                                    </Badge>
+                                    {/* Admin: status dropdown; Regular: static badge */}
+                                    {isAdmin ? (
+                                      <Box minWidth="140px">
+                                        <Select
+                                          label="Status"
+                                          labelHidden
+                                          options={STATUS_OPTIONS}
+                                          value={feature.status}
+                                          onChange={(val) =>
+                                            handleStatusChange(feature.id, val)
+                                          }
+                                        />
+                                      </Box>
+                                    ) : (
+                                      <Badge
+                                        tone={STATUS_TONES[feature.status]}
+                                      >
+                                        {STATUS_LABELS[feature.status] ??
+                                          feature.status}
+                                      </Badge>
+                                    )}
                                     <Badge>{feature.category}</Badge>
                                   </InlineStack>
                                 </InlineStack>
@@ -792,7 +944,7 @@ export default function FeatureRequestsPage() {
                                   >
                                     Submitted {formatDate(feature.createdAt)}
                                   </Text>
-                                  {isOwner && (
+                                  {canDelete && (
                                     <Button
                                       variant="plain"
                                       tone="critical"
@@ -803,7 +955,7 @@ export default function FeatureRequestsPage() {
                                       }
                                       loading={
                                         pendingDeleteId === feature.id &&
-                                        fetcher.state !== "idle"
+                                        deleteFetcher.state !== "idle"
                                       }
                                       accessibilityLabel="Delete feature request"
                                     >
@@ -865,7 +1017,7 @@ export default function FeatureRequestsPage() {
         primaryAction={{
           content: "Submit Request",
           onAction: handleSubmitFeature,
-          loading: isSubmitting,
+          loading: submitFetcher.state !== "idle",
         }}
         secondaryActions={[{ content: "Cancel", onAction: handleCloseModal }]}
       >
@@ -893,6 +1045,8 @@ export default function FeatureRequestsPage() {
               placeholder="Describe the feature and why it would be valuable..."
               autoComplete="off"
               multiline={4}
+              maxLength={MAX_DESCRIPTION_LENGTH}
+              showCharacterCount
               helpText="The more context you provide, the better we can understand your needs."
             />
             <Select

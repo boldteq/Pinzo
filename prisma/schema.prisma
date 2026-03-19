@@ -146,3 +146,30 @@ model ShopSettings {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
+
+model FeatureRequest {
+  id          String        @id @default(cuid())
+  title       String
+  description String
+  category    String        @default("General")
+  status      String        @default("under_review") // under_review, planned, in_progress, done, shipped
+  shop        String        // who submitted it
+  votesCount  Int           @default(0) // denormalized vote count for sorting
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  votes       FeatureVote[]
+
+  @@index([status])
+  @@index([votesCount])
+}
+
+model FeatureVote {
+  id               String         @id @default(cuid())
+  featureRequestId String
+  shop             String
+  createdAt        DateTime       @default(now())
+  featureRequest   FeatureRequest @relation(fields: [featureRequestId], references: [id], onDelete: Cascade)
+
+  @@unique([featureRequestId, shop])
+  @@index([shop])
+}

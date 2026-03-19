@@ -270,8 +270,7 @@ export default function HelpPage() {
                     Email Support
                   </Button>
                   <Button
-                    url="https://feedback.zipcodechecker.app"
-                    external
+                    url="/app/feature-requests"
                   >
                     Feature Requests
                   </Button>

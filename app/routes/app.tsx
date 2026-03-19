@@ -70,6 +70,7 @@ export default function App() {
           <s-link href="/app/widget">Widget Customization</s-link>
           <s-link href="/app/settings">Settings</s-link>
           <s-link href="/app/help">Help &amp; Support</s-link>
+          <s-link href="/app/feature-requests">Feature Requests</s-link>
         </s-app-nav>
         <AppContent />
       </PolarisAppProvider>

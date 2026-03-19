@@ -331,26 +331,56 @@
   // ── Shared meta/waitlist CSS — injected by all three style presets ──────────
   function buildSharedCss(W, cfg) {
     return (
+      // Spin animation for loading spinner
+      "@keyframes zcc-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}" +
+      // Button icon/label structure
+      W + " .zcc-btn-icon{display:inline-flex !important;align-items:center !important;flex-shrink:0 !important}" +
+      W + " .zcc-btn-icon svg{width:15px !important;height:15px !important;display:block !important}" +
+      W + " .zcc-btn-label{display:inline !important}" +
+      // Result card layout
       W + " .zcc-result-icon{flex-shrink:0 !important;width:24px !important;height:24px !important;display:flex !important;align-items:center !important;justify-content:center !important}" +
-      W + " .zcc-result-icon svg{width:22px !important;height:22px !important}" +
+      W + " .zcc-result-icon svg{width:22px !important;height:22px !important;display:block !important}" +
       W + " .zcc-result-content{flex:1 !important;min-width:0 !important}" +
-      W + " .zcc-meta{margin-top:4px !important;font-size:13px !important;display:flex !important;align-items:center !important;gap:6px !important;color:" + cfg.textColor + " !important;line-height:1.3 !important}" +
-      W + " .zcc-meta .zcc-emoji{font-size:14px !important;flex-shrink:0 !important;width:18px !important;text-align:center !important}" +
-      W + " .zcc-meta strong{font-weight:700 !important}" +
-      W + " .zcc-meta svg{width:14px !important;height:14px !important;flex-shrink:0 !important}" +
-      W + " .zcc-cutoff{margin-top:6px !important;font-size:0.85em !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:6px !important}" +
-      W + " .zcc-days{margin-top:6px !important;font-size:0.85em !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:6px !important}" +
-      W + " .zcc-cod{margin-top:6px !important;display:inline-flex !important;align-items:center !important;gap:5px !important;border-radius:20px !important;padding:3px 10px !important;font-size:12px !important;font-weight:600 !important}" +
-      W + " .zcc-cod--available{background:" + cfg.successColor + "10 !important;border:1px solid " + cfg.successColor + "20 !important;color:" + cfg.successColor + " !important}" +
-      W + " .zcc-cod--unavailable{background:#d72c0d10 !important;border:1px solid #d72c0d20 !important;color:#d72c0d !important}" +
-      W + " .zcc-return-policy{margin-top:6px !important;font-size:0.85em !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:6px !important}" +
-      W + " .zcc-wl-toggle{display:inline-flex !important;align-items:center !important;gap:6px !important;font-size:13px !important;font-weight:600 !important;color:" + cfg.primaryColor + " !important;text-decoration:none !important;cursor:pointer !important;border:none !important;background:none !important;padding:0 !important}" +
+      W + " .zcc-result-message{font-weight:600 !important;line-height:1.4 !important}" +
+      // Meta info rows (ETA, zone, days, cutoff)
+      W + " .zcc-meta{margin-top:6px !important;font-size:13px !important;display:flex !important;align-items:center !important;gap:7px !important;color:#4b5563 !important;line-height:1.4 !important}" +
+      W + " .zcc-meta svg{width:14px !important;height:14px !important;flex-shrink:0 !important;opacity:0.7 !important}" +
+      W + " .zcc-meta strong{font-weight:600 !important;color:" + cfg.textColor + " !important}" +
+      W + " .zcc-meta span{flex:1 !important}" +
+      W + " .zcc-cutoff{margin-top:5px !important;font-size:12px !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:7px !important}" +
+      W + " .zcc-cutoff svg{width:13px !important;height:13px !important;flex-shrink:0 !important;opacity:0.6 !important}" +
+      W + " .zcc-days{margin-top:5px !important;font-size:12px !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:7px !important}" +
+      W + " .zcc-days svg{width:13px !important;height:13px !important;flex-shrink:0 !important;opacity:0.6 !important}" +
+      // COD badge
+      W + " .zcc-cod{margin-top:8px !important;display:inline-flex !important;align-items:center !important;gap:5px !important;border-radius:20px !important;padding:4px 10px !important;font-size:12px !important;font-weight:600 !important}" +
+      W + " .zcc-cod svg{width:13px !important;height:13px !important;flex-shrink:0 !important}" +
+      W + " .zcc-cod--available{background:" + cfg.successColor + "12 !important;border:1px solid " + cfg.successColor + "25 !important;color:" + cfg.successColor + " !important}" +
+      W + " .zcc-cod--unavailable{background:#d72c0d10 !important;border:1px solid #d72c0d22 !important;color:#d72c0d !important}" +
+      // Return policy row
+      W + " .zcc-return-policy{margin-top:5px !important;font-size:12px !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:7px !important}" +
+      W + " .zcc-return-policy svg{width:13px !important;height:13px !important;flex-shrink:0 !important;opacity:0.6 !important}" +
+      W + " .zcc-return-policy span{flex:1 !important}" +
+      // Waitlist toggle
+      W + " .zcc-wl-toggle{display:inline-flex !important;align-items:center !important;gap:6px !important;font-size:13px !important;font-weight:600 !important;color:" + cfg.primaryColor + " !important;text-decoration:none !important;cursor:pointer !important;border:none !important;background:none !important;padding:0 !important;margin-top:8px !important}" +
       W + " .zcc-wl-toggle:hover{text-decoration:underline !important}" +
+      W + " .zcc-wl-toggle svg{width:14px !important;height:14px !important;flex-shrink:0 !important}" +
+      // Waitlist form inputs
       W + " .zcc-wl-input:focus{border-color:" + cfg.primaryColor + " !important;box-shadow:0 0 0 2px " + cfg.primaryColor + "20 !important}" +
+      // Waitlist submit button
+      W + " .zcc-wl-btn{display:flex !important;align-items:center !important;justify-content:center !important;gap:7px !important}" +
+      W + " .zcc-wl-btn-icon{display:inline-flex !important;align-items:center !important;flex-shrink:0 !important}" +
+      W + " .zcc-wl-btn-icon svg{width:14px !important;height:14px !important;display:block !important}" +
       W + " .zcc-wl-btn:hover{filter:brightness(1.06) !important;transform:translateY(-1px) !important}" +
       W + " .zcc-wl-btn:disabled{opacity:.6 !important;cursor:not-allowed !important}" +
+      // Waitlist success state
+      W + " .zcc-wl-success{display:flex !important;align-items:flex-start !important;gap:8px !important;font-size:13px !important;color:" + cfg.successColor + " !important;font-weight:500 !important;padding:4px 0 !important}" +
+      W + " .zcc-wl-success-icon{display:inline-flex !important;align-items:center !important;flex-shrink:0 !important;margin-top:1px !important}" +
+      W + " .zcc-wl-success-icon svg{width:16px !important;height:16px !important;display:block !important}" +
+      // Social proof pill
+      W + " .zcc-social-proof{display:inline-flex !important;align-items:center !important;gap:6px !important;font-size:12px !important;color:#6d7175 !important;margin-bottom:10px !important;background:#f6f6f7 !important;padding:5px 10px !important;border-radius:20px !important;line-height:1.3 !important}" +
+      W + " .zcc-social-proof-icon{display:inline-flex !important;align-items:center !important;flex-shrink:0 !important}" +
+      W + " .zcc-social-proof-icon svg{width:14px !important;height:14px !important;display:block !important}" +
       W + " .zcc-wl-title{font-size:13px !important;font-weight:700 !important;color:" + cfg.textColor + " !important;margin-bottom:10px !important}" +
-      W + " .zcc-social-proof{display:inline-flex !important;align-items:center !important;gap:6px !important;font-size:12px !important;color:#6d7175 !important;margin-bottom:10px !important;background:#f6f6f7 !important;padding:4px 10px !important;border-radius:20px !important}" +
       "@keyframes zcc-pulse{0%,100%{box-shadow:0 0 0 0 " + cfg.primaryColor + "40}50%{box-shadow:0 0 0 8px " + cfg.primaryColor + "00}}"
     );
   }
@@ -374,12 +404,14 @@
       W + " .zcc-btn:hover{filter:brightness(1.06) !important;box-shadow:0 4px 14px " + cfg.primaryColor + "40 !important;transform:translateY(-1px) !important}" +
       W + " .zcc-btn:active{filter:brightness(0.95) !important;transform:translateY(0) !important}" +
       W + " .zcc-btn:disabled{opacity:.6 !important;cursor:not-allowed !important;filter:none !important;transform:none !important;box-shadow:none !important}" +
-      W + " .zcc-result{margin-top:10px !important;padding:12px 14px !important;border-radius:12px !important;font-size:13.5px !important;line-height:1.5 !important;animation:zcc-slide-in 0.4s cubic-bezier(0.34,1.56,0.64,1) !important;display:flex !important;gap:10px !important;align-items:flex-start !important;justify-content:space-between !important}" +
-      W + " .zcc-result.ok{background:" + cfg.successColor + "08 !important;border:1px solid " + cfg.successColor + "18 !important}" +
-      W + " .zcc-result.fail{background:" + cfg.errorColor + "08 !important;border:1px solid " + cfg.errorColor + "18 !important}" +
-      W + " .zcc-wl{margin-top:10px !important;padding:14px !important;background:linear-gradient(135deg,#f8fafc,#f1f5f9) !important;border-radius:12px !important;border:1px solid #e2e8f0 !important}" +
-      W + " .zcc-wl-input{border-radius:8px !important;border:1.5px solid #dee2e6 !important;padding:10px 14px !important;width:100% !important;display:block !important;margin-bottom:6px !important;outline:none !important;font-size:13px !important;transition:border-color 0.2s !important}" +
-      W + " .zcc-wl-btn{border-radius:50px !important;background:" + cfg.primaryColor + " !important;color:#fff !important;padding:10px !important;width:100% !important;font-weight:600 !important;border:none !important;cursor:pointer !important;font-size:13px !important;transition:filter 0.2s,transform 0.2s !important}" +
+      W + " .zcc-result{margin-top:12px !important;padding:13px 15px !important;border-radius:12px !important;font-size:13.5px !important;line-height:1.5 !important;animation:zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1) !important;display:flex !important;gap:12px !important;align-items:flex-start !important}" +
+      W + " .zcc-result.ok{background:" + cfg.successColor + "0c !important;border:1px solid " + cfg.successColor + "20 !important;color:" + cfg.textColor + " !important}" +
+      W + " .zcc-result.ok .zcc-result-icon svg{color:" + cfg.successColor + " !important;stroke:" + cfg.successColor + " !important}" +
+      W + " .zcc-result.fail{background:" + cfg.errorColor + "08 !important;border:1px solid " + cfg.errorColor + "18 !important;color:" + cfg.textColor + " !important}" +
+      W + " .zcc-result.fail .zcc-result-icon svg{color:" + cfg.errorColor + " !important;stroke:" + cfg.errorColor + " !important}" +
+      W + " .zcc-wl{margin-top:10px !important;padding:13px 14px !important;background:#f8fafc !important;border-radius:10px !important;border:1px solid #e2e8f0 !important}" +
+      W + " .zcc-wl-input{border-radius:8px !important;border:1.5px solid #dee2e6 !important;padding:10px 14px !important;width:100% !important;display:block !important;margin-bottom:8px !important;outline:none !important;font-size:13px !important;transition:border-color 0.2s,box-shadow 0.2s !important;background:#fff !important;color:" + cfg.textColor + " !important}" +
+      W + " .zcc-wl-btn{border-radius:50px !important;background:" + cfg.primaryColor + " !important;color:#fff !important;padding:10px 16px !important;width:100% !important;font-weight:600 !important;border:none !important;cursor:pointer !important;font-size:13px !important;transition:filter 0.2s,transform 0.2s !important;letter-spacing:0.01em !important}" +
       buildSharedCss(W, cfg)
     );
   }
@@ -392,6 +424,23 @@
     styleEl.textContent = css;
     document.head.appendChild(styleEl);
   }
+
+  // ── SVG icon library — all icons are outlined/stroke style, 24×24 viewBox ──
+  var ICONS = {
+    location: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+    search:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>',
+    check:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>',
+    xCircle:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>',
+    truck:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
+    calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    clock:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    card:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>',
+    refresh:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
+    mail:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+    users:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    spinner:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:zcc-spin 0.8s linear infinite"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-opacity="1"/></svg>',
+    checkmark:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+  };
 
   // ── Shared: build widget inner HTML + wire up events ────────────────────────
   // showHeading: pass false when the caller already renders a heading (e.g. popup modal header)
@@ -411,11 +460,11 @@
           ' placeholder="' + escAttr(cfg.placeholder) + '"' +
           ' aria-label="' + escAttr(cfg.placeholder) + '" />' +
         '<button class="zcc-btn" id="' + wid + '-btn" type="button">' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>' +
-          esc(btnLabel) +
+          '<span class="zcc-btn-icon">' + ICONS.search + '</span>' +
+          '<span class="zcc-btn-label">' + esc(btnLabel) + '</span>' +
         "</button>" +
       "</div>" +
-      '<div id="' + wid + '-res"></div>'
+      '<div id="' + wid + '-res" aria-live="polite"></div>'
     );
   }
 
@@ -423,8 +472,6 @@
     var inp = document.getElementById(wid + "-inp");
     var btn = document.getElementById(wid + "-btn");
     var res = document.getElementById(wid + "-res");
-    var btnLabel = cfg.buttonText;
-    var btnOrigHtml = btn ? btn.innerHTML : '';
     if (!inp || !btn || !res) return;
 
     function normalizeZip(raw) {
@@ -434,13 +481,25 @@
       return z;
     }
 
+    function setBtnLoading(loading) {
+      var iconEl = btn.querySelector('.zcc-btn-icon');
+      var labelEl = btn.querySelector('.zcc-btn-label');
+      btn.disabled = loading;
+      if (loading) {
+        if (iconEl) iconEl.innerHTML = ICONS.spinner;
+        if (labelEl) labelEl.textContent = '\u2026';
+      } else {
+        if (iconEl) iconEl.innerHTML = ICONS.search;
+        if (labelEl) labelEl.textContent = cfg.buttonText;
+      }
+    }
+
     function checkZip() {
       var zip = normalizeZip(inp.value);
       inp.value = zip;  // Update the input field to show the normalized value (clean UX)
       if (!zip) { inp.focus(); return; }
 
-      btn.disabled = true;
-      btn.textContent = "\u2026";
+      setBtnLoading(true);
       res.innerHTML = "";
 
       fetch(
@@ -449,8 +508,7 @@
       )
         .then(function (r) { return r.json(); })
         .then(function (data) {
-          btn.disabled = false;
-          btn.innerHTML = btnOrigHtml;
+          setBtnLoading(false);
 
           // Store validation result for cart page
           try {
@@ -463,28 +521,20 @@
             }));
           } catch(e) { /* sessionStorage may be unavailable */ }
 
-          // SVG icons for results
-          var svgCheck = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>';
-          var svgX = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>';
-          var svgClock = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
-          var svgTruck = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>';
-          var svgCalendar = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
-          var svgReturn = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>';
-
           if (data.allowed) {
             var html = '<div class="zcc-result ok">' +
-              '<div class="zcc-result-icon">' + svgCheck + '</div>' +
+              '<div class="zcc-result-icon">' + ICONS.check + '</div>' +
               '<div class="zcc-result-content">' +
-              '<div>' + esc(data.message) + '</div>';
+              '<div class="zcc-result-message">' + esc(data.message) + '</div>';
             if (cfg.showEta && data.eta) {
-              html += '<div class="zcc-meta">' + svgTruck + ' Estimated delivery: ' + esc(data.eta) + "</div>";
+              html += '<div class="zcc-meta">' + ICONS.truck + '<span>Estimated delivery: <strong>' + esc(data.eta) + '</strong></span></div>';
             }
             if (cfg.showZone && data.zone) {
-              html += '<div class="zcc-meta">Zone: ' + esc(data.zone) + "</div>";
+              html += '<div class="zcc-meta">' + ICONS.location + '<span>Zone: <strong>' + esc(data.zone) + '</strong></span></div>';
             }
             if (cfg.showDeliveryDays && data.daysOfWeek) {
               var days = data.daysOfWeek.split(',').map(function(d) { return d.trim(); }).join(' \u00b7 ');
-              html += '<div class="zcc-meta zcc-days">' + svgCalendar + ' ' + esc(days) + '</div>';
+              html += '<div class="zcc-meta zcc-days">' + ICONS.calendar + '<span>' + esc(days) + '</span></div>';
             }
             if (cfg.showCutoffTime && data.cutoffTime) {
               var parts = data.cutoffTime.split(':');
@@ -492,37 +542,37 @@
               var min = parts[1] || '00';
               var ampm = hr >= 12 ? 'PM' : 'AM';
               var hr12 = hr % 12 || 12;
-              html += '<div class="zcc-meta zcc-cutoff">' + svgClock + ' Order by ' + hr12 + ':' + min + ' ' + ampm + ' for same-day</div>';
+              html += '<div class="zcc-meta zcc-cutoff">' + ICONS.clock + '<span>Order by <strong>' + hr12 + ':' + min + ' ' + ampm + '</strong> for same-day</span></div>';
             }
             if (data.codAvailable === true) {
-              html += '<div class="zcc-cod zcc-cod--available"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Cash on Delivery Available</div>';
+              html += '<div class="zcc-cod zcc-cod--available">' + ICONS.card + ' Cash on Delivery Available</div>';
             } else if (data.codAvailable === false) {
-              html += '<div class="zcc-cod zcc-cod--unavailable"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> COD Not Available</div>';
+              html += '<div class="zcc-cod zcc-cod--unavailable">' + ICONS.card + ' COD Not Available</div>';
             }
             if (data.returnPolicy) {
-              html += '<div class="zcc-return-policy">' + svgReturn + ' ' + esc(data.returnPolicy) + '</div>';
+              html += '<div class="zcc-return-policy">' + ICONS.refresh + '<span>' + esc(data.returnPolicy) + '</span></div>';
             }
-            html += "</div></div>";
+            html += '</div></div>';
             res.innerHTML = html;
           } else {
             var html = '<div class="zcc-result fail">' +
-              '<div class="zcc-result-icon">' + svgX + '</div>' +
+              '<div class="zcc-result-icon">' + ICONS.xCircle + '</div>' +
               '<div class="zcc-result-content">' +
-              '<div>' + esc(data.message) + '</div>';
+              '<div class="zcc-result-message">' + esc(data.message) + '</div>';
             if (cfg.showWaitlistOnFailure) {
               html +=
                 '<div class="zcc-wl">' +
                 '<button class="zcc-wl-toggle" id="' + wid + '-wl-toggle" type="button">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>' +
+                ICONS.mail +
                 ' Request delivery to your area</button>' +
                 '<div id="' + wid + '-wl-form" style="display:none;margin-top:12px">' +
                 '<input class="zcc-wl-input" type="text" id="' + wid + '-wl-name" placeholder="Your name" />' +
                 '<input class="zcc-wl-input" type="email" id="' + wid + '-wl-email" placeholder="Your email" />' +
-                '<button class="zcc-wl-btn" id="' + wid + '-wl-btn" type="button">Submit Request</button>' +
+                '<button class="zcc-wl-btn" id="' + wid + '-wl-btn" type="button"><span class="zcc-wl-btn-icon">' + ICONS.mail + '</span><span class="zcc-wl-btn-label">Submit Request</span></button>' +
                 '</div>' +
-                "</div>";
+                '</div>';
             }
-            html += "</div></div>";
+            html += '</div></div>';
             res.innerHTML = html;
 
             if (cfg.showWaitlistOnFailure) {
@@ -544,7 +594,12 @@
                   var spEl = document.createElement('div');
                   spEl.className = 'zcc-social-proof';
                   var count = data.waitlistCount;
-                  spEl.textContent = '\uD83D\uDE4B Join ' + count + ' other' + (count !== 1 ? 's' : '') + ' waiting for delivery to your area';
+                  var spIcon = document.createElement('span');
+                  spIcon.className = 'zcc-social-proof-icon';
+                  spIcon.innerHTML = ICONS.users;
+                  var spText = document.createTextNode(' Join ' + count + ' other' + (count !== 1 ? 's' : '') + ' waiting for delivery to your area');
+                  spEl.appendChild(spIcon);
+                  spEl.appendChild(spText);
                   wlSection.parentNode.insertBefore(spEl, wlSection);
                 }
               }
@@ -599,9 +654,8 @@
           }
         })
         .catch(function () {
-          btn.disabled = false;
-          btn.innerHTML = btnOrigHtml;
-          res.innerHTML = '<div class="zcc-result fail"><div class="zcc-result-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></div><div class="zcc-result-content">Something went wrong. Please try again.</div></div>';
+          setBtnLoading(false);
+          res.innerHTML = '<div class="zcc-result fail"><div class="zcc-result-icon">' + ICONS.xCircle + '</div><div class="zcc-result-content"><div class="zcc-result-message">Something went wrong. Please try again.</div></div></div>';
           try {
             sessionStorage.removeItem('zcc:valid');
             sessionStorage.removeItem('zcc:zip');
@@ -636,7 +690,11 @@
 
   function joinWaitlist(zip, email, name, wBtn) {
     wBtn.disabled = true;
-    wBtn.textContent = "Submitting\u2026";
+    var wBtnIcon = wBtn.querySelector('.zcc-wl-btn-icon');
+    var wBtnLabel = wBtn.querySelector('.zcc-wl-btn-label');
+    if (wBtnIcon) wBtnIcon.innerHTML = ICONS.spinner;
+    if (wBtnLabel) wBtnLabel.textContent = 'Submitting\u2026';
+    if (!wBtnIcon && !wBtnLabel) wBtn.textContent = 'Submitting\u2026';
 
     var payload = { shop: SHOP, zip: zip, email: email };
     if (name) payload.name = name;
@@ -651,17 +709,22 @@
         var wlEl = wBtn.closest(".zcc-wl");
         if (data.success) {
           if (wlEl) wlEl.innerHTML =
-            '<p style="font-size:13px;margin:6px 0 0;color:#008060">' +
-            "\u2713 Your request has been submitted! We\u2019ll notify you when delivery is available." +
-            "</p>";
+            '<div class="zcc-wl-success">' +
+            '<span class="zcc-wl-success-icon">' + ICONS.checkmark + '</span>' +
+            '<span>Your request has been submitted! We\u2019ll notify you when delivery is available.</span>' +
+            '</div>';
         } else {
           wBtn.disabled = false;
-          wBtn.textContent = "Submit Request";
+          if (wBtnIcon) wBtnIcon.innerHTML = ICONS.mail;
+          if (wBtnLabel) wBtnLabel.textContent = 'Submit Request';
+          if (!wBtnIcon && !wBtnLabel) wBtn.textContent = 'Submit Request';
         }
       })
       .catch(function () {
         wBtn.disabled = false;
-        wBtn.textContent = "Submit Request";
+        if (wBtnIcon) wBtnIcon.innerHTML = ICONS.mail;
+        if (wBtnLabel) wBtnLabel.textContent = 'Submit Request';
+        if (!wBtnIcon && !wBtnLabel) wBtn.textContent = 'Submit Request';
       });
   }
 

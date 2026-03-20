@@ -345,7 +345,7 @@ function buildWidgetCss(wid: string, cfg: WidgetConfig): string {
     W + " .zcc-input{flex:1;min-width:0;padding:12px 16px;font-size:14px;border:1.5px solid #e0e0e0;border-radius:" + btnRadius + ";outline:none;background:#fafbfb;color:" + cfg.textColor + ";transition:border-color 0.2s,box-shadow 0.2s}" +
     W + " .zcc-input:focus{border-color:" + p + ";box-shadow:0 0 0 3px " + p + "15}" +
     W + " .zcc-input::placeholder{color:#9ca3af}" +
-    W + " .zcc-btn{flex-shrink:0;white-space:nowrap;background:" + p + ";color:#fff;border:none;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;border-radius:" + btnRadius + ";box-shadow:0 2px 8px " + p + "25;transition:filter 0.2s,box-shadow 0.2s,transform 0.2s;display:flex;align-items:center;justify-content:center;gap:6px}" +
+    W + " .zcc-btn{flex-shrink:0;white-space:nowrap;background:" + p + ";color:#fff;border:none;padding:12px 24px;min-width:110px;font-size:14px;font-weight:600;cursor:pointer;border-radius:" + btnRadius + ";box-shadow:0 2px 8px " + p + "25;transition:filter 0.2s,box-shadow 0.2s,transform 0.2s;display:flex;align-items:center;justify-content:center;gap:6px}" +
     W + " .zcc-btn:hover{filter:brightness(1.06);box-shadow:0 4px 14px " + p + "40;transform:translateY(-1px)}" +
     W + " .zcc-btn:active{filter:brightness(0.95);transform:translateY(0)}" +
     W + " .zcc-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none;filter:none}" +

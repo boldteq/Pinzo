@@ -900,7 +900,7 @@ export default function FeatureRequestsPage() {
                     {SORT_OPTIONS.map((opt) => (
                       <Button
                         key={opt.value}
-                        variant={sortValue === opt.value ? "primary" : "secondary"}
+                        variant={sortValue === opt.value ? "primary" : "tertiary"}
                         size="slim"
                         onClick={() => handleSortChange(opt.value)}
                       >
@@ -913,6 +913,7 @@ export default function FeatureRequestsPage() {
               <Divider />
 
               {/* Feature list */}
+              <Box padding="400">
               {filteredFeatures.length === 0 ? (
                 <EmptyState
                   heading="No feature requests yet"
@@ -929,7 +930,7 @@ export default function FeatureRequestsPage() {
                   </Text>
                 </EmptyState>
               ) : (
-                <BlockStack gap="300">
+                <BlockStack gap="400">
                   {paginatedFeatures.map((feature) => {
                     const isVoted = votedIds.has(feature.id);
                     const isOwner = feature.shop === shop;
@@ -945,25 +946,9 @@ export default function FeatureRequestsPage() {
                       <Box
                         key={feature.id}
                         padding="400"
-                        background={
-                          feature.status === "planned"
-                            ? "bg-surface-info"
-                            : feature.status === "in_progress"
-                              ? "bg-surface-magic"
-                              : feature.status === "done" || feature.status === "shipped"
-                                ? "bg-surface-success"
-                                : "bg-surface-warning"
-                        }
+                        background="bg-surface"
                         borderWidth="025"
-                        borderColor={
-                          feature.status === "planned"
-                            ? "border-info"
-                            : feature.status === "in_progress"
-                              ? "border-magic"
-                              : feature.status === "done" || feature.status === "shipped"
-                                ? "border-success"
-                                : "border-warning"
-                        }
+                        borderColor="border"
                         borderRadius="300"
                       >
                         <InlineStack
@@ -1028,7 +1013,7 @@ export default function FeatureRequestsPage() {
                               >
                                 <Text
                                   as="p"
-                                  variant="bodyMd"
+                                  variant="headingSm"
                                   fontWeight="semibold"
                                 >
                                   {feature.title}
@@ -1066,6 +1051,7 @@ export default function FeatureRequestsPage() {
                               >
                                 <InlineStack gap="300" blockAlign="center" wrap>
                                   <Badge>{feature.category}</Badge>
+                                  {isOwner && <Badge tone="info">Yours</Badge>}
                                   <Text
                                     as="p"
                                     tone="subdued"
@@ -1125,6 +1111,7 @@ export default function FeatureRequestsPage() {
                   })}
                 </BlockStack>
               )}
+              </Box>
 
               {/* Pagination */}
               {totalPages > 1 && (

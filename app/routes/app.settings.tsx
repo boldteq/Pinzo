@@ -139,7 +139,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 // ---------------------------------------------------------------------------
 
 export default function SettingsPage() {
-  const { subscription, zipCount, shop, shopName, defaultBehavior, notificationEmail, emailSenderName, emailReplyTo } =
+  const { subscription, zipCount, shopName, defaultBehavior, notificationEmail, emailSenderName, emailReplyTo } =
     useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const shopify = useAppBridge();
@@ -298,45 +298,134 @@ export default function SettingsPage() {
         <Layout>
 
           {/* ----------------------------------------------------------------
-              Section 1: Subscription
+              Section 1: Plan & Usage (merged)
           ---------------------------------------------------------------- */}
           <Layout.Section>
             <Card>
               <BlockStack gap="400">
-                <Text as="h2" variant="headingMd">
-                  Subscription
-                </Text>
-                <Divider />
                 <InlineStack align="space-between" blockAlign="center">
-                  <BlockStack gap="100">
-                    <Text as="p" variant="bodyMd">
-                      Current Plan
-                    </Text>
-                    <InlineStack gap="200" blockAlign="center">
-                      <Badge tone={planBadgeTone}>{`${planLabel} Plan`}</Badge>
-                      {subscription.planTier !== "free" && (
-                        <Text as="span" tone="subdued" variant="bodySm">
-                          {subscription.billingInterval === "annual"
-                            ? "Billed annually"
-                            : "Billed monthly"}
+                  <InlineStack gap="300" blockAlign="center">
+                    <div style={{
+                      width: 40, height: 40, borderRadius: 10,
+                      background: subscription.planTier === "ultimate"
+                        ? "linear-gradient(135deg, #15803d, #22c55e)"
+                        : subscription.planTier === "pro"
+                          ? "linear-gradient(135deg, #1d4ed8, #3b82f6)"
+                          : subscription.planTier === "starter"
+                            ? "linear-gradient(135deg, #b45309, #f59e0b)"
+                            : "linear-gradient(135deg, #6b7280, #9ca3af)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "#fff", fontWeight: 700, fontSize: 16, fontFamily: "system-ui",
+                    }}>
+                      {planLabel.charAt(0)}
+                    </div>
+                    <BlockStack gap="050">
+                      <InlineStack gap="200" blockAlign="center">
+                        <Text as="h2" variant="headingMd">
+                          {planLabel} Plan
                         </Text>
-                      )}
-                      {(subscription.planTier === "free" || subscription.planTier === "starter") && (
-                        <Text as="span" tone="subdued" variant="bodySm">
-                          {subscription.planTier === "free" ? "Limited features" : "Essential features"}
-                        </Text>
-                      )}
-                    </InlineStack>
-                  </BlockStack>
+                        <Badge tone={planBadgeTone}>Active</Badge>
+                      </InlineStack>
+                      <Text as="p" tone="subdued" variant="bodySm">
+                        {subscription.planTier === "free"
+                          ? "Limited features"
+                          : subscription.planTier === "starter"
+                            ? "Essential features"
+                            : subscription.billingInterval === "annual"
+                              ? "Billed annually"
+                              : "Billed monthly"}
+                      </Text>
+                    </BlockStack>
+                  </InlineStack>
                   <Button
                     variant="primary"
                     onClick={() => navigate("/app/pricing")}
                   >
                     {subscription.planTier === "free" || subscription.planTier === "starter"
-                      ? "Upgrade Plan"
-                      : "Manage Plan"}
+                      ? "Upgrade"
+                      : "Manage"}
                   </Button>
                 </InlineStack>
+                <Divider />
+                {/* Usage grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
+                  <div style={{ background: "#f8f8f8", borderRadius: 10, padding: "12px 16px", textAlign: "center" }}>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: "#1a1a1a", fontFamily: "system-ui" }}>
+                      {zipCount}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#6b6b6b", fontFamily: "system-ui", marginTop: 2 }}>
+                      Zip Codes
+                    </div>
+                    {limits.maxZipCodes < UNLIMITED && (
+                      <div style={{ marginTop: 6 }}>
+                        <div style={{ background: "#e5e5e5", borderRadius: 4, height: 4, overflow: "hidden" }}>
+                          <div style={{
+                            background: zipCount / limits.maxZipCodes > 0.8 ? "#ef4444" : "#22c55e",
+                            height: 4, borderRadius: 4,
+                            width: `${Math.min(100, (zipCount / limits.maxZipCodes) * 100)}%`,
+                          }} />
+                        </div>
+                        <div style={{ fontSize: 10, color: "#8c8c8c", fontFamily: "system-ui", marginTop: 2 }}>
+                          of {limits.maxZipCodes}
+                        </div>
+                      </div>
+                    )}
+                    {limits.maxZipCodes >= UNLIMITED && (
+                      <div style={{ fontSize: 10, color: "#22c55e", fontFamily: "system-ui", marginTop: 4, fontWeight: 600 }}>
+                        Unlimited
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ background: "#f8f8f8", borderRadius: 10, padding: "12px 16px", textAlign: "center" }}>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: "#1a1a1a", fontFamily: "system-ui" }}>
+                      {limits.maxDeliveryRules >= UNLIMITED
+                        ? "\u221E"
+                        : limits.maxDeliveryRules === 0
+                          ? "\u2014"
+                          : limits.maxDeliveryRules}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#6b6b6b", fontFamily: "system-ui", marginTop: 2 }}>
+                      Delivery Rules
+                    </div>
+                    <div style={{ fontSize: 10, fontFamily: "system-ui", marginTop: 4, fontWeight: 600, color: limits.maxDeliveryRules === 0 ? "#ef4444" : "#22c55e" }}>
+                      {limits.maxDeliveryRules >= UNLIMITED
+                        ? "Unlimited"
+                        : limits.maxDeliveryRules === 0
+                          ? "Not Available"
+                          : `Up to ${limits.maxDeliveryRules}`}
+                    </div>
+                  </div>
+                  <div style={{ background: "#f8f8f8", borderRadius: 10, padding: "12px 16px", textAlign: "center" }}>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: "#1a1a1a", fontFamily: "system-ui" }}>
+                      {limits.maxWaitlist >= UNLIMITED
+                        ? "\u221E"
+                        : limits.maxWaitlist === 0
+                          ? "\u2014"
+                          : limits.maxWaitlist}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#6b6b6b", fontFamily: "system-ui", marginTop: 2 }}>
+                      Waitlist
+                    </div>
+                    <div style={{ fontSize: 10, fontFamily: "system-ui", marginTop: 4, fontWeight: 600, color: limits.maxWaitlist === 0 ? "#ef4444" : "#22c55e" }}>
+                      {limits.maxWaitlist >= UNLIMITED
+                        ? "Unlimited"
+                        : limits.maxWaitlist === 0
+                          ? "Not Available"
+                          : `Up to ${limits.maxWaitlist}`}
+                    </div>
+                  </div>
+                  <div style={{ background: "#f8f8f8", borderRadius: 10, padding: "12px 16px", textAlign: "center" }}>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: "#1a1a1a", fontFamily: "system-ui" }}>
+                      {limits.allowBlocked ? "\u2713" : "\u2717"}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#6b6b6b", fontFamily: "system-ui", marginTop: 2 }}>
+                      Block List
+                    </div>
+                    <div style={{ fontSize: 10, fontFamily: "system-ui", marginTop: 4, fontWeight: 600, color: limits.allowBlocked ? "#22c55e" : "#ef4444" }}>
+                      {limits.allowBlocked ? "Enabled" : "Not Available"}
+                    </div>
+                  </div>
+                </div>
               </BlockStack>
             </Card>
           </Layout.Section>
@@ -556,95 +645,6 @@ export default function SettingsPage() {
             </Card>
           </Layout.Section>
 
-          {/* ----------------------------------------------------------------
-              Section 5: Usage & Limits
-          ---------------------------------------------------------------- */}
-          <Layout.Section>
-            <Card>
-              <BlockStack gap="400">
-                <Text as="h2" variant="headingMd">
-                  Usage &amp; Limits
-                </Text>
-                <Divider />
-                <InlineStack align="space-between">
-                  <Text as="p" variant="bodyMd">
-                    Zip Codes Used
-                  </Text>
-                  <Text as="p" fontWeight="semibold">
-                    {zipCount}
-                    {limits.maxZipCodes < UNLIMITED
-                      ? ` / ${limits.maxZipCodes}`
-                      : " (Unlimited)"}
-                  </Text>
-                </InlineStack>
-                <InlineStack align="space-between">
-                  <Text as="p" variant="bodyMd">
-                    Blocked Zip Codes
-                  </Text>
-                  <Text as="p" fontWeight="semibold">
-                    {limits.allowBlocked ? "Enabled" : "Not Available"}
-                  </Text>
-                </InlineStack>
-                <InlineStack align="space-between">
-                  <Text as="p" variant="bodyMd">
-                    Delivery Rules
-                  </Text>
-                  <Text as="p" fontWeight="semibold">
-                    {limits.maxDeliveryRules >= UNLIMITED
-                      ? "Unlimited"
-                      : limits.maxDeliveryRules === 0
-                        ? "Not Available"
-                        : `Up to ${limits.maxDeliveryRules}`}
-                  </Text>
-                </InlineStack>
-                <InlineStack align="space-between">
-                  <Text as="p" variant="bodyMd">
-                    Waitlist
-                  </Text>
-                  <Text as="p" fontWeight="semibold">
-                    {limits.maxWaitlist >= UNLIMITED
-                      ? "Unlimited"
-                      : limits.maxWaitlist === 0
-                        ? "Not Available"
-                        : `Up to ${limits.maxWaitlist} entries`}
-                  </Text>
-                </InlineStack>
-                <InlineStack align="space-between">
-                  <Text as="p" variant="bodyMd">
-                    Store
-                  </Text>
-                  <Text as="p" fontWeight="semibold">
-                    {shop}
-                  </Text>
-                </InlineStack>
-              </BlockStack>
-            </Card>
-          </Layout.Section>
-
-          {/* ----------------------------------------------------------------
-              Section 5: Data Management (NEW)
-          ---------------------------------------------------------------- */}
-          <Layout.Section>
-            <Card>
-              <BlockStack gap="400">
-                <Text as="h2" variant="headingMd">
-                  Data Management
-                </Text>
-                <Divider />
-                <InlineStack gap="300" wrap>
-                  <Button onClick={() => navigate("/app/zip-codes")}>
-                    Manage Zip Codes
-                  </Button>
-                  <Button onClick={() => navigate("/app/waitlist")}>
-                    View Waitlist
-                  </Button>
-                  <Button onClick={() => navigate("/app/delivery-rules")}>
-                    Manage Delivery Rules
-                  </Button>
-                </InlineStack>
-              </BlockStack>
-            </Card>
-          </Layout.Section>
 
         </Layout>
       </Box>

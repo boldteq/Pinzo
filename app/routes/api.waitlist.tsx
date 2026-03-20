@@ -157,6 +157,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       .then((settings) => {
         const emailOpts: EmailOptions = {
           senderName: settings?.emailSenderName,
+          shopDisplayName: settings?.shopName,
           replyTo: settings?.emailReplyTo,
         };
 

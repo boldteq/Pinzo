@@ -33,19 +33,31 @@ import {
 // ---------------------------------------------------------------------------
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
+  const { session, admin } = await authenticate.admin(request);
   const shop = session.shop;
 
-  const [subscription, zipCount, shopSettings] = await Promise.all([
+  const [subscription, zipCount, shopSettings, shopResponse] = await Promise.all([
     getShopSubscription(shop),
     db.zipCode.count({ where: { shop } }),
     db.shopSettings.findUnique({ where: { shop } }),
+    admin.graphql(`{ shop { name } }`),
   ]);
+
+  const shopData = await shopResponse.json();
+  const shopName: string = shopData.data?.shop?.name ?? shop.replace(".myshopify.com", "");
+
+  // Cache the shop display name so email service can use it without API calls
+  await db.shopSettings.upsert({
+    where: { shop },
+    create: { shop, shopName },
+    update: { shopName },
+  });
 
   return {
     subscription,
     zipCount,
     shop,
+    shopName,
     defaultBehavior: shopSettings?.defaultBehavior ?? "block",
     notificationEmail: shopSettings?.notificationEmail ?? "",
     emailSenderName: shopSettings?.emailSenderName ?? "",
@@ -108,7 +120,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const settings = await db.shopSettings.findUnique({ where: { shop } });
       const sent = await sendTestEmail(
         testEmail,
-        { senderName: settings?.emailSenderName, replyTo: settings?.emailReplyTo },
+        { senderName: settings?.emailSenderName, shopDisplayName: settings?.shopName, replyTo: settings?.emailReplyTo },
         shop,
       );
       return sent
@@ -127,7 +139,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 // ---------------------------------------------------------------------------
 
 export default function SettingsPage() {
-  const { subscription, zipCount, shop, defaultBehavior, notificationEmail, emailSenderName, emailReplyTo } =
+  const { subscription, zipCount, shop, shopName, defaultBehavior, notificationEmail, emailSenderName, emailReplyTo } =
     useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const shopify = useAppBridge();
@@ -367,17 +379,17 @@ export default function SettingsPage() {
           </Layout.Section>
 
           {/* ----------------------------------------------------------------
-              Section 3: Notifications (NEW)
+              Section 3 & 4: Email Settings + Live Preview (side-by-side)
           ---------------------------------------------------------------- */}
-          <Layout.Section>
+          <Layout.Section variant="oneHalf">
             <Card>
               <BlockStack gap="400">
                 <BlockStack gap="100">
                   <Text as="h2" variant="headingMd">
-                    Waitlist Notifications
+                    Email Settings
                   </Text>
                   <Text as="p" tone="subdued" variant="bodyMd">
-                    Get notified by email when customers join the waitlist.
+                    Control how notification and customer emails are sent from your store.
                   </Text>
                 </BlockStack>
                 <Divider />
@@ -388,6 +400,13 @@ export default function SettingsPage() {
                       {notificationFetcher.data.error}
                     </Banner>
                   )}
+                {emailSettingsFetcher.data &&
+                  "error" in emailSettingsFetcher.data &&
+                  emailSettingsFetcher.data.error && (
+                    <Banner tone="critical">
+                      {emailSettingsFetcher.data.error}
+                    </Banner>
+                  )}
                 {testEmailFetcher.data &&
                   "error" in testEmailFetcher.data &&
                   testEmailFetcher.data.error && (
@@ -396,16 +415,31 @@ export default function SettingsPage() {
                     </Banner>
                   )}
                 <TextField
-                  label="Notification email"
+                  label="Where should we notify you?"
                   type="email"
                   placeholder="your@email.com"
                   value={emailValue}
                   onChange={handleEmailChange}
                   autoComplete="email"
+                  helpText="You'll receive an email here whenever a customer joins the waitlist. Leave blank to disable notifications."
                 />
-                <Text as="p" tone="subdued" variant="bodySm">
-                  If left empty, no email notifications are sent.
-                </Text>
+                <TextField
+                  label="Sender name"
+                  value={senderNameValue}
+                  onChange={setSenderNameValue}
+                  placeholder={shopName}
+                  autoComplete="off"
+                  helpText={`This is the name customers see in their inbox. Leave blank to use your store name ("${shopName}").`}
+                />
+                <TextField
+                  label="Reply-to email"
+                  type="email"
+                  value={replyToValue}
+                  onChange={setReplyToValue}
+                  placeholder="support@yourstore.com"
+                  autoComplete="email"
+                  helpText="When a customer hits Reply on your email, their message goes here. Leave blank if you don't need replies."
+                />
                 <Button
                   onClick={handleSendTestEmail}
                   loading={testEmailFetcher.state !== "idle"}
@@ -417,61 +451,149 @@ export default function SettingsPage() {
             </Card>
           </Layout.Section>
 
-          {/* ----------------------------------------------------------------
-              Section 4: Email Sender Settings
-          ---------------------------------------------------------------- */}
-          <Layout.Section>
+          <Layout.Section variant="oneHalf">
             <Card>
               <BlockStack gap="400">
                 <BlockStack gap="100">
                   <Text as="h2" variant="headingMd">
-                    Email Sender Settings
+                    Email Preview
                   </Text>
                   <Text as="p" tone="subdued" variant="bodyMd">
-                    Configure how outgoing emails appear to your customers.
+                    This is how your emails will appear to customers.
                   </Text>
                 </BlockStack>
                 <Divider />
-                {emailSettingsFetcher.data &&
-                  "error" in emailSettingsFetcher.data &&
-                  emailSettingsFetcher.data.error && (
-                    <Banner tone="critical">
-                      {emailSettingsFetcher.data.error}
-                    </Banner>
-                  )}
-                <TextField
-                  label="Sender name"
-                  value={senderNameValue}
-                  onChange={setSenderNameValue}
-                  placeholder={shop.replace(".myshopify.com", "")}
-                  autoComplete="off"
-                  helpText={`Customers see this in the "From" field. Leave blank to use your store name. Emails are sent as "${senderNameValue.trim() || shop.replace(".myshopify.com", "")} via Pinzo <noreply@boldteq.app>".`}
-                />
-                <TextField
-                  label="Reply-to email"
-                  type="email"
-                  value={replyToValue}
-                  onChange={setReplyToValue}
-                  placeholder="support@yourstore.com"
-                  autoComplete="email"
-                  helpText="When customers reply to an email, their reply goes to this address. Leave blank for no reply-to."
-                />
+                {/* Email client mockup */}
                 <Box
-                  padding="300"
                   background="bg-surface-secondary"
-                  borderRadius="200"
+                  borderRadius="300"
+                  padding="0"
+                  borderWidth="025"
+                  borderColor="border"
                 >
-                  <BlockStack gap="100">
-                    <Text as="p" variant="bodySm" fontWeight="semibold">
-                      Preview
-                    </Text>
-                    <Text as="p" variant="bodySm" tone="subdued">
-                      From: {senderNameValue.trim() || shop.replace(".myshopify.com", "")} via Pinzo &lt;noreply@boldteq.app&gt;
-                    </Text>
-                    <Text as="p" variant="bodySm" tone="subdued">
-                      Reply-To: {replyToValue.trim() || "Not set — replies will not be delivered"}
-                    </Text>
-                  </BlockStack>
+                  {/* Email client header bar */}
+                  <Box
+                    background="bg-surface"
+                    borderRadius="300"
+                    padding="400"
+                  >
+                    <BlockStack gap="300">
+                      {/* Header row */}
+                      <InlineStack align="space-between" blockAlign="center">
+                        <Text as="p" variant="headingSm">
+                          Inbox
+                        </Text>
+                        <Box
+                          background="bg-surface-secondary"
+                          borderRadius="100"
+                          padding="100"
+                        >
+                          <Text as="p" variant="bodySm" tone="subdued">
+                            1 new
+                          </Text>
+                        </Box>
+                      </InlineStack>
+                      <Divider />
+                      {/* Email row in inbox */}
+                      <Box
+                        background="bg-surface-active"
+                        borderRadius="200"
+                        padding="300"
+                      >
+                        <BlockStack gap="100">
+                          <InlineStack align="space-between" blockAlign="center">
+                            <Text as="p" variant="bodySm" fontWeight="bold">
+                              {senderNameValue.trim() || shopName} via Pinzo
+                            </Text>
+                            <Text as="p" variant="bodySm" tone="subdued">
+                              just now
+                            </Text>
+                          </InlineStack>
+                          <Text as="p" variant="bodySm" fontWeight="semibold">
+                            You&apos;re on the waitlist!
+                          </Text>
+                          <Text as="p" variant="bodySm" tone="subdued">
+                            Thanks for signing up — we&apos;ll let you know as soon as delivery becomes available in your area...
+                          </Text>
+                        </BlockStack>
+                      </Box>
+                    </BlockStack>
+                  </Box>
+                  {/* Email detail pane */}
+                  <Box padding="400">
+                    <BlockStack gap="300">
+                      <Text as="p" variant="headingSm" fontWeight="bold">
+                        You&apos;re on the waitlist!
+                      </Text>
+                      <BlockStack gap="150">
+                        <InlineStack gap="200" blockAlign="center">
+                          <Box minWidth="60px">
+                            <Text as="p" variant="bodySm" tone="subdued">
+                              From:
+                            </Text>
+                          </Box>
+                          <Text as="p" variant="bodySm">
+                            {senderNameValue.trim() || shopName} via Pinzo &lt;noreply@boldteq.app&gt;
+                          </Text>
+                        </InlineStack>
+                        {replyToValue.trim() && (
+                          <InlineStack gap="200" blockAlign="center">
+                            <Box minWidth="60px">
+                              <Text as="p" variant="bodySm" tone="subdued">
+                                Reply-To:
+                              </Text>
+                            </Box>
+                            <Text as="p" variant="bodySm">
+                              {replyToValue.trim()}
+                            </Text>
+                          </InlineStack>
+                        )}
+                        <InlineStack gap="200" blockAlign="center">
+                          <Box minWidth="60px">
+                            <Text as="p" variant="bodySm" tone="subdued">
+                              To:
+                            </Text>
+                          </Box>
+                          <Text as="p" variant="bodySm">
+                            customer@example.com
+                          </Text>
+                        </InlineStack>
+                        <InlineStack gap="200" blockAlign="center">
+                          <Box minWidth="60px">
+                            <Text as="p" variant="bodySm" tone="subdued">
+                              Subject:
+                            </Text>
+                          </Box>
+                          <Text as="p" variant="bodySm">
+                            You&apos;re on the waitlist!
+                          </Text>
+                        </InlineStack>
+                      </BlockStack>
+                      <Divider />
+                      <BlockStack gap="200">
+                        <Text as="p" variant="bodySm">
+                          Hi there,
+                        </Text>
+                        <Text as="p" variant="bodySm">
+                          Thanks for your interest! We&apos;ve added you to the waitlist for your area. We&apos;ll send you an email as soon as delivery becomes available near you.
+                        </Text>
+                        <Text as="p" variant="bodySm" tone="subdued">
+                          — {senderNameValue.trim() || shopName}
+                        </Text>
+                      </BlockStack>
+                      {!replyToValue.trim() && (
+                        <Box
+                          background="bg-surface-secondary"
+                          borderRadius="100"
+                          padding="200"
+                        >
+                          <Text as="p" variant="bodySm" tone="subdued">
+                            No reply-to set — customers cannot reply to this email.
+                          </Text>
+                        </Box>
+                      )}
+                    </BlockStack>
+                  </Box>
                 </Box>
               </BlockStack>
             </Card>

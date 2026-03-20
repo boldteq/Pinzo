@@ -141,9 +141,10 @@ model Subscription {
 model ShopSettings {
   id                String   @id @default(cuid())
   shop              String   @unique
+  shopName          String?  // cached Shopify store display name (auto-updated)
   defaultBehavior   String   @default("block") // "block" = block all unlisted zips, "allow" = allow all unlisted zips
   notificationEmail String?  // email to receive waitlist notifications
-  emailSenderName   String?  // display name in From field (e.g. "Cool Store") — defaults to shop name + "via Pinzo"
+  emailSenderName   String?  // custom display name in From field — defaults to shopName
   emailReplyTo      String?  // reply-to address for customer-facing emails
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

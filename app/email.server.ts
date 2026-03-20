@@ -11,8 +11,10 @@ import { Resend } from "resend";
 // ---------------------------------------------------------------------------
 
 export interface EmailOptions {
-  /** Display name in the From field (e.g. "Cool Store"). Defaults to shop name + "via Pinzo". */
+  /** Display name in the From field (e.g. "Cool Store"). Defaults to shopDisplayName. */
   senderName?: string | null;
+  /** Cached Shopify store display name (from ShopSettings.shopName). Falls back to myshopify slug. */
+  shopDisplayName?: string | null;
   /** Reply-to email for customer-facing emails. If empty, no reply-to header is added. */
   replyTo?: string | null;
 }
@@ -38,8 +40,8 @@ function getRawFromEmail(): string {
   return process.env.RESEND_FROM_EMAIL || "noreply@example.com";
 }
 
-function shopDisplayName(shop: string): string {
-  return shop.replace(".myshopify.com", "");
+function shopFallbackName(shop: string, options?: EmailOptions): string {
+  return options?.shopDisplayName?.trim() || shop.replace(".myshopify.com", "");
 }
 
 /**
@@ -49,7 +51,7 @@ function shopDisplayName(shop: string): string {
  * - No custom name:          "cool-store via Pinzo <noreply@boldteq.app>"
  */
 function buildFrom(shop: string, options?: EmailOptions): string {
-  const displayName = options?.senderName?.trim() || shopDisplayName(shop);
+  const displayName = options?.senderName?.trim() || shopFallbackName(shop, options);
   return `${displayName} via Pinzo <${getRawFromEmail()}>`;
 }
 
@@ -76,7 +78,7 @@ export async function sendWaitlistConfirmation(
   const resend = getClient();
   if (!resend) return false;
 
-  const name = options?.senderName?.trim() || shopDisplayName(shop);
+  const name = options?.senderName?.trim() || shopFallbackName(shop, options);
 
   try {
     await resend.emails.send({
@@ -114,7 +116,7 @@ export async function sendMerchantWaitlistAlert(
   const resend = getClient();
   if (!resend) return false;
 
-  const name = options?.senderName?.trim() || shopDisplayName(shop);
+  const name = options?.senderName?.trim() || shopFallbackName(shop, options);
 
   try {
     await resend.emails.send({
@@ -156,7 +158,7 @@ export async function sendZipAvailableNotification(
   const resend = getClient();
   if (!resend) return false;
 
-  const name = options?.senderName?.trim() || shopDisplayName(shop);
+  const name = options?.senderName?.trim() || shopFallbackName(shop, options);
 
   try {
     await resend.emails.send({
@@ -193,7 +195,7 @@ export async function sendTestEmail(
   const resend = getClient();
   if (!resend) return false;
 
-  const name = options?.senderName?.trim() || (shop ? shopDisplayName(shop) : "Your Store");
+  const name = options?.senderName?.trim() || (shop ? shopFallbackName(shop, options) : "Your Store");
 
   try {
     await resend.emails.send({

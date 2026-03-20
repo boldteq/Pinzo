@@ -78,6 +78,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const shopSettings = await db.shopSettings.findUnique({ where: { shop } });
   const emailOpts: EmailOptions = {
     senderName: shopSettings?.emailSenderName,
+    shopDisplayName: shopSettings?.shopName,
     replyTo: shopSettings?.emailReplyTo,
   };
 

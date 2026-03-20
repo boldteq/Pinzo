@@ -101,7 +101,7 @@
   data-shop="{{ shop.permanent_domain }}"
   data-api="{{ app.url }}"
   data-block="{{ block.id }}"
-  {% if zcc_config %}data-config='{{ zcc_config | json }}'{% endif %}
+  {% if zcc_config %}data-config="{{ zcc_config | json | escape }}"{% endif %}
   {{ block.shopify_attributes }}
 ></div>
 
@@ -391,7 +391,7 @@
     var btnRadius = rad || "10px";
     return (
       "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}" +
-      W + "{background:transparent !important;color:" + cfg.textColor + " !important;padding:0 !important;border:none !important;box-shadow:none !important;max-width:480px !important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important;box-sizing:border-box !important}" +
+      W + "{background:" + cfg.backgroundColor + " !important;color:" + cfg.textColor + " !important;padding:0 !important;border:none !important;box-shadow:none !important;max-width:480px !important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important;box-sizing:border-box !important}" +
       W + " *{box-sizing:border-box !important}" +
       W + " .zcc-heading{font-size:15px !important;font-weight:700 !important;letter-spacing:-0.01em !important;margin:0 !important;color:" + cfg.textColor + " !important;display:flex !important;align-items:center !important;gap:8px !important;padding-bottom:12px !important;border-bottom:1px solid rgba(0,0,0,0.06) !important;margin-bottom:12px !important}" +
       W + " .zcc-heading-icon{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:28px !important;height:28px !important;border-radius:50% !important;background:linear-gradient(135deg," + cfg.primaryColor + "18," + cfg.primaryColor + "08) !important;flex-shrink:0 !important}" +

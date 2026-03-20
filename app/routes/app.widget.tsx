@@ -336,7 +336,7 @@ function buildWidgetCss(wid: string, cfg: WidgetConfig): string {
     "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}" +
     "@keyframes zcc-scale-in{from{transform:scale(0.92);opacity:0}to{transform:scale(1);opacity:1}}" +
     "@keyframes zcc-pulse-ring{0%{transform:scale(1);opacity:.5}50%{transform:scale(1.2);opacity:0}100%{transform:scale(1.2);opacity:0}}" +
-    W + "{background:transparent;color:" + cfg.textColor + ";padding:0;border:none;box-shadow:none;max-width:480px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-sizing:border-box}" +
+    W + "{background:" + cfg.backgroundColor + ";color:" + cfg.textColor + ";padding:0;border:none;box-shadow:none;max-width:480px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-sizing:border-box}" +
     W + " *{box-sizing:border-box}" +
     W + " .zcc-heading{font-size:15px;font-weight:700;letter-spacing:-0.01em;margin:0;color:" + cfg.textColor + ";display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid rgba(0,0,0,0.06);margin-bottom:12px}" +
     W + " .zcc-heading-icon{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg," + p + "18," + p + "08);flex-shrink:0}" +
@@ -681,12 +681,30 @@ function PopupPreview({
 const WidgetPreview = memo(function WidgetPreview({
   cfg,
   previewState,
+  widgetFullCustom,
 }: {
   cfg: WidgetConfig;
   previewState: "idle" | "success" | "error" | "notfound";
+  widgetFullCustom: boolean;
 }) {
   const wid = "zcc-admin-preview";
-  const css = useMemo(() => buildWidgetCss(wid, cfg), [wid, cfg]);
+
+  // Apply the same plan enforcement the API applies so the preview matches
+  // exactly what will render on the storefront.
+  const effectiveCfg: WidgetConfig = useMemo(() => {
+    if (widgetFullCustom) return cfg;
+    return {
+      ...cfg,
+      primaryColor: DEFAULTS.primaryColor,
+      successColor: DEFAULTS.successColor,
+      errorColor: DEFAULTS.errorColor,
+      backgroundColor: DEFAULTS.backgroundColor,
+      textColor: DEFAULTS.textColor,
+      position: DEFAULTS.position,
+    };
+  }, [cfg, widgetFullCustom]);
+
+  const css = useMemo(() => buildWidgetCss(wid, effectiveCfg), [wid, effectiveCfg]);
 
   const resultMessage =
     previewState === "success" ? cfg.successMessage :
@@ -694,21 +712,22 @@ const WidgetPreview = memo(function WidgetPreview({
     previewState === "notfound" ? cfg.notFoundMessage : null;
 
   // SVG icons as inline JSX — consistent outlined/stroke style
+  // Use effectiveCfg for colors so the preview matches what storefront serves
   const iconStyle = { width: 16, height: 16, display: "block" as const };
   const metaIconStyle = { width: 14, height: 14, display: "block" as const, opacity: 0.7 };
   const timelineIconStyle = { width: 18, height: 18, display: "block" as const };
   const pinIcon = (
-    <svg viewBox="0 0 24 24" fill="none" stroke={cfg.primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={iconStyle}>
+    <svg viewBox="0 0 24 24" fill="none" stroke={effectiveCfg.primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={iconStyle}>
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
     </svg>
   );
   const checkCircleIcon = (
-    <svg viewBox="0 0 24 24" fill="none" stroke={cfg.successColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={iconStyle}>
+    <svg viewBox="0 0 24 24" fill="none" stroke={effectiveCfg.successColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={iconStyle}>
       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>
     </svg>
   );
   const xCircleIcon = (
-    <svg viewBox="0 0 24 24" fill="none" stroke={cfg.errorColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: "block" as const }}>
+    <svg viewBox="0 0 24 24" fill="none" stroke={effectiveCfg.errorColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: "block" as const }}>
       <circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>
     </svg>
   );
@@ -743,17 +762,17 @@ const WidgetPreview = memo(function WidgetPreview({
     </svg>
   );
   const bagIcon = (
-    <svg viewBox="0 0 24 24" fill="none" stroke={cfg.primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={timelineIconStyle}>
+    <svg viewBox="0 0 24 24" fill="none" stroke={effectiveCfg.primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={timelineIconStyle}>
       <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
     </svg>
   );
   const shipTruckIcon = (
-    <svg viewBox="0 0 24 24" fill="none" stroke={cfg.primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={timelineIconStyle}>
+    <svg viewBox="0 0 24 24" fill="none" stroke={effectiveCfg.primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={timelineIconStyle}>
       <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 13.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>
     </svg>
   );
   const packageIcon = (
-    <svg viewBox="0 0 24 24" fill="none" stroke={cfg.primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={timelineIconStyle}>
+    <svg viewBox="0 0 24 24" fill="none" stroke={effectiveCfg.primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={timelineIconStyle}>
       <path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
     </svg>
   );
@@ -782,7 +801,7 @@ const WidgetPreview = memo(function WidgetPreview({
               type="text"
               value="380007"
               readOnly
-              style={{ color: cfg.errorColor }}
+              style={{ color: effectiveCfg.errorColor }}
             />
           ) : (
             <input
@@ -809,7 +828,7 @@ const WidgetPreview = memo(function WidgetPreview({
         <>
           <div className="zcc-result ok">
             <div className="zcc-result-content">
-              <div style={{ fontWeight: 600, color: cfg.successColor, marginBottom: 4 }}>
+              <div style={{ fontWeight: 600, color: effectiveCfg.successColor, marginBottom: 4 }}>
                 {cfg.successMessage}
               </div>
               {cfg.showEta && (
@@ -878,7 +897,7 @@ const WidgetPreview = memo(function WidgetPreview({
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ flexShrink: 0, display: "inline-flex" }}>{xCircleIcon}</span>
               <span>
-                <strong style={{ color: cfg.errorColor }}>Sorry,</strong>{" "}
+                <strong style={{ color: effectiveCfg.errorColor }}>Sorry,</strong>{" "}
                 {resultMessage ? resultMessage.replace(/^Sorry,?\s*/i, "") : "We don't deliver to this area yet."}
               </span>
             </div>
@@ -896,16 +915,16 @@ const WidgetPreview = memo(function WidgetPreview({
   );
 
   // Floating position: realistic storefront simulation with toggle
-  if (cfg.position === "floating") {
+  if (effectiveCfg.position === "floating") {
     return (
-      <FloatingPreview cfg={cfg} css={css} wid={wid} widgetHtml={widgetHtml} pinIcon={pinIcon} />
+      <FloatingPreview cfg={effectiveCfg} css={css} wid={wid} widgetHtml={widgetHtml} pinIcon={pinIcon} />
     );
   }
 
   // Popup position: realistic modal overlay simulation
-  if (cfg.position === "popup") {
+  if (effectiveCfg.position === "popup") {
     return (
-      <PopupPreview cfg={cfg} css={css} wid={wid} widgetHtml={widgetHtml} pinIcon={pinIcon} />
+      <PopupPreview cfg={effectiveCfg} css={css} wid={wid} widgetHtml={widgetHtml} pinIcon={pinIcon} />
     );
   }
 
@@ -1737,6 +1756,16 @@ export default function WidgetPage() {
                       ))}
                     </div>
 
+                    {/* Plan enforcement notice — shown when Free plan strips colors */}
+                    {!limits.widgetFullCustom && (
+                      <Banner tone="warning">
+                        <Text as="p" variant="bodySm">
+                          This preview shows how the widget will look on your storefront. Custom colors require a Starter plan or above — the widget uses default colors until you upgrade.{" "}
+                          <Button variant="plain" onClick={() => navigate("/app/pricing")}>Upgrade now</Button>
+                        </Text>
+                      </Banner>
+                    )}
+
                     {/* Preview widget — device frame + dot-grid */}
                     <div style={{
                       border: "1px solid #e2e8f0",
@@ -1765,7 +1794,7 @@ export default function WidgetPage() {
                         backgroundSize: "20px 20px",
                         backgroundColor: "#f8fafc",
                       }}>
-                        <WidgetPreview cfg={previewCfg} previewState={previewState} />
+                        <WidgetPreview cfg={previewCfg} previewState={previewState} widgetFullCustom={limits.widgetFullCustom} />
                       </div>
                     </div>
                   </BlockStack>

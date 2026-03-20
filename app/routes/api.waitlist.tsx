@@ -20,6 +20,7 @@ import { normalizeZipCode } from "../utils/zip";
 import {
   sendWaitlistConfirmation,
   sendMerchantWaitlistAlert,
+  type EmailOptions,
 } from "../email.server";
 
 const CORS_HEADERS = {
@@ -150,19 +151,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     });
 
-    // Fire-and-forget: send confirmation to customer
-    sendWaitlistConfirmation(email, normalizedZip, shop).catch(() => {});
-
-    // Fire-and-forget: notify merchant if notificationEmail is set
+    // Fire-and-forget: fetch email settings then send emails
     db.shopSettings
-      .findUnique({ where: { shop }, select: { notificationEmail: true } })
+      .findUnique({ where: { shop } })
       .then((settings) => {
+        const emailOpts: EmailOptions = {
+          senderName: settings?.emailSenderName,
+          replyTo: settings?.emailReplyTo,
+        };
+
+        // Confirmation to customer
+        sendWaitlistConfirmation(email, normalizedZip, shop, emailOpts).catch(() => {});
+
+        // Notify merchant if notificationEmail is set
         if (settings?.notificationEmail) {
           sendMerchantWaitlistAlert(
             settings.notificationEmail,
             email,
             normalizedZip,
             shop,
+            emailOpts,
           ).catch(() => {});
         }
       })

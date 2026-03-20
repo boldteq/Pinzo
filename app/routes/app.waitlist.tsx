@@ -11,7 +11,7 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { getShopSubscription } from "../billing.server";
 import { PLAN_LIMITS, UNLIMITED } from "../plans";
-import { sendZipAvailableNotification } from "../email.server";
+import { sendZipAvailableNotification, type EmailOptions } from "../email.server";
 import {
   Page,
   Layout,
@@ -73,6 +73,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const shop = session.shop;
   const formData = await request.formData();
   const intent = formData.get("intent");
+
+  // Fetch email sender settings once for any action that may send emails
+  const shopSettings = await db.shopSettings.findUnique({ where: { shop } });
+  const emailOpts: EmailOptions = {
+    senderName: shopSettings?.emailSenderName,
+    replyTo: shopSettings?.emailReplyTo,
+  };
 
   if (intent === "add") {
     const email = String(formData.get("email") || "").trim().toLowerCase();
@@ -159,7 +166,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const shopUrl = `https://${shop}`;
     const emailResults = await Promise.allSettled(
       emails.map((email) =>
-        sendZipAvailableNotification(email, zipCode, shop, shopUrl),
+        sendZipAvailableNotification(email, zipCode, shop, shopUrl, emailOpts),
       ),
     );
     const emailsSent = emailResults.filter(
@@ -203,7 +210,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const shopUrl = `https://${shop}`;
     const emailResults = await Promise.allSettled(
       waitingEntries.map((e) =>
-        sendZipAvailableNotification(e.email, e.zipCode, shop, shopUrl),
+        sendZipAvailableNotification(e.email, e.zipCode, shop, shopUrl, emailOpts),
       ),
     );
     const emailsSent = emailResults.filter(
@@ -246,7 +253,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const shopUrl = `https://${shop}`;
       const emailResults = await Promise.allSettled(
         entriesToNotify.map((e) =>
-          sendZipAvailableNotification(e.email, e.zipCode, shop, shopUrl),
+          sendZipAvailableNotification(e.email, e.zipCode, shop, shopUrl, emailOpts),
         ),
       );
       const emailsSent = emailResults.filter(

@@ -7,6 +7,17 @@
 import { Resend } from "resend";
 
 // ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export interface EmailOptions {
+  /** Display name in the From field (e.g. "Cool Store"). Defaults to shop name + "via Pinzo". */
+  senderName?: string | null;
+  /** Reply-to email for customer-facing emails. If empty, no reply-to header is added. */
+  replyTo?: string | null;
+}
+
+// ---------------------------------------------------------------------------
 // Client singleton
 // ---------------------------------------------------------------------------
 
@@ -23,13 +34,33 @@ function getClient(): Resend | null {
   return client;
 }
 
-function getFromEmail(): string {
-  const email = process.env.RESEND_FROM_EMAIL || "noreply@example.com";
-  return `Pinzo <${email}>`;
+function getRawFromEmail(): string {
+  return process.env.RESEND_FROM_EMAIL || "noreply@example.com";
 }
 
 function shopDisplayName(shop: string): string {
   return shop.replace(".myshopify.com", "");
+}
+
+/**
+ * Build the full From address with display name.
+ *
+ * - Custom sender name set:  "Cool Store via Pinzo <noreply@boldteq.app>"
+ * - No custom name:          "cool-store via Pinzo <noreply@boldteq.app>"
+ */
+function buildFrom(shop: string, options?: EmailOptions): string {
+  const displayName = options?.senderName?.trim() || shopDisplayName(shop);
+  return `${displayName} via Pinzo <${getRawFromEmail()}>`;
+}
+
+/**
+ * Build optional reply_to field. Returns undefined when not configured
+ * so it can be spread into the Resend payload without adding an empty header.
+ */
+function buildReplyTo(options?: EmailOptions): { reply_to: string } | Record<string, never> {
+  const replyTo = options?.replyTo?.trim();
+  if (replyTo) return { reply_to: replyTo };
+  return {};
 }
 
 // ---------------------------------------------------------------------------
@@ -40,15 +71,16 @@ export async function sendWaitlistConfirmation(
   to: string,
   zipCode: string,
   shop: string,
+  options?: EmailOptions,
 ): Promise<boolean> {
   const resend = getClient();
   if (!resend) return false;
 
-  const name = shopDisplayName(shop);
+  const name = options?.senderName?.trim() || shopDisplayName(shop);
 
   try {
     await resend.emails.send({
-      from: getFromEmail(),
+      from: buildFrom(shop, options),
       to,
       subject: `You're on the waitlist — ${name}`,
       html: `
@@ -59,6 +91,7 @@ export async function sendWaitlistConfirmation(
         </div>
       `,
       text: `You're on the waitlist!\n\nThanks for signing up. We'll let you know as soon as delivery is available to ${zipCode}.\n\n— ${name}`,
+      ...buildReplyTo(options),
     });
     return true;
   } catch (error) {
@@ -76,15 +109,16 @@ export async function sendMerchantWaitlistAlert(
   customerEmail: string,
   zipCode: string,
   shop: string,
+  options?: EmailOptions,
 ): Promise<boolean> {
   const resend = getClient();
   if (!resend) return false;
 
-  const name = shopDisplayName(shop);
+  const name = options?.senderName?.trim() || shopDisplayName(shop);
 
   try {
     await resend.emails.send({
-      from: getFromEmail(),
+      from: buildFrom(shop, options),
       to,
       subject: `New waitlist signup: ${zipCode}`,
       html: `
@@ -99,6 +133,7 @@ export async function sendMerchantWaitlistAlert(
         </div>
       `,
       text: `New waitlist signup\n\nA customer (${customerEmail}) just joined the waitlist for ZIP code ${zipCode}.\n\nManage the waitlist from your ${name} admin dashboard.`,
+      ...buildReplyTo(options),
     });
     return true;
   } catch (error) {
@@ -116,15 +151,16 @@ export async function sendZipAvailableNotification(
   zipCode: string,
   shop: string,
   shopUrl: string,
+  options?: EmailOptions,
 ): Promise<boolean> {
   const resend = getClient();
   if (!resend) return false;
 
-  const name = shopDisplayName(shop);
+  const name = options?.senderName?.trim() || shopDisplayName(shop);
 
   try {
     await resend.emails.send({
-      from: getFromEmail(),
+      from: buildFrom(shop, options),
       to,
       subject: `Great news! We now deliver to ${zipCode}`,
       html: `
@@ -136,6 +172,7 @@ export async function sendZipAvailableNotification(
         </div>
       `,
       text: `Great news!\n\nDelivery is now available to ZIP code ${zipCode}. Visit ${shopUrl} to place your order.\n\n— ${name}`,
+      ...buildReplyTo(options),
     });
     return true;
   } catch (error) {
@@ -148,22 +185,32 @@ export async function sendZipAvailableNotification(
 // 4. Test Email  (Settings page)
 // ---------------------------------------------------------------------------
 
-export async function sendTestEmail(to: string): Promise<boolean> {
+export async function sendTestEmail(
+  to: string,
+  options?: EmailOptions,
+  shop?: string,
+): Promise<boolean> {
   const resend = getClient();
   if (!resend) return false;
 
+  const name = options?.senderName?.trim() || (shop ? shopDisplayName(shop) : "Your Store");
+
   try {
     await resend.emails.send({
-      from: getFromEmail(),
+      from: buildFrom(shop || "test-store.myshopify.com", options),
       to,
       subject: "Pinzo — Test Email",
       html: `
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px">
           <h2 style="margin:0 0 16px">Test email received!</h2>
-          <p>Your Resend email integration is working correctly. You will receive notifications when customers join your waitlist.</p>
+          <p>Your email integration is working correctly.</p>
+          <p style="margin-top:16px"><strong>From:</strong> ${name} via Pinzo &lt;${getRawFromEmail()}&gt;</p>
+          ${options?.replyTo ? `<p><strong>Reply-To:</strong> ${options.replyTo}</p>` : "<p><strong>Reply-To:</strong> <em>Not set</em></p>"}
+          <p style="color:#666;font-size:13px;margin-top:24px">You will receive notifications when customers join your waitlist.</p>
         </div>
       `,
-      text: "Test email received!\n\nYour Resend email integration is working correctly. You will receive notifications when customers join your waitlist.",
+      text: `Test email received!\n\nYour email integration is working correctly.\n\nFrom: ${name} via Pinzo <${getRawFromEmail()}>\nReply-To: ${options?.replyTo || "Not set"}\n\nYou will receive notifications when customers join your waitlist.`,
+      ...buildReplyTo(options),
     });
     return true;
   } catch (error) {

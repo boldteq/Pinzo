@@ -48,6 +48,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     shop,
     defaultBehavior: shopSettings?.defaultBehavior ?? "block",
     notificationEmail: shopSettings?.notificationEmail ?? "",
+    emailSenderName: shopSettings?.emailSenderName ?? "",
+    emailReplyTo: shopSettings?.emailReplyTo ?? "",
   };
 };
 
@@ -87,10 +89,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return { success: true, intent };
     }
 
+    if (intent === "save-email-settings") {
+      const emailSenderName =
+        (formData.get("emailSenderName") as string | null)?.trim() || null;
+      const emailReplyTo =
+        (formData.get("emailReplyTo") as string | null)?.trim() || null;
+      await db.shopSettings.upsert({
+        where: { shop },
+        create: { shop, emailSenderName, emailReplyTo },
+        update: { emailSenderName, emailReplyTo },
+      });
+      return { success: true, intent };
+    }
+
     if (intent === "send-test-email") {
       const testEmail = (formData.get("testEmail") as string | null) ?? "";
       if (!testEmail) return { error: "No email address provided." };
-      const sent = await sendTestEmail(testEmail);
+      const settings = await db.shopSettings.findUnique({ where: { shop } });
+      const sent = await sendTestEmail(
+        testEmail,
+        { senderName: settings?.emailSenderName, replyTo: settings?.emailReplyTo },
+        shop,
+      );
       return sent
         ? { success: true, intent }
         : { error: "Failed to send test email. Check your Resend API key and sender email." };
@@ -107,7 +127,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 // ---------------------------------------------------------------------------
 
 export default function SettingsPage() {
-  const { subscription, zipCount, shop, defaultBehavior, notificationEmail } =
+  const { subscription, zipCount, shop, defaultBehavior, notificationEmail, emailSenderName, emailReplyTo } =
     useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const shopify = useAppBridge();
@@ -116,19 +136,26 @@ export default function SettingsPage() {
   // Fetchers — one per save section so loading states stay independent
   const behaviorFetcher = useFetcher<typeof action>();
   const notificationFetcher = useFetcher<typeof action>();
+  const emailSettingsFetcher = useFetcher<typeof action>();
   const testEmailFetcher = useFetcher<typeof action>();
 
   // Local controlled state
   const [behaviorValue, setBehaviorValue] = useState(defaultBehavior);
   const [emailValue, setEmailValue] = useState(notificationEmail);
+  const [senderNameValue, setSenderNameValue] = useState(emailSenderName);
+  const [replyToValue, setReplyToValue] = useState(emailReplyTo);
 
   const isSavingBehavior = behaviorFetcher.state !== "idle";
   const isSavingNotification = notificationFetcher.state !== "idle";
-  const isSaving = isSavingBehavior || isSavingNotification;
+  const isSavingEmailSettings = emailSettingsFetcher.state !== "idle";
+  const isSaving = isSavingBehavior || isSavingNotification || isSavingEmailSettings;
 
   // Track dirty state
   const isDirty =
-    behaviorValue !== defaultBehavior || emailValue !== notificationEmail;
+    behaviorValue !== defaultBehavior ||
+    emailValue !== notificationEmail ||
+    senderNameValue !== emailSenderName ||
+    replyToValue !== emailReplyTo;
 
   // Toast on success
   useEffect(() => {
@@ -150,6 +177,16 @@ export default function SettingsPage() {
       shopify.toast.show("Settings saved");
     }
   }, [notificationFetcher.data, shopify]);
+
+  useEffect(() => {
+    if (
+      emailSettingsFetcher.data &&
+      "success" in emailSettingsFetcher.data &&
+      emailSettingsFetcher.data.success
+    ) {
+      shopify.toast.show("Email settings saved");
+    }
+  }, [emailSettingsFetcher.data, shopify]);
 
   useEffect(() => {
     if (
@@ -184,12 +221,21 @@ export default function SettingsPage() {
       fd.append("notificationEmail", emailValue);
       notificationFetcher.submit(fd, { method: "post" });
     }
-  }, [behaviorFetcher, notificationFetcher, behaviorValue, emailValue, defaultBehavior, notificationEmail]);
+    if (senderNameValue !== emailSenderName || replyToValue !== emailReplyTo) {
+      const fd = new FormData();
+      fd.append("intent", "save-email-settings");
+      fd.append("emailSenderName", senderNameValue);
+      fd.append("emailReplyTo", replyToValue);
+      emailSettingsFetcher.submit(fd, { method: "post" });
+    }
+  }, [behaviorFetcher, notificationFetcher, emailSettingsFetcher, behaviorValue, emailValue, senderNameValue, replyToValue, defaultBehavior, notificationEmail, emailSenderName, emailReplyTo]);
 
   const handleDiscard = useCallback(() => {
     setBehaviorValue(defaultBehavior);
     setEmailValue(notificationEmail);
-  }, [defaultBehavior, notificationEmail]);
+    setSenderNameValue(emailSenderName);
+    setReplyToValue(emailReplyTo);
+  }, [defaultBehavior, notificationEmail, emailSenderName, emailReplyTo]);
 
   const handleSendTestEmail = useCallback(() => {
     if (!emailValue) return;
@@ -372,7 +418,67 @@ export default function SettingsPage() {
           </Layout.Section>
 
           {/* ----------------------------------------------------------------
-              Section 4: Usage & Limits
+              Section 4: Email Sender Settings
+          ---------------------------------------------------------------- */}
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="400">
+                <BlockStack gap="100">
+                  <Text as="h2" variant="headingMd">
+                    Email Sender Settings
+                  </Text>
+                  <Text as="p" tone="subdued" variant="bodyMd">
+                    Configure how outgoing emails appear to your customers.
+                  </Text>
+                </BlockStack>
+                <Divider />
+                {emailSettingsFetcher.data &&
+                  "error" in emailSettingsFetcher.data &&
+                  emailSettingsFetcher.data.error && (
+                    <Banner tone="critical">
+                      {emailSettingsFetcher.data.error}
+                    </Banner>
+                  )}
+                <TextField
+                  label="Sender name"
+                  value={senderNameValue}
+                  onChange={setSenderNameValue}
+                  placeholder={shop.replace(".myshopify.com", "")}
+                  autoComplete="off"
+                  helpText={`Customers see this in the "From" field. Leave blank to use your store name. Emails are sent as "${senderNameValue.trim() || shop.replace(".myshopify.com", "")} via Pinzo <noreply@boldteq.app>".`}
+                />
+                <TextField
+                  label="Reply-to email"
+                  type="email"
+                  value={replyToValue}
+                  onChange={setReplyToValue}
+                  placeholder="support@yourstore.com"
+                  autoComplete="email"
+                  helpText="When customers reply to an email, their reply goes to this address. Leave blank for no reply-to."
+                />
+                <Box
+                  padding="300"
+                  background="bg-surface-secondary"
+                  borderRadius="200"
+                >
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodySm" fontWeight="semibold">
+                      Preview
+                    </Text>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      From: {senderNameValue.trim() || shop.replace(".myshopify.com", "")} via Pinzo &lt;noreply@boldteq.app&gt;
+                    </Text>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      Reply-To: {replyToValue.trim() || "Not set — replies will not be delivered"}
+                    </Text>
+                  </BlockStack>
+                </Box>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+
+          {/* ----------------------------------------------------------------
+              Section 5: Usage & Limits
           ---------------------------------------------------------------- */}
           <Layout.Section>
             <Card>

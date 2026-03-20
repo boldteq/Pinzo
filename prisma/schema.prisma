@@ -143,6 +143,8 @@ model ShopSettings {
   shop              String   @unique
   defaultBehavior   String   @default("block") // "block" = block all unlisted zips, "allow" = allow all unlisted zips
   notificationEmail String?  // email to receive waitlist notifications
+  emailSenderName   String?  // display name in From field (e.g. "Cool Store") — defaults to shop name + "via Pinzo"
+  emailReplyTo      String?  // reply-to address for customer-facing emails
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }

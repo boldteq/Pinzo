@@ -139,11 +139,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Server-side enforcement: strip features the plan doesn't include
   const payload = {
     ...raw,
-    // Free plan: reset to defaults for colors/position
+    // Free plan: reset colors to defaults (position is already "inline" in DB
+    // for free-plan shops since the admin UI disables the position selector)
     ...(limits.widgetFullCustom
       ? {}
       : {
-          position: DEFAULTS.position,
           primaryColor: DEFAULTS.primaryColor,
           successColor: DEFAULTS.successColor,
           errorColor: DEFAULTS.errorColor,

@@ -93,7 +93,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const sent = await sendTestEmail(testEmail);
       return sent
         ? { success: true, intent }
-        : { error: "Failed to send test email. Check your Postmark API key and sender email." };
+        : { error: "Failed to send test email. Check your Resend API key and sender email." };
     }
 
     return { error: "Unknown intent" };

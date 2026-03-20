@@ -24,7 +24,8 @@ function getClient(): Resend | null {
 }
 
 function getFromEmail(): string {
-  return process.env.RESEND_FROM_EMAIL || "noreply@example.com";
+  const email = process.env.RESEND_FROM_EMAIL || "noreply@example.com";
+  return `Pinzo <${email}>`;
 }
 
 function shopDisplayName(shop: string): string {

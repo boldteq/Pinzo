@@ -100,6 +100,7 @@
   data-zcc-widget="true"
   data-shop="{{ shop.permanent_domain }}"
   data-api="{{ app.url }}"
+  data-proxy="/apps/zipcheck"
   data-block="{{ block.id }}"
   {% if zcc_config %}data-config="{{ zcc_config | json | escape }}"{% endif %}
   {{ block.shopify_attributes }}
@@ -136,7 +137,15 @@
   if (!container) return;
 
   var SHOP = container.dataset.shop;
-  var API_BASE = (container.dataset.api || "").replace(/\/$/, "");
+  // app.url resolves to the App Proxy URL (e.g. https://store.myshopify.com/apps/zipcheck).
+  // If for any reason it is empty (e.g. dev environment or Shopify Liquid context issue),
+  // fall back to the relative proxy path so the request still routes correctly through
+  // Shopify's App Proxy rather than hitting the store's own domain as a missing route.
+  var _rawApi = (container.dataset.api || "").replace(/\/$/, "");
+  var _proxyPath = (container.dataset.proxy || "/apps/zipcheck").replace(/\/$/, "");
+  // Prefer app.url when it looks like a full URL; otherwise use the relative proxy path
+  // (which Shopify will forward to our app via the App Proxy config).
+  var API_BASE = (_rawApi && _rawApi.indexOf("http") === 0) ? _rawApi : _proxyPath;
 
   // Try embedded config from metafield first (instant, no network needed)
   var configStr = container.getAttribute("data-config");
@@ -522,6 +531,7 @@
           // transient server error and show it in the result area rather than
           // falling through with undefined message text.
           if (data.error && data.allowed === undefined) {
+            console.error('[ZipCodeChecker] API returned error:', data.error, '| API_BASE="' + API_BASE + '" SHOP="' + SHOP + '"');
             res.innerHTML = '<div class="zcc-result fail"><div class="zcc-result-icon">' + ICONS.xCircle + '</div><div class="zcc-result-content"><div class="zcc-result-message">Something went wrong. Please try again.</div></div></div>';
             try {
               sessionStorage.removeItem('zcc:valid');
@@ -674,8 +684,11 @@
             } catch(e) { /* DOM query may fail in some contexts */ }
           }
         })
-        .catch(function () {
+        .catch(function (err) {
           setBtnLoading(false);
+          // Log to console so merchants/developers can diagnose API connectivity issues.
+          // The URL is logged so we can immediately see if the proxy/API base is wrong.
+          console.error('[ZipCodeChecker] ZIP check failed. API_BASE="' + API_BASE + '" SHOP="' + SHOP + '"', err);
           res.innerHTML = '<div class="zcc-result fail"><div class="zcc-result-icon">' + ICONS.xCircle + '</div><div class="zcc-result-content"><div class="zcc-result-message">Something went wrong. Please try again.</div></div></div>';
           try {
             sessionStorage.removeItem('zcc:valid');

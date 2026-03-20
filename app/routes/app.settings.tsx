@@ -463,138 +463,95 @@ export default function SettingsPage() {
                   </Text>
                 </BlockStack>
                 <Divider />
-                {/* Email client mockup */}
-                <Box
-                  background="bg-surface-secondary"
-                  borderRadius="300"
-                  padding="0"
-                  borderWidth="025"
-                  borderColor="border"
-                >
-                  {/* Email client header bar */}
-                  <Box
-                    background="bg-surface"
-                    borderRadius="300"
-                    padding="400"
-                  >
-                    <BlockStack gap="300">
-                      {/* Header row */}
-                      <InlineStack align="space-between" blockAlign="center">
-                        <Text as="p" variant="headingSm">
-                          Inbox
-                        </Text>
-                        <Box
-                          background="bg-surface-secondary"
-                          borderRadius="100"
-                          padding="100"
-                        >
-                          <Text as="p" variant="bodySm" tone="subdued">
-                            1 new
-                          </Text>
-                        </Box>
-                      </InlineStack>
-                      <Divider />
-                      {/* Email row in inbox */}
-                      <Box
-                        background="bg-surface-active"
-                        borderRadius="200"
-                        padding="300"
-                      >
-                        <BlockStack gap="100">
-                          <InlineStack align="space-between" blockAlign="center">
-                            <Text as="p" variant="bodySm" fontWeight="bold">
-                              {senderNameValue.trim() || shopName} via Pinzo
-                            </Text>
-                            <Text as="p" variant="bodySm" tone="subdued">
-                              just now
-                            </Text>
-                          </InlineStack>
-                          <Text as="p" variant="bodySm" fontWeight="semibold">
-                            You&apos;re on the waitlist!
-                          </Text>
-                          <Text as="p" variant="bodySm" tone="subdued">
-                            Thanks for signing up — we&apos;ll let you know as soon as delivery becomes available in your area...
-                          </Text>
-                        </BlockStack>
-                      </Box>
-                    </BlockStack>
-                  </Box>
-                  {/* Email detail pane */}
-                  <Box padding="400">
-                    <BlockStack gap="300">
-                      <Text as="p" variant="headingSm" fontWeight="bold">
-                        You&apos;re on the waitlist!
-                      </Text>
-                      <BlockStack gap="150">
-                        <InlineStack gap="200" blockAlign="center">
-                          <Box minWidth="60px">
-                            <Text as="p" variant="bodySm" tone="subdued">
-                              From:
-                            </Text>
-                          </Box>
-                          <Text as="p" variant="bodySm">
-                            {senderNameValue.trim() || shopName} via Pinzo &lt;noreply@boldteq.app&gt;
-                          </Text>
-                        </InlineStack>
-                        {replyToValue.trim() && (
-                          <InlineStack gap="200" blockAlign="center">
-                            <Box minWidth="60px">
-                              <Text as="p" variant="bodySm" tone="subdued">
-                                Reply-To:
-                              </Text>
-                            </Box>
-                            <Text as="p" variant="bodySm">
-                              {replyToValue.trim()}
-                            </Text>
-                          </InlineStack>
-                        )}
-                        <InlineStack gap="200" blockAlign="center">
-                          <Box minWidth="60px">
-                            <Text as="p" variant="bodySm" tone="subdued">
-                              To:
-                            </Text>
-                          </Box>
-                          <Text as="p" variant="bodySm">
-                            customer@example.com
-                          </Text>
-                        </InlineStack>
-                        <InlineStack gap="200" blockAlign="center">
-                          <Box minWidth="60px">
-                            <Text as="p" variant="bodySm" tone="subdued">
-                              Subject:
-                            </Text>
-                          </Box>
-                          <Text as="p" variant="bodySm">
-                            You&apos;re on the waitlist!
-                          </Text>
-                        </InlineStack>
-                      </BlockStack>
-                      <Divider />
-                      <BlockStack gap="200">
-                        <Text as="p" variant="bodySm">
-                          Hi there,
-                        </Text>
-                        <Text as="p" variant="bodySm">
-                          Thanks for your interest! We&apos;ve added you to the waitlist for your area. We&apos;ll send you an email as soon as delivery becomes available near you.
-                        </Text>
-                        <Text as="p" variant="bodySm" tone="subdued">
-                          — {senderNameValue.trim() || shopName}
-                        </Text>
-                      </BlockStack>
-                      {!replyToValue.trim() && (
-                        <Box
-                          background="bg-surface-secondary"
-                          borderRadius="100"
-                          padding="200"
-                        >
-                          <Text as="p" variant="bodySm" tone="subdued">
-                            No reply-to set — customers cannot reply to this email.
-                          </Text>
-                        </Box>
+
+                {/* Realistic email preview */}
+                <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #e3e3e3", background: "#f6f6f7" }}>
+                  {/* Email client toolbar */}
+                  <div style={{ background: "#f0f0f0", padding: "10px 16px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid #e0e0e0" }}>
+                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#ff5f57" }} />
+                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#febc2e" }} />
+                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#28c840" }} />
+                    <span style={{ marginLeft: 12, fontSize: 12, color: "#8c8c8c", fontFamily: "system-ui" }}>Mail</span>
+                  </div>
+
+                  {/* Email header */}
+                  <div style={{ background: "#ffffff", padding: "16px 20px", borderBottom: "1px solid #ebebeb" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                      <div style={{
+                        width: 40, height: 40, borderRadius: "50%",
+                        background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        color: "#fff", fontWeight: 700, fontSize: 16, fontFamily: "system-ui",
+                        flexShrink: 0,
+                      }}>
+                        {(senderNameValue.trim() || shopName).charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontWeight: 600, fontSize: 14, color: "#1a1a1a", fontFamily: "system-ui" }}>
+                            {senderNameValue.trim() || shopName} via Pinzo
+                          </span>
+                          <span style={{ fontSize: 12, color: "#8c8c8c", fontFamily: "system-ui", flexShrink: 0 }}>
+                            Just now
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 12, color: "#6b6b6b", fontFamily: "system-ui", marginTop: 2 }}>
+                          noreply@boldteq.app
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a", fontFamily: "system-ui", marginTop: 4 }}>
+                          You&apos;re on the waitlist — {senderNameValue.trim() || shopName}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Meta rows */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingLeft: 52 }}>
+                      <div style={{ fontSize: 12, color: "#8c8c8c", fontFamily: "system-ui" }}>
+                        <span style={{ color: "#6b6b6b" }}>To:</span>{" "}
+                        <span style={{ color: "#1a1a1a" }}>customer@example.com</span>
+                      </div>
+                      {replyToValue.trim() ? (
+                        <div style={{ fontSize: 12, color: "#8c8c8c", fontFamily: "system-ui" }}>
+                          <span style={{ color: "#6b6b6b" }}>Reply-To:</span>{" "}
+                          <span style={{ color: "#1a1a1a" }}>{replyToValue.trim()}</span>
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: 12, color: "#c47a00", fontFamily: "system-ui", display: "flex", alignItems: "center", gap: 4 }}>
+                          <span>&#9888;</span> No reply-to — customers cannot reply
+                        </div>
                       )}
-                    </BlockStack>
-                  </Box>
-                </Box>
+                    </div>
+                  </div>
+
+                  {/* Email body — matches actual email template */}
+                  <div style={{ background: "#ffffff", padding: "24px 20px" }}>
+                    <div style={{
+                      maxWidth: 480, margin: "0 auto",
+                      fontFamily: "Arial, sans-serif",
+                      background: "#ffffff",
+                      borderRadius: 8,
+                      border: "1px solid #f0f0f0",
+                      padding: 24,
+                    }}>
+                      <h2 style={{ margin: "0 0 16px", fontSize: 20, fontWeight: 700, color: "#1a1a1a" }}>
+                        You&apos;re on the waitlist!
+                      </h2>
+                      <p style={{ margin: "0 0 12px", fontSize: 14, lineHeight: 1.6, color: "#333" }}>
+                        Thanks for signing up. We&apos;ll let you know as soon as
+                        delivery is available to <strong>10001</strong>.
+                      </p>
+                      <p style={{ margin: "24px 0 0", fontSize: 13, color: "#666" }}>
+                        — {senderNameValue.trim() || shopName}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div style={{ background: "#f6f6f7", padding: "12px 20px", borderTop: "1px solid #ebebeb", textAlign: "center" }}>
+                    <span style={{ fontSize: 11, color: "#999", fontFamily: "system-ui" }}>
+                      Sent via Pinzo &middot; noreply@boldteq.app
+                    </span>
+                  </div>
+                </div>
               </BlockStack>
             </Card>
           </Layout.Section>

@@ -1,5 +1,13 @@
 import { useEffect } from "react";
 import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
+
+declare global {
+  interface Window {
+    $chatwoot?: { toggle: (action: string) => void };
+    chatwootSettings?: Record<string, unknown>;
+    chatwootSDK?: { run: (config: { websiteToken: string; baseUrl: string }) => void };
+  }
+}
 import { Outlet, useLoaderData, useNavigation, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
@@ -60,9 +68,9 @@ function AppContent() {
 function ChatwootWidget() {
   useEffect(() => {
     // Skip if already loaded
-    if ((window as any).$chatwoot) return;
+    if (window.$chatwoot) return;
 
-    (window as any).chatwootSettings = {
+    window.chatwootSettings = {
       position: "right",
       type: "standard",
       launcherTitle: "",
@@ -73,7 +81,7 @@ function ChatwootWidget() {
     script.src = `${BASE_URL}/packs/js/sdk.js`;
     script.async = true;
     script.onload = () => {
-      (window as any).chatwootSDK.run({
+      window.chatwootSDK?.run({
         websiteToken: "F2gCECkLD25SAkJ92AcVui4x",
         baseUrl: BASE_URL,
       });

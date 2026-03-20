@@ -202,8 +202,8 @@ export default function HelpPage() {
                       <Button
                         variant="primary"
                         onClick={() => {
-                          if (typeof window !== "undefined" && (window as any).$crisp) {
-                            (window as any).$crisp.push(["do", "chat:open"]);
+                          if (typeof window !== "undefined" && (window as any).$chatwoot) {
+                            (window as any).$chatwoot.toggle("open");
                           }
                         }}
                       >

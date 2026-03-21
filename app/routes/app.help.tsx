@@ -288,27 +288,46 @@ export default function HelpPage() {
           </Layout.Section>
 
           {/* ----------------------------------------------------------------
-              Section 3: Support Hours — compact banner
+              Section 3: Support Hours
           ---------------------------------------------------------------- */}
           <Layout.Section>
-            <Banner tone="info" icon={ClockIcon}>
-              <InlineStack gap="200" wrap>
-                <Text as="span" variant="bodySm" fontWeight="semibold">
-                  Support Hours:
-                </Text>
-                <Text as="span" variant="bodySm">
-                  Mon-Fri 9 AM - 6 PM IST
-                </Text>
-                <Text as="span" variant="bodySm" tone="subdued">|</Text>
-                <Text as="span" variant="bodySm">
-                  Sat 10 AM - 4 PM IST
-                </Text>
-                <Text as="span" variant="bodySm" tone="subdued">|</Text>
-                <Text as="span" variant="bodySm" tone="subdued">
-                  Sun Closed
-                </Text>
-              </InlineStack>
-            </Banner>
+            <Card>
+              <BlockStack gap="300">
+                <InlineStack gap="200" blockAlign="center">
+                  <Icon source={ClockIcon} tone="info" />
+                  <Text as="h2" variant="headingSm">
+                    Support Hours
+                  </Text>
+                </InlineStack>
+                <Divider />
+                <InlineStack gap="400" align="start" wrap>
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      Monday - Friday
+                    </Text>
+                    <Text as="p" variant="bodyMd" fontWeight="semibold">
+                      9:00 AM - 6:00 PM IST
+                    </Text>
+                  </BlockStack>
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      Saturday
+                    </Text>
+                    <Text as="p" variant="bodyMd" fontWeight="semibold">
+                      10:00 AM - 4:00 PM IST
+                    </Text>
+                  </BlockStack>
+                  <BlockStack gap="100">
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      Sunday
+                    </Text>
+                    <Text as="p" variant="bodyMd" fontWeight="semibold" tone="subdued">
+                      Closed
+                    </Text>
+                  </BlockStack>
+                </InlineStack>
+              </BlockStack>
+            </Card>
           </Layout.Section>
 
         </Layout>

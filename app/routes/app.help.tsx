@@ -308,9 +308,9 @@ export default function HelpPage() {
                 >
                   <BlockStack gap="200" inlineAlign="center">
                     <Box
-                      background="bg-fill-info"
+                      background="bg-surface-info"
                       borderRadius="full"
-                      padding="200"
+                      padding="300"
                     >
                       <Icon source={CalendarTimeIcon} tone="info" />
                     </Box>
@@ -334,9 +334,9 @@ export default function HelpPage() {
                 >
                   <BlockStack gap="200" inlineAlign="center">
                     <Box
-                      background="bg-fill-success"
+                      background="bg-surface-success"
                       borderRadius="full"
-                      padding="200"
+                      padding="300"
                     >
                       <Icon source={SmileyHappyIcon} tone="success" />
                     </Box>

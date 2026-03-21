@@ -25,6 +25,8 @@ import {
   EmailNewsletterIcon,
   LightbulbIcon,
   ClockIcon,
+  CalendarTimeIcon,
+  SmileyHappyIcon,
 } from "@shopify/polaris-icons";
 
 // ---------------------------------------------------------------------------
@@ -310,7 +312,7 @@ export default function HelpPage() {
                       borderRadius="full"
                       padding="200"
                     >
-                      <Icon source={ClockIcon} tone="info" />
+                      <Icon source={CalendarTimeIcon} tone="info" />
                     </Box>
                     <Text as="h3" variant="headingSm" alignment="center">
                       Monday — Friday
@@ -336,7 +338,7 @@ export default function HelpPage() {
                       borderRadius="full"
                       padding="200"
                     >
-                      <Icon source={ClockIcon} tone="success" />
+                      <Icon source={SmileyHappyIcon} tone="success" />
                     </Box>
                     <Text as="h3" variant="headingSm" alignment="center">
                       Weekends

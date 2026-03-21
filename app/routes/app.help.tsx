@@ -16,6 +16,7 @@ import {
   Banner,
   Collapsible,
   Icon,
+  InlineGrid,
 } from "@shopify/polaris";
 import {
   ChevronDownIcon,
@@ -291,43 +292,88 @@ export default function HelpPage() {
               Section 3: Support Hours
           ---------------------------------------------------------------- */}
           <Layout.Section>
-            <Card>
-              <BlockStack gap="300">
-                <InlineStack gap="200" blockAlign="center">
-                  <Icon source={ClockIcon} tone="info" />
-                  <Text as="h2" variant="headingSm">
-                    Support Hours
-                  </Text>
-                </InlineStack>
-                <Divider />
-                <InlineStack gap="400" align="start" wrap>
-                  <BlockStack gap="100">
-                    <Text as="p" variant="bodySm" tone="subdued">
-                      Monday - Friday
+            <BlockStack gap="400">
+              <Text as="h2" variant="headingMd">
+                Support Hours
+              </Text>
+              <InlineGrid columns={{ xs: 1, sm: 3 }} gap="400">
+                <Box
+                  padding="400"
+                  background="bg-surface-info"
+                  borderWidth="025"
+                  borderColor="border-info"
+                  borderRadius="200"
+                >
+                  <BlockStack gap="200" inlineAlign="center">
+                    <Box
+                      background="bg-fill-info"
+                      borderRadius="full"
+                      padding="200"
+                    >
+                      <Icon source={ClockIcon} tone="info" />
+                    </Box>
+                    <Text as="h3" variant="headingSm" alignment="center">
+                      Mon — Fri
                     </Text>
-                    <Text as="p" variant="bodyMd" fontWeight="semibold">
-                      9:00 AM - 6:00 PM IST
+                    <Text as="p" variant="bodyMd" alignment="center" fontWeight="semibold">
+                      9:00 AM — 6:00 PM
+                    </Text>
+                    <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                      IST
                     </Text>
                   </BlockStack>
-                  <BlockStack gap="100">
-                    <Text as="p" variant="bodySm" tone="subdued">
+                </Box>
+                <Box
+                  padding="400"
+                  background="bg-surface-warning"
+                  borderWidth="025"
+                  borderColor="border-warning"
+                  borderRadius="200"
+                >
+                  <BlockStack gap="200" inlineAlign="center">
+                    <Box
+                      background="bg-fill-warning"
+                      borderRadius="full"
+                      padding="200"
+                    >
+                      <Icon source={ClockIcon} tone="caution" />
+                    </Box>
+                    <Text as="h3" variant="headingSm" alignment="center">
                       Saturday
                     </Text>
-                    <Text as="p" variant="bodyMd" fontWeight="semibold">
-                      10:00 AM - 4:00 PM IST
+                    <Text as="p" variant="bodyMd" alignment="center" fontWeight="semibold">
+                      10:00 AM — 4:00 PM
+                    </Text>
+                    <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                      IST
                     </Text>
                   </BlockStack>
-                  <BlockStack gap="100">
-                    <Text as="p" variant="bodySm" tone="subdued">
+                </Box>
+                <Box
+                  padding="400"
+                  background="bg-surface"
+                  borderWidth="025"
+                  borderColor="border"
+                  borderRadius="200"
+                >
+                  <BlockStack gap="200" inlineAlign="center">
+                    <Box
+                      background="bg-surface-secondary"
+                      borderRadius="full"
+                      padding="200"
+                    >
+                      <Icon source={ClockIcon} tone="subdued" />
+                    </Box>
+                    <Text as="h3" variant="headingSm" alignment="center">
                       Sunday
                     </Text>
-                    <Text as="p" variant="bodyMd" fontWeight="semibold" tone="subdued">
+                    <Text as="p" variant="bodyMd" alignment="center" fontWeight="semibold" tone="subdued">
                       Closed
                     </Text>
                   </BlockStack>
-                </InlineStack>
-              </BlockStack>
-            </Card>
+                </Box>
+              </InlineGrid>
+            </BlockStack>
           </Layout.Section>
 
         </Layout>

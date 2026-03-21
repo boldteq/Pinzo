@@ -17,6 +17,7 @@ import {
   Collapsible,
   Icon,
   InlineGrid,
+  Badge,
 } from "@shopify/polaris";
 import {
   ChevronDownIcon,
@@ -294,65 +295,70 @@ export default function HelpPage() {
               Section 3: Support Hours
           ---------------------------------------------------------------- */}
           <Layout.Section>
-            <BlockStack gap="400">
-              <Text as="h2" variant="headingMd">
-                Support Hours
-              </Text>
-              <InlineGrid columns={{ xs: 1, sm: 2 }} gap="400">
-                <Box
-                  padding="400"
-                  background="bg-surface-info"
-                  borderWidth="025"
-                  borderColor="border-info"
-                  borderRadius="200"
-                >
-                  <BlockStack gap="200" inlineAlign="center">
-                    <Box
-                      background="bg-surface-info"
-                      borderRadius="full"
-                      padding="300"
-                    >
-                      <Icon source={CalendarTimeIcon} tone="info" />
-                    </Box>
-                    <Text as="h3" variant="headingSm" alignment="center">
-                      Monday — Friday
-                    </Text>
-                    <Text as="p" variant="bodyMd" alignment="center" fontWeight="semibold">
-                      9:00 AM — 6:00 PM IST
-                    </Text>
-                    <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-                      Full support available
-                    </Text>
-                  </BlockStack>
-                </Box>
-                <Box
-                  padding="400"
-                  background="bg-surface-success"
-                  borderWidth="025"
-                  borderColor="border-success"
-                  borderRadius="200"
-                >
-                  <BlockStack gap="200" inlineAlign="center">
-                    <Box
-                      background="bg-surface-success"
-                      borderRadius="full"
-                      padding="300"
-                    >
-                      <Icon source={SmileyHappyIcon} tone="success" />
-                    </Box>
-                    <Text as="h3" variant="headingSm" alignment="center">
-                      Weekends
-                    </Text>
-                    <Text as="p" variant="bodyMd" alignment="center" fontWeight="semibold">
-                      We still respond!
-                    </Text>
-                    <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-                      Replies may take a bit longer but we&rsquo;ve got you covered
-                    </Text>
-                  </BlockStack>
-                </Box>
-              </InlineGrid>
-            </BlockStack>
+            <Box
+              padding="500"
+              background="bg-surface-secondary"
+              borderRadius="300"
+            >
+              <BlockStack gap="400">
+                <InlineStack gap="200" blockAlign="center" align="center">
+                  <Icon source={ClockIcon} tone="subdued" />
+                  <Text as="h2" variant="headingMd">
+                    Support Hours
+                  </Text>
+                </InlineStack>
+                <InlineGrid columns={{ xs: 1, sm: 2 }} gap="400">
+                  <Box
+                    padding="500"
+                    background="bg-surface"
+                    borderWidth="025"
+                    borderColor="border"
+                    borderRadius="300"
+                  >
+                    <BlockStack gap="300" inlineAlign="center">
+                      <Box
+                        background="bg-surface-info"
+                        borderRadius="full"
+                        padding="300"
+                      >
+                        <Icon source={CalendarTimeIcon} tone="info" />
+                      </Box>
+                      <Text as="h3" variant="headingSm" alignment="center">
+                        Monday — Friday
+                      </Text>
+                      <Text as="p" variant="headingMd" alignment="center" fontWeight="bold">
+                        9:00 AM — 6:00 PM IST
+                      </Text>
+                      <Badge tone="info">Full support available</Badge>
+                    </BlockStack>
+                  </Box>
+                  <Box
+                    padding="500"
+                    background="bg-surface"
+                    borderWidth="025"
+                    borderColor="border"
+                    borderRadius="300"
+                  >
+                    <BlockStack gap="300" inlineAlign="center">
+                      <Box
+                        background="bg-surface-success"
+                        borderRadius="full"
+                        padding="300"
+                      >
+                        <Icon source={SmileyHappyIcon} tone="success" />
+                      </Box>
+                      <Text as="h3" variant="headingSm" alignment="center">
+                        Weekends
+                      </Text>
+                      <Text as="p" variant="headingMd" alignment="center" fontWeight="bold">
+                        We still respond!
+                      </Text>
+                      <Badge tone="success">Replies may take a bit longer</Badge>
+                    </BlockStack>
+                  </Box>
+                </InlineGrid>
+              </BlockStack>
+            </Box>
           </Layout.Section>
 
         </Layout>

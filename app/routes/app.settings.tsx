@@ -586,93 +586,164 @@ export default function SettingsPage() {
                 <Divider />
 
                 {/* Realistic email preview */}
-                <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #e0e0e0", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
-                  {/* Email client toolbar */}
+                <div style={{
+                  borderRadius: 16, overflow: "hidden",
+                  boxShadow: "0 8px 32px rgba(99,102,241,0.12), 0 2px 8px rgba(0,0,0,0.06)",
+                  border: "1px solid #e5e7eb",
+                }}>
+                  {/* macOS toolbar */}
                   <div style={{
-                    background: "linear-gradient(180deg, #f8f8f8, #f0f0f0)",
-                    padding: "10px 16px",
+                    background: "linear-gradient(180deg, #fafafa, #f3f3f3)",
+                    padding: "12px 16px",
                     display: "flex", alignItems: "center", gap: 8,
-                    borderBottom: "1px solid #e0e0e0",
+                    borderBottom: "1px solid #e5e5e5",
                   }}>
-                    <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#ff5f57", boxShadow: "inset 0 -1px 2px rgba(0,0,0,0.1)" }} />
-                    <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#febc2e", boxShadow: "inset 0 -1px 2px rgba(0,0,0,0.1)" }} />
-                    <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#28c840", boxShadow: "inset 0 -1px 2px rgba(0,0,0,0.1)" }} />
-                    <span style={{ marginLeft: 12, fontSize: 13, color: "#666", fontFamily: "system-ui", fontWeight: 500 }}>Inbox</span>
+                    <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#ff5f57" }} />
+                    <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#febc2e" }} />
+                    <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#28c840" }} />
+                    <div style={{
+                      flex: 1, textAlign: "center",
+                      fontSize: 12, color: "#999", fontFamily: "system-ui", fontWeight: 500,
+                    }}>
+                      New Message from {senderNameValue.trim() || shopName}
+                    </div>
                   </div>
 
-                  {/* Email header */}
-                  <div style={{ background: "#ffffff", padding: "16px 20px", borderBottom: "1px solid #f0f0f0" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{
-                        width: 44, height: 44, borderRadius: "50%",
-                        background: "linear-gradient(135deg, #6366f1, #a855f7)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        color: "#fff", fontWeight: 700, fontSize: 18, fontFamily: "system-ui",
-                        flexShrink: 0, boxShadow: "0 2px 8px rgba(99,102,241,0.3)",
-                      }}>
-                        {(senderNameValue.trim() || shopName).charAt(0).toUpperCase()}
+                  {/* Sender info bar */}
+                  <div style={{
+                    background: "#ffffff", padding: "14px 20px",
+                    borderBottom: "1px solid #f0f0f0",
+                    display: "flex", alignItems: "center", gap: 14,
+                  }}>
+                    <div style={{
+                      width: 48, height: 48, borderRadius: "50%",
+                      background: "linear-gradient(135deg, #6366f1, #ec4899)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "#fff", fontWeight: 700, fontSize: 20, fontFamily: "system-ui",
+                      flexShrink: 0, boxShadow: "0 4px 12px rgba(99,102,241,0.35)",
+                    }}>
+                      {(senderNameValue.trim() || shopName).charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15, color: "#1a1a1a", fontFamily: "system-ui" }}>
+                        {senderNameValue.trim() || shopName}
+                        <span style={{
+                          marginLeft: 6, fontSize: 10, color: "#6366f1", fontWeight: 600,
+                          background: "#eef2ff", borderRadius: 6, padding: "2px 6px",
+                          verticalAlign: "middle",
+                        }}>via Pinzo</span>
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontWeight: 600, fontSize: 14, color: "#1a1a1a", fontFamily: "system-ui" }}>
-                            {senderNameValue.trim() || shopName} via Pinzo
-                          </span>
-                          <span style={{
-                            fontSize: 11, color: "#fff", fontFamily: "system-ui",
-                            background: "#6366f1", borderRadius: 10, padding: "2px 8px", fontWeight: 500,
-                          }}>
-                            Now
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 12, color: "#888", fontFamily: "system-ui", marginTop: 2 }}>
-                          noreply@boldteq.app
-                        </div>
-                        <div style={{ fontSize: 12, color: "#555", fontFamily: "system-ui", marginTop: 4 }}>
-                          <span style={{ color: "#888" }}>To:</span> customer@example.com
-                          {replyToValue.trim() && (
-                            <span style={{ marginLeft: 12, color: "#888" }}>
-                              Reply-To: <span style={{ color: "#555" }}>{replyToValue.trim()}</span>
-                            </span>
-                          )}
-                        </div>
+                      <div style={{ fontSize: 12, color: "#888", fontFamily: "system-ui", marginTop: 3 }}>
+                        To: customer@example.com
+                        {replyToValue.trim() && (
+                          <span> &middot; Reply-To: {replyToValue.trim()}</span>
+                        )}
                       </div>
+                    </div>
+                    <div style={{
+                      fontSize: 11, color: "#fff", fontFamily: "system-ui",
+                      background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                      borderRadius: 12, padding: "3px 10px", fontWeight: 600,
+                      boxShadow: "0 2px 6px rgba(99,102,241,0.3)",
+                    }}>
+                      Just now
+                    </div>
+                  </div>
+
+                  {/* Subject line */}
+                  <div style={{
+                    background: "#ffffff", padding: "12px 20px",
+                    borderBottom: "1px solid #f5f5f5",
+                  }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: "#1a1a1a", fontFamily: "system-ui" }}>
+                      You&apos;re on the waitlist — {senderNameValue.trim() || shopName}
                     </div>
                   </div>
 
                   {/* Email body */}
-                  <div style={{ background: "#f9fafb", padding: "24px 20px" }}>
+                  <div style={{
+                    background: "linear-gradient(180deg, #f8f9ff, #f3f0ff)",
+                    padding: "28px 20px",
+                  }}>
                     <div style={{
-                      maxWidth: 480, margin: "0 auto",
                       fontFamily: "Arial, sans-serif",
                       background: "#ffffff",
-                      borderRadius: 12,
+                      borderRadius: 16,
                       overflow: "hidden",
-                      boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+                      boxShadow: "0 4px 20px rgba(99,102,241,0.1)",
                     }}>
-                      {/* Colored header bar */}
+                      {/* Gradient banner */}
                       <div style={{
-                        background: "linear-gradient(135deg, #6366f1, #a855f7)",
-                        padding: "20px 24px",
+                        background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)",
+                        padding: "28px 28px 20px",
+                        position: "relative",
                       }}>
-                        <div style={{ fontSize: 22, fontWeight: 700, color: "#ffffff", margin: 0 }}>
+                        <div style={{
+                          fontSize: 13, color: "rgba(255,255,255,0.8)", fontWeight: 500,
+                          marginBottom: 6, letterSpacing: "0.5px", textTransform: "uppercase",
+                        }}>
+                          Waitlist Confirmation
+                        </div>
+                        <div style={{ fontSize: 24, fontWeight: 800, color: "#ffffff" }}>
                           You&apos;re on the waitlist!
                         </div>
                       </div>
+
                       {/* Body content */}
-                      <div style={{ padding: "20px 24px" }}>
-                        <p style={{ margin: "0 0 16px", fontSize: 14, lineHeight: 1.7, color: "#333" }}>
-                          Thanks for signing up. We&apos;ll let you know as soon as
-                          delivery is available to <span style={{
-                            background: "#f0f0ff", color: "#6366f1", fontWeight: 600,
-                            padding: "1px 6px", borderRadius: 4,
-                          }}>10001</span>.
+                      <div style={{ padding: "24px 28px" }}>
+                        <p style={{ margin: "0 0 20px", fontSize: 15, lineHeight: 1.7, color: "#374151" }}>
+                          Hi there! Thanks for signing up. We&apos;ll notify you as soon as
+                          delivery is available to your area.
                         </p>
+
+                        {/* ZIP code highlight box */}
                         <div style={{
-                          borderTop: "1px solid #f0f0f0",
-                          paddingTop: 16, marginTop: 8,
-                          fontSize: 13, color: "#888",
+                          background: "linear-gradient(135deg, #eef2ff, #faf5ff)",
+                          borderRadius: 12, padding: "16px 20px",
+                          border: "1px solid #e0e7ff",
+                          display: "flex", alignItems: "center", gap: 12,
                         }}>
-                          — {senderNameValue.trim() || shopName}
+                          <div style={{
+                            width: 40, height: 40, borderRadius: 10,
+                            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            color: "#fff", fontSize: 18, flexShrink: 0,
+                          }}>
+                            &#128205;
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 12, color: "#6b7280", fontWeight: 500 }}>
+                              Requested ZIP code
+                            </div>
+                            <div style={{ fontSize: 22, fontWeight: 800, color: "#4f46e5", letterSpacing: "1px" }}>
+                              10001
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Signature */}
+                        <div style={{
+                          marginTop: 24, paddingTop: 16,
+                          borderTop: "1px solid #f3f4f6",
+                          display: "flex", alignItems: "center", gap: 10,
+                        }}>
+                          <div style={{
+                            width: 32, height: 32, borderRadius: "50%",
+                            background: "linear-gradient(135deg, #6366f1, #ec4899)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            color: "#fff", fontWeight: 700, fontSize: 13, fontFamily: "system-ui",
+                            flexShrink: 0,
+                          }}>
+                            {(senderNameValue.trim() || shopName).charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+                              {senderNameValue.trim() || shopName}
+                            </div>
+                            <div style={{ fontSize: 11, color: "#9ca3af" }}>
+                              Sent via Pinzo
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -680,13 +751,13 @@ export default function SettingsPage() {
 
                   {/* Footer */}
                   <div style={{
-                    background: "linear-gradient(180deg, #f0f0f0, #e8e8e8)",
-                    padding: "10px 20px",
+                    background: "#ffffff",
+                    padding: "12px 20px",
                     textAlign: "center",
-                    borderTop: "1px solid #e0e0e0",
+                    borderTop: "1px solid #f0f0f0",
                   }}>
-                    <span style={{ fontSize: 11, color: "#999", fontFamily: "system-ui" }}>
-                      Sent via <span style={{ color: "#6366f1", fontWeight: 600 }}>Pinzo</span> &middot; noreply@boldteq.app
+                    <span style={{ fontSize: 11, color: "#b0b0b0", fontFamily: "system-ui" }}>
+                      Powered by <span style={{ color: "#6366f1", fontWeight: 700 }}>Pinzo</span> &middot; noreply@boldteq.app
                     </span>
                   </div>
                 </div>

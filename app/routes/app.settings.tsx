@@ -475,10 +475,10 @@ export default function SettingsPage() {
               <BlockStack gap="400">
                 <BlockStack gap="100">
                   <Text as="h2" variant="headingMd">
-                    Email Settings
+                    Email Notifications
                   </Text>
-                  <Text as="p" tone="subdued" variant="bodyMd">
-                    Control how notification and customer emails are sent from your store.
+                  <Text as="p" tone="subdued" variant="bodySm">
+                    Set up how you get notified and how your emails look to customers.
                   </Text>
                 </BlockStack>
                 <Divider />
@@ -503,39 +503,71 @@ export default function SettingsPage() {
                       {testEmailFetcher.data.error}
                     </Banner>
                   )}
-                <TextField
-                  label="Where should we notify you?"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={emailValue}
-                  onChange={handleEmailChange}
-                  autoComplete="email"
-                  helpText="You'll receive an email here whenever a customer joins the waitlist. Leave blank to disable notifications."
-                />
-                <TextField
-                  label="Sender name"
-                  value={senderNameValue}
-                  onChange={setSenderNameValue}
-                  placeholder={shopName}
-                  autoComplete="off"
-                  helpText={`This is the name customers see in their inbox. Leave blank to use your store name ("${shopName}").`}
-                />
-                <TextField
-                  label="Reply-to email"
-                  type="email"
-                  value={replyToValue}
-                  onChange={setReplyToValue}
-                  placeholder="support@yourstore.com"
-                  autoComplete="email"
-                  helpText="When a customer hits Reply on your email, their message goes here. Leave blank if you don't need replies."
-                />
-                <Button
-                  onClick={handleSendTestEmail}
-                  loading={testEmailFetcher.state !== "idle"}
-                  disabled={!emailValue}
+
+                {/* Your notification email */}
+                <Box
+                  padding="300"
+                  background="bg-surface-secondary"
+                  borderRadius="200"
                 >
-                  Send Test Email
-                </Button>
+                  <BlockStack gap="200">
+                    <Text as="h3" variant="headingSm">
+                      Your notification email
+                    </Text>
+                    <TextField
+                      label="Email address"
+                      labelHidden
+                      type="email"
+                      placeholder="your@email.com"
+                      value={emailValue}
+                      onChange={handleEmailChange}
+                      autoComplete="email"
+                      helpText="Get notified when someone joins the waitlist. Leave empty to turn off."
+                    />
+                  </BlockStack>
+                </Box>
+
+                {/* What customers see */}
+                <Box
+                  padding="300"
+                  background="bg-surface-secondary"
+                  borderRadius="200"
+                >
+                  <BlockStack gap="300">
+                    <Text as="h3" variant="headingSm">
+                      What customers see
+                    </Text>
+                    <TextField
+                      label="From name"
+                      value={senderNameValue}
+                      onChange={setSenderNameValue}
+                      placeholder={shopName}
+                      autoComplete="off"
+                      helpText={`Shown as the sender. Defaults to "${shopName}".`}
+                    />
+                    <TextField
+                      label="Reply-to address"
+                      type="email"
+                      value={replyToValue}
+                      onChange={setReplyToValue}
+                      placeholder="support@yourstore.com"
+                      autoComplete="email"
+                      helpText="Where customer replies go. Leave empty to disable replies."
+                    />
+                  </BlockStack>
+                </Box>
+
+                <Divider />
+                <InlineStack align="end">
+                  <Button
+                    onClick={handleSendTestEmail}
+                    loading={testEmailFetcher.state !== "idle"}
+                    disabled={!emailValue}
+                    variant="primary"
+                  >
+                    Send Test Email
+                  </Button>
+                </InlineStack>
               </BlockStack>
             </Card>
           </Layout.Section>
@@ -545,33 +577,38 @@ export default function SettingsPage() {
               <BlockStack gap="400">
                 <BlockStack gap="100">
                   <Text as="h2" variant="headingMd">
-                    Email Preview
+                    Live Preview
                   </Text>
-                  <Text as="p" tone="subdued" variant="bodyMd">
-                    This is how your emails will appear to customers.
+                  <Text as="p" tone="subdued" variant="bodySm">
+                    This updates as you type — what your customers will receive.
                   </Text>
                 </BlockStack>
                 <Divider />
 
                 {/* Realistic email preview */}
-                <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #e3e3e3", background: "#f6f6f7" }}>
+                <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #e0e0e0", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
                   {/* Email client toolbar */}
-                  <div style={{ background: "#f0f0f0", padding: "10px 16px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid #e0e0e0" }}>
-                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#ff5f57" }} />
-                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#febc2e" }} />
-                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#28c840" }} />
-                    <span style={{ marginLeft: 12, fontSize: 12, color: "#8c8c8c", fontFamily: "system-ui" }}>Mail</span>
+                  <div style={{
+                    background: "linear-gradient(180deg, #f8f8f8, #f0f0f0)",
+                    padding: "10px 16px",
+                    display: "flex", alignItems: "center", gap: 8,
+                    borderBottom: "1px solid #e0e0e0",
+                  }}>
+                    <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#ff5f57", boxShadow: "inset 0 -1px 2px rgba(0,0,0,0.1)" }} />
+                    <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#febc2e", boxShadow: "inset 0 -1px 2px rgba(0,0,0,0.1)" }} />
+                    <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#28c840", boxShadow: "inset 0 -1px 2px rgba(0,0,0,0.1)" }} />
+                    <span style={{ marginLeft: 12, fontSize: 13, color: "#666", fontFamily: "system-ui", fontWeight: 500 }}>Inbox</span>
                   </div>
 
                   {/* Email header */}
-                  <div style={{ background: "#ffffff", padding: "16px 20px", borderBottom: "1px solid #ebebeb" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                  <div style={{ background: "#ffffff", padding: "16px 20px", borderBottom: "1px solid #f0f0f0" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <div style={{
-                        width: 40, height: 40, borderRadius: "50%",
-                        background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                        width: 44, height: 44, borderRadius: "50%",
+                        background: "linear-gradient(135deg, #6366f1, #a855f7)",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        color: "#fff", fontWeight: 700, fontSize: 16, fontFamily: "system-ui",
-                        flexShrink: 0,
+                        color: "#fff", fontWeight: 700, fontSize: 18, fontFamily: "system-ui",
+                        flexShrink: 0, boxShadow: "0 2px 8px rgba(99,102,241,0.3)",
                       }}>
                         {(senderNameValue.trim() || shopName).charAt(0).toUpperCase()}
                       </div>
@@ -580,67 +617,85 @@ export default function SettingsPage() {
                           <span style={{ fontWeight: 600, fontSize: 14, color: "#1a1a1a", fontFamily: "system-ui" }}>
                             {senderNameValue.trim() || shopName} via Pinzo
                           </span>
-                          <span style={{ fontSize: 12, color: "#8c8c8c", fontFamily: "system-ui", flexShrink: 0 }}>
-                            Just now
+                          <span style={{
+                            fontSize: 11, color: "#fff", fontFamily: "system-ui",
+                            background: "#6366f1", borderRadius: 10, padding: "2px 8px", fontWeight: 500,
+                          }}>
+                            Now
                           </span>
                         </div>
-                        <div style={{ fontSize: 12, color: "#6b6b6b", fontFamily: "system-ui", marginTop: 2 }}>
+                        <div style={{ fontSize: 12, color: "#888", fontFamily: "system-ui", marginTop: 2 }}>
                           noreply@boldteq.app
                         </div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a", fontFamily: "system-ui", marginTop: 4 }}>
-                          You&apos;re on the waitlist — {senderNameValue.trim() || shopName}
+                        <div style={{ fontSize: 12, color: "#555", fontFamily: "system-ui", marginTop: 4 }}>
+                          <span style={{ color: "#888" }}>To:</span> customer@example.com
+                          {replyToValue.trim() && (
+                            <span style={{ marginLeft: 12, color: "#888" }}>
+                              Reply-To: <span style={{ color: "#555" }}>{replyToValue.trim()}</span>
+                            </span>
+                          )}
                         </div>
                       </div>
-                    </div>
-                    {/* Meta rows */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingLeft: 52 }}>
-                      <div style={{ fontSize: 12, color: "#8c8c8c", fontFamily: "system-ui" }}>
-                        <span style={{ color: "#6b6b6b" }}>To:</span>{" "}
-                        <span style={{ color: "#1a1a1a" }}>customer@example.com</span>
-                      </div>
-                      {replyToValue.trim() ? (
-                        <div style={{ fontSize: 12, color: "#8c8c8c", fontFamily: "system-ui" }}>
-                          <span style={{ color: "#6b6b6b" }}>Reply-To:</span>{" "}
-                          <span style={{ color: "#1a1a1a" }}>{replyToValue.trim()}</span>
-                        </div>
-                      ) : (
-                        <div style={{ fontSize: 12, color: "#c47a00", fontFamily: "system-ui", display: "flex", alignItems: "center", gap: 4 }}>
-                          <span>&#9888;</span> No reply-to — customers cannot reply
-                        </div>
-                      )}
                     </div>
                   </div>
 
-                  {/* Email body — matches actual email template */}
-                  <div style={{ background: "#ffffff", padding: "24px 20px" }}>
+                  {/* Email body */}
+                  <div style={{ background: "#f9fafb", padding: "24px 20px" }}>
                     <div style={{
                       maxWidth: 480, margin: "0 auto",
                       fontFamily: "Arial, sans-serif",
                       background: "#ffffff",
-                      borderRadius: 8,
-                      border: "1px solid #f0f0f0",
-                      padding: 24,
+                      borderRadius: 12,
+                      overflow: "hidden",
+                      boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
                     }}>
-                      <h2 style={{ margin: "0 0 16px", fontSize: 20, fontWeight: 700, color: "#1a1a1a" }}>
-                        You&apos;re on the waitlist!
-                      </h2>
-                      <p style={{ margin: "0 0 12px", fontSize: 14, lineHeight: 1.6, color: "#333" }}>
-                        Thanks for signing up. We&apos;ll let you know as soon as
-                        delivery is available to <strong>10001</strong>.
-                      </p>
-                      <p style={{ margin: "24px 0 0", fontSize: 13, color: "#666" }}>
-                        — {senderNameValue.trim() || shopName}
-                      </p>
+                      {/* Colored header bar */}
+                      <div style={{
+                        background: "linear-gradient(135deg, #6366f1, #a855f7)",
+                        padding: "20px 24px",
+                      }}>
+                        <div style={{ fontSize: 22, fontWeight: 700, color: "#ffffff", margin: 0 }}>
+                          You&apos;re on the waitlist!
+                        </div>
+                      </div>
+                      {/* Body content */}
+                      <div style={{ padding: "20px 24px" }}>
+                        <p style={{ margin: "0 0 16px", fontSize: 14, lineHeight: 1.7, color: "#333" }}>
+                          Thanks for signing up. We&apos;ll let you know as soon as
+                          delivery is available to <span style={{
+                            background: "#f0f0ff", color: "#6366f1", fontWeight: 600,
+                            padding: "1px 6px", borderRadius: 4,
+                          }}>10001</span>.
+                        </p>
+                        <div style={{
+                          borderTop: "1px solid #f0f0f0",
+                          paddingTop: 16, marginTop: 8,
+                          fontSize: 13, color: "#888",
+                        }}>
+                          — {senderNameValue.trim() || shopName}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   {/* Footer */}
-                  <div style={{ background: "#f6f6f7", padding: "12px 20px", borderTop: "1px solid #ebebeb", textAlign: "center" }}>
+                  <div style={{
+                    background: "linear-gradient(180deg, #f0f0f0, #e8e8e8)",
+                    padding: "10px 20px",
+                    textAlign: "center",
+                    borderTop: "1px solid #e0e0e0",
+                  }}>
                     <span style={{ fontSize: 11, color: "#999", fontFamily: "system-ui" }}>
-                      Sent via Pinzo &middot; noreply@boldteq.app
+                      Sent via <span style={{ color: "#6366f1", fontWeight: 600 }}>Pinzo</span> &middot; noreply@boldteq.app
                     </span>
                   </div>
                 </div>
+
+                {!replyToValue.trim() && (
+                  <Banner tone="warning">
+                    No reply-to set — customers won&apos;t be able to reply to this email.
+                  </Banner>
+                )}
               </BlockStack>
             </Card>
           </Layout.Section>

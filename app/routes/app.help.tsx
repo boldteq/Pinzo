@@ -99,7 +99,7 @@ export default function HelpPage() {
           <Layout.Section>
             <Card padding="0">
               <Box padding="400" paddingBlockEnd="200">
-                <Text as="h2" variant="headingMd">
+                <Text as="h2" variant="headingLg" fontWeight="bold">
                   Frequently Asked Questions
                 </Text>
               </Box>

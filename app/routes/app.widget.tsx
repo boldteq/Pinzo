@@ -144,6 +144,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       // Server-side plan gating: strip premium fields the shop's plan doesn't allow
       const subscription = await getShopSubscription(shop);
       const limits = PLAN_LIMITS[subscription.planTier];
+      if (!limits.widgetFullCustom) {
+        data.primaryColor = "#008060";
+        data.successColor = "#008060";
+        data.errorColor = "#D72C0D";
+        data.backgroundColor = "#FFFFFF";
+        data.textColor = "#202223";
+        data.position = "inline";
+      }
+      if (!limits.showEtaCodReturn) {
+        data.showEta = false;
+        data.showZone = false;
+        data.showCod = false;
+        data.showReturnPolicy = false;
+        data.showCutoffTime = false;
+        data.showDeliveryDays = false;
+      }
       if (!limits.customCss) {
         data.customCss = null;
       }
@@ -296,33 +312,40 @@ function scopeAdminCss(rawCss: string | null | undefined, wid: string): string {
 // ── CSS generators — one per style preset, mirrors the Liquid block CSS ─────
 
 function buildSharedMetaCss(W: string, cfg: WidgetConfig): string {
-  const p = cfg.primaryColor;
   const s = cfg.successColor;
   return (
+    // Result card layout — matches storefront
     W + " .zcc-result-icon{flex-shrink:0;width:24px;height:24px;display:flex;align-items:center;justify-content:center}" +
-    W + " .zcc-result-icon svg{width:22px;height:22px}" +
+    W + " .zcc-result-icon svg{width:22px;height:22px;display:block}" +
     W + " .zcc-result-content{flex:1;min-width:0}" +
-    // Compact single-line meta rows — tight spacing
-    W + " .zcc-meta{margin-top:4px;font-size:13px;display:flex;align-items:center;gap:6px;color:" + cfg.textColor + ";line-height:1.3}" +
-    W + " .zcc-meta svg{flex-shrink:0;width:14px;height:14px;display:block}" +
-    W + " .zcc-meta strong{font-weight:700}" +
-    // COD as compact inline pill
-    W + " .zcc-cod{margin-top:6px;display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600}" +
-    W + " .zcc-cod--available{background:" + s + "10;border:1px solid " + s + "20;color:" + s + "}" +
-    W + " .zcc-cod--unavailable{background:#d72c0d10;border:1px solid #d72c0d20;color:#d72c0d}" +
+    W + " .zcc-result-message{font-weight:600;line-height:1.4}" +
+    // Button icon/label structure
+    W + " .zcc-btn-icon{display:inline-flex;align-items:center;flex-shrink:0}" +
+    W + " .zcc-btn-icon svg{width:15px;height:15px;display:block}" +
+    W + " .zcc-btn-label{display:inline}" +
+    // Meta info rows — aligned with storefront values
+    W + " .zcc-meta{margin-top:6px;font-size:13px;display:flex;align-items:center;gap:7px;color:#4b5563;line-height:1.4}" +
+    W + " .zcc-meta svg{width:14px;height:14px;flex-shrink:0;opacity:0.7}" +
+    W + " .zcc-meta strong{font-weight:600;color:" + cfg.textColor + "}" +
+    W + " .zcc-meta span{flex:1}" +
+    // Cutoff / days / return policy — separate classes matching storefront
+    W + " .zcc-cutoff{margin-top:5px;font-size:12px;color:#6d7175;display:flex;align-items:center;gap:7px}" +
+    W + " .zcc-cutoff svg{width:13px;height:13px;flex-shrink:0;opacity:0.6}" +
+    W + " .zcc-days{margin-top:5px;font-size:12px;color:#6d7175;display:flex;align-items:center;gap:7px}" +
+    W + " .zcc-days svg{width:13px;height:13px;flex-shrink:0;opacity:0.6}" +
+    W + " .zcc-return-policy{margin-top:5px;font-size:12px;color:#6d7175;display:flex;align-items:center;gap:7px}" +
+    W + " .zcc-return-policy svg{width:13px;height:13px;flex-shrink:0;opacity:0.6}" +
+    W + " .zcc-return-policy span{flex:1}" +
+    // COD badge — aligned with storefront values
+    W + " .zcc-cod{margin-top:8px;display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600}" +
+    W + " .zcc-cod svg{width:13px;height:13px;flex-shrink:0}" +
+    W + " .zcc-cod--available{background:" + s + "12;border:1px solid " + s + "25;color:" + s + "}" +
+    W + " .zcc-cod--unavailable{background:#d72c0d10;border:1px solid #d72c0d22;color:#d72c0d}" +
+    // Waitlist
     W + " .zcc-wl-title{font-size:13px;font-weight:700;color:" + cfg.textColor + ";margin-bottom:10px}" +
-    // Confirmed header — compact
-    W + " .zcc-confirmed-header{display:flex;align-items:center;gap:8px;padding:10px 14px;background:" + s + "06;border:1px solid " + s + "15;border-radius:10px;font-size:13.5px;font-weight:500;color:" + cfg.textColor + "}" +
-    W + " .zcc-change-link{margin-left:auto;color:" + p + ";font-size:12px;cursor:pointer;font-weight:600}" +
-    // Compact inline timeline — single row
-    W + " .zcc-timeline{display:flex;align-items:center;margin-top:10px;padding:10px 12px;background:" + p + "05;border-radius:10px;gap:0;justify-content:center}" +
-    W + " .zcc-timeline-step{display:flex;flex-direction:column;align-items:center;flex:1;gap:2px}" +
-    W + " .zcc-timeline-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.06)}" +
-    W + " .zcc-timeline-icon svg{width:18px;height:18px;display:block}" +
-    W + " .zcc-timeline-step--active .zcc-timeline-icon{box-shadow:0 1px 6px " + p + "18}" +
-    W + " .zcc-timeline-label{font-size:10px;font-weight:700;color:" + cfg.textColor + ";text-transform:uppercase;letter-spacing:0.3px}" +
-    W + " .zcc-timeline-date{font-size:10px;color:#6b7280}" +
-    W + " .zcc-timeline-line{height:2px;width:16px;background:" + p + "25;flex-shrink:0}"
+    W + " .zcc-wl-btn-icon{display:inline-flex;align-items:center;flex-shrink:0}" +
+    W + " .zcc-wl-btn-icon svg{width:14px;height:14px;display:block}" +
+    W + " .zcc-wl-btn-label{display:inline}"
   );
 }
 
@@ -350,13 +373,16 @@ function buildWidgetCss(wid: string, cfg: WidgetConfig): string {
     W + " .zcc-btn:active{filter:brightness(0.95);transform:translateY(0)}" +
     W + " .zcc-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none;filter:none}" +
     W + " .zcc-btn--error{background:" + e + "10;color:" + e + ";font-weight:700;box-shadow:none}" +
-    W + " .zcc-result{margin-top:10px;padding:12px 14px;border-radius:12px;font-size:13.5px;line-height:1.5;animation:zcc-slide-in 0.4s cubic-bezier(0.34,1.56,0.64,1);display:flex;gap:10px;align-items:flex-start;justify-content:space-between}" +
-    W + " .zcc-result.ok{background:" + s + "08;border:1px solid " + s + "18}" +
-    W + " .zcc-result.fail{background:" + e + "08;border:1px solid " + e + "18}" +
-    W + " .zcc-wl{margin-top:10px;padding:14px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:12px;border:1px solid #e2e8f0}" +
-    W + " .zcc-wl-input{border-radius:8px;border:1.5px solid #dee2e6;padding:10px 14px;width:100%;display:block;margin-bottom:6px;outline:none;font-size:13px;transition:border-color 0.2s;background:#fff}" +
-    W + " .zcc-wl-btn{border-radius:50px;background:" + p + ";color:#fff;padding:10px;width:100%;font-weight:600;border:none;cursor:pointer;font-size:13px;transition:filter 0.2s,transform 0.2s}" +
-    W + " .zcc-wl-btn:hover{filter:brightness(1.06);transform:translateY(-1px)}" +
+    W + " .zcc-result{margin-top:12px;padding:13px 15px;border-radius:12px;font-size:13.5px;line-height:1.5;animation:zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1);display:flex;gap:12px;align-items:flex-start}" +
+    W + " .zcc-result.ok{background:" + s + "0c;border:1px solid " + s + "20;color:" + cfg.textColor + "}" +
+    W + " .zcc-result.ok .zcc-result-icon svg{color:" + s + ";stroke:" + s + "}" +
+    W + " .zcc-result.fail{background:" + e + "08;border:1px solid " + e + "18;color:" + cfg.textColor + "}" +
+    W + " .zcc-result.fail .zcc-result-icon svg{color:" + e + ";stroke:" + e + "}" +
+    W + " .zcc-wl{margin-top:10px;padding:13px 14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0}" +
+    W + " .zcc-wl-input{border-radius:8px;border:1.5px solid #dee2e6;padding:10px 14px;width:100%;display:block;margin-bottom:8px;outline:none;font-size:13px;transition:border-color 0.2s,box-shadow 0.2s;background:#fff;color:" + cfg.textColor + "}" +
+    W + " .zcc-wl-btn{border-radius:" + btnRadius + ";background:" + p + ";color:#fff;padding:10px 20px;width:100%;font-weight:600;border:none;cursor:pointer;font-size:13px;transition:filter 0.2s,box-shadow 0.2s,transform 0.2s;letter-spacing:0.01em;box-shadow:0 2px 8px " + p + "25;display:flex;align-items:center;justify-content:center;gap:6px}" +
+    W + " .zcc-wl-btn:hover{filter:brightness(1.06);box-shadow:0 4px 14px " + p + "40;transform:translateY(-1px)}" +
+    W + " .zcc-wl-btn:active{filter:brightness(0.95);transform:translateY(0)}" +
     buildSharedMetaCss(W, cfg);
   return base + scopeAdminCss(cfg.customCss, wid);
 }
@@ -469,39 +495,37 @@ function FloatingPreview({
                   }}>
                     {pinIcon}
                   </span>
-                  {cfg.heading}
+                  Delivery Check
                 </div>
                 <button
                   type="button"
                   onClick={() => setPanelOpen(false)}
                   style={{
-                    background: "rgba(0,0,0,0.05)",
+                    background: "none",
                     border: "none",
                     cursor: "pointer",
                     color: cfg.textColor,
-                    borderRadius: 8,
-                    width: 28,
-                    height: 28,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: 0,
+                    opacity: 0.5,
+                    borderRadius: 6,
+                    padding: 4,
+                    lineHeight: 1,
+                    transition: "all 0.15s",
                   }}
                 >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
                     <path d="M18 6L6 18" /><path d="M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-              {/* Panel body — compact */}
-              <div style={{ padding: "10px 14px 14px" }}>
+              {/* Panel body */}
+              <div style={{ padding: "16px 20px 20px" }}>
                 <style dangerouslySetInnerHTML={{ __html: `#${wid} .zcc-heading{display:none}` }} />
                 {widgetHtml}
               </div>
             </div>
           )}
 
-          {/* Trigger button — circular icon only */}
+          {/* Trigger button — pill with text, matching storefront */}
           <button
             type="button"
             onClick={() => setPanelOpen(!panelOpen)}
@@ -509,22 +533,23 @@ function FloatingPreview({
               background: cfg.primaryColor,
               color: "#fff",
               border: "none",
-              borderRadius: "50%",
-              width: 52,
-              height: 52,
-              padding: 0,
+              borderRadius: 50,
+              padding: "14px 22px",
+              fontSize: 14,
+              fontWeight: 600,
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
+              gap: 8,
               cursor: "pointer",
-              boxShadow: `0 6px 20px ${cfg.primaryColor}40, 0 2px 6px rgba(0,0,0,0.1)`,
-              transition: "transform 0.2s ease, box-shadow 0.2s ease",
-              position: "relative" as const,
+              boxShadow: `0 4px 16px ${cfg.primaryColor}40`,
+              transition: "all 0.2s ease",
+              whiteSpace: "nowrap" as const,
             }}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 22, height: 22 }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
             </svg>
+            {cfg.buttonText || "Check Delivery"}
           </button>
         </div>
       </div>
@@ -577,7 +602,7 @@ function PopupPreview({
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
             </svg>
-            {cfg.heading}
+            {cfg.buttonText || cfg.heading}
           </button>
         </div>
 
@@ -682,27 +707,37 @@ const WidgetPreview = memo(function WidgetPreview({
   cfg,
   previewState,
   widgetFullCustom,
+  showEtaCodReturn,
 }: {
   cfg: WidgetConfig;
   previewState: "idle" | "success" | "error" | "notfound";
   widgetFullCustom: boolean;
+  showEtaCodReturn: boolean;
 }) {
   const wid = "zcc-admin-preview";
 
   // Apply the same plan enforcement the API applies so the preview matches
   // exactly what will render on the storefront.
   const effectiveCfg: WidgetConfig = useMemo(() => {
-    if (widgetFullCustom) return cfg;
-    return {
-      ...cfg,
-      primaryColor: DEFAULTS.primaryColor,
-      successColor: DEFAULTS.successColor,
-      errorColor: DEFAULTS.errorColor,
-      backgroundColor: DEFAULTS.backgroundColor,
-      textColor: DEFAULTS.textColor,
-      position: DEFAULTS.position,
-    };
-  }, [cfg, widgetFullCustom]);
+    const c = { ...cfg };
+    if (!widgetFullCustom) {
+      c.primaryColor = DEFAULTS.primaryColor;
+      c.successColor = DEFAULTS.successColor;
+      c.errorColor = DEFAULTS.errorColor;
+      c.backgroundColor = DEFAULTS.backgroundColor;
+      c.textColor = DEFAULTS.textColor;
+      c.position = DEFAULTS.position;
+    }
+    if (!showEtaCodReturn) {
+      c.showEta = false;
+      c.showZone = false;
+      c.showCod = false;
+      c.showReturnPolicy = false;
+      c.showCutoffTime = false;
+      c.showDeliveryDays = false;
+    }
+    return c;
+  }, [cfg, widgetFullCustom, showEtaCodReturn]);
 
   const css = useMemo(() => buildWidgetCss(wid, effectiveCfg), [wid, effectiveCfg]);
 
@@ -715,7 +750,6 @@ const WidgetPreview = memo(function WidgetPreview({
   // Use effectiveCfg for colors so the preview matches what storefront serves
   const iconStyle = { width: 16, height: 16, display: "block" as const };
   const metaIconStyle = { width: 14, height: 14, display: "block" as const, opacity: 0.7 };
-  const timelineIconStyle = { width: 18, height: 18, display: "block" as const };
   const pinIcon = (
     <svg viewBox="0 0 24 24" fill="none" stroke={effectiveCfg.primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={iconStyle}>
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
@@ -729,11 +763,6 @@ const WidgetPreview = memo(function WidgetPreview({
   const xCircleIcon = (
     <svg viewBox="0 0 24 24" fill="none" stroke={effectiveCfg.errorColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, display: "block" as const }}>
       <circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>
-    </svg>
-  );
-  const xSmallIcon = (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12, display: "block" as const }}>
-      <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
     </svg>
   );
   const truckIcon = (
@@ -761,21 +790,6 @@ const WidgetPreview = memo(function WidgetPreview({
       <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/>
     </svg>
   );
-  const bagIcon = (
-    <svg viewBox="0 0 24 24" fill="none" stroke={effectiveCfg.primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={timelineIconStyle}>
-      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
-    </svg>
-  );
-  const shipTruckIcon = (
-    <svg viewBox="0 0 24 24" fill="none" stroke={effectiveCfg.primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={timelineIconStyle}>
-      <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 13.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>
-    </svg>
-  );
-  const packageIcon = (
-    <svg viewBox="0 0 24 24" fill="none" stroke={effectiveCfg.primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={timelineIconStyle}>
-      <path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
-    </svg>
-  );
   const widgetHtml = (
     <div id={wid}>
       <div className="zcc-heading">
@@ -783,129 +797,72 @@ const WidgetPreview = memo(function WidgetPreview({
         <span>{cfg.heading}</span>
       </div>
 
-      {/* Success state: show "Delivering to" confirmed view instead of search bar */}
-      {previewState === "success" ? (
-        <div className="zcc-confirmed">
-          <div className="zcc-confirmed-header">
-            <span style={{ display: "inline-flex", alignItems: "center" }}>{checkCircleIcon}</span>
-            <span>Delivering to <strong>10001</strong></span>
-            <span className="zcc-change-link">Change</span>
-          </div>
-        </div>
-      ) : (
-        /* All other states: show search bar */
-        <div className="zcc-search-bar">
-          {(previewState === "error" || previewState === "notfound") ? (
-            <input
-              className="zcc-input"
-              type="text"
-              value="380007"
-              readOnly
-              style={{ color: effectiveCfg.errorColor }}
-            />
-          ) : (
-            <input
-              className="zcc-input"
-              type="text"
-              placeholder={cfg.placeholder}
-              readOnly
-            />
-          )}
-          {(previewState === "error" || previewState === "notfound") ? (
-            <button className="zcc-btn zcc-btn--error" type="button" style={{ gap: 6 }}>
-              {cfg.buttonText.toUpperCase()} {xSmallIcon}
-            </button>
-          ) : (
-            <button className="zcc-btn" type="button">
-              {cfg.buttonText}
-            </button>
-          )}
-        </div>
-      )}
+      {/* Search bar — always visible, matching storefront structure */}
+      <div className="zcc-search-bar">
+        {previewState === "success" ? (
+          <input className="zcc-input" type="text" value="10001" readOnly />
+        ) : (previewState === "error" || previewState === "notfound") ? (
+          <input className="zcc-input" type="text" value="380007" readOnly />
+        ) : (
+          <input className="zcc-input" type="text" placeholder={cfg.placeholder} readOnly />
+        )}
+        <button className="zcc-btn" type="button">
+          <span className="zcc-btn-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15, display: "block" }}>
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+          </span>
+          <span className="zcc-btn-label">{cfg.buttonText}</span>
+        </button>
+      </div>
 
-      {/* Success result — compact card with emoji accent */}
+      {/* Success result — matches storefront rendering */}
       {previewState === "success" && (
-        <>
-          <div className="zcc-result ok">
-            <div className="zcc-result-content">
-              <div style={{ fontWeight: 600, color: effectiveCfg.successColor, marginBottom: 4 }}>
-                {cfg.successMessage}
-              </div>
-              {cfg.showEta && (
-                <div className="zcc-meta">
-                  {truckIcon}
-                  <span>Get it by <strong>Thu, Mar 20</strong>{cfg.showCutoffTime ? " · Order within " : ""}{cfg.showCutoffTime && <strong>5h 30m</strong>}</span>
-                </div>
-              )}
-              {!cfg.showEta && cfg.showCutoffTime && (
-                <div className="zcc-meta">
-                  {clockIcon}
-                  <span>Order within <strong>5h 30m</strong> for same-day</span>
-                </div>
-              )}
-              {cfg.showDeliveryDays && (
-                <div className="zcc-meta">
-                  {calendarIcon}
-                  <span>Mon · Tue · Wed · Thu · Fri</span>
-                </div>
-              )}
-              {(cfg.showCod || cfg.showReturnPolicy) && (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, flexWrap: "wrap" as const }}>
-                  {cfg.showCod && (
-                    <div className="zcc-cod zcc-cod--available">
-                      {cardIcon} COD Available
-                    </div>
-                  )}
-                  {cfg.showReturnPolicy && (
-                    <span style={{ fontSize: 12, color: "#6b7280", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                      {refreshIcon} Returns accepted
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
+        <div className="zcc-result ok">
+          <div className="zcc-result-icon">{checkCircleIcon}</div>
+          <div className="zcc-result-content">
+            <div className="zcc-result-message" style={{ color: effectiveCfg.successColor }}>{cfg.successMessage}</div>
+            {effectiveCfg.showEta && (
+              <div className="zcc-meta">{truckIcon}<span>Estimated delivery: <strong>2-3 business days</strong></span></div>
+            )}
+            {effectiveCfg.showZone && (
+              <div className="zcc-meta">{pinIcon}<span>Zone: <strong>North</strong></span></div>
+            )}
+            {effectiveCfg.showDeliveryDays && (
+              <div className="zcc-meta zcc-days">{calendarIcon}<span>Mon &middot; Tue &middot; Wed &middot; Thu &middot; Fri</span></div>
+            )}
+            {effectiveCfg.showCutoffTime && (
+              <div className="zcc-meta zcc-cutoff">{clockIcon}<span>Order by <strong>2:00 PM</strong> for same-day</span></div>
+            )}
+            {effectiveCfg.showCod && (
+              <div className="zcc-cod zcc-cod--available">{cardIcon} Cash on Delivery Available</div>
+            )}
+            {effectiveCfg.showReturnPolicy && (
+              <div className="zcc-return-policy">{refreshIcon}<span>7-day easy returns</span></div>
+            )}
           </div>
-          {/* Compact inline delivery timeline */}
-          {cfg.showEta && (
-            <div className="zcc-timeline">
-              <div className="zcc-timeline-step zcc-timeline-step--active">
-                <div className="zcc-timeline-icon">{bagIcon}</div>
-                <div className="zcc-timeline-label">Order</div>
-                <div className="zcc-timeline-date">Today</div>
-              </div>
-              <div className="zcc-timeline-line" />
-              <div className="zcc-timeline-step zcc-timeline-step--active">
-                <div className="zcc-timeline-icon">{shipTruckIcon}</div>
-                <div className="zcc-timeline-label">Ships</div>
-                <div className="zcc-timeline-date">Mar 19</div>
-              </div>
-              <div className="zcc-timeline-line" />
-              <div className="zcc-timeline-step">
-                <div className="zcc-timeline-icon">{packageIcon}</div>
-                <div className="zcc-timeline-label">Deliver</div>
-                <div className="zcc-timeline-date">Mar 21</div>
-              </div>
-            </div>
-          )}
-        </>
+        </div>
       )}
 
-      {/* Error / Not Found result — compact */}
+      {/* Error / Not Found result — matches storefront rendering */}
       {(previewState === "error" || previewState === "notfound") && (
         <div className="zcc-result fail">
+          <div className="zcc-result-icon">{xCircleIcon}</div>
           <div className="zcc-result-content">
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ flexShrink: 0, display: "inline-flex" }}>{xCircleIcon}</span>
-              <span>
-                <strong style={{ color: effectiveCfg.errorColor }}>Sorry,</strong>{" "}
-                {resultMessage ? resultMessage.replace(/^Sorry,?\s*/i, "") : "We don't deliver to this area yet."}
-              </span>
-            </div>
+            <div className="zcc-result-message">{resultMessage}</div>
             {cfg.showWaitlistOnFailure && (
               <div className="zcc-wl">
                 <div className="zcc-wl-title">Get notified when we deliver here</div>
+                <input className="zcc-wl-input" type="text" placeholder="Your name" readOnly />
                 <input className="zcc-wl-input" type="email" placeholder="Your email" readOnly />
-                <button className="zcc-wl-btn" type="button">Join Waitlist</button>
+                <button className="zcc-wl-btn" type="button">
+                  <span className="zcc-wl-btn-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, display: "block" }}>
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                  </span>
+                  <span className="zcc-wl-btn-label">Submit Request</span>
+                </button>
               </div>
             )}
           </div>
@@ -1794,7 +1751,7 @@ export default function WidgetPage() {
                         backgroundSize: "20px 20px",
                         backgroundColor: "#f8fafc",
                       }}>
-                        <WidgetPreview cfg={previewCfg} previewState={previewState} widgetFullCustom={limits.widgetFullCustom} />
+                        <WidgetPreview cfg={previewCfg} previewState={previewState} widgetFullCustom={limits.widgetFullCustom} showEtaCodReturn={limits.showEtaCodReturn} />
                       </div>
                     </div>
                   </BlockStack>

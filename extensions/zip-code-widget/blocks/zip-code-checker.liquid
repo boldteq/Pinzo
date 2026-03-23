@@ -581,12 +581,14 @@
               var hr12 = hr % 12 || 12;
               html += '<div class="zcc-meta zcc-cutoff">' + ICONS.clock + '<span>Order by <strong>' + hr12 + ':' + min + ' ' + ampm + '</strong> for same-day</span></div>';
             }
-            if (data.codAvailable === true) {
-              html += '<div class="zcc-cod zcc-cod--available">' + ICONS.card + ' Cash on Delivery Available</div>';
-            } else if (data.codAvailable === false) {
-              html += '<div class="zcc-cod zcc-cod--unavailable">' + ICONS.card + ' COD Not Available</div>';
+            if (cfg.showCod !== false) {
+              if (data.codAvailable === true) {
+                html += '<div class="zcc-cod zcc-cod--available">' + ICONS.card + ' Cash on Delivery Available</div>';
+              } else if (data.codAvailable === false) {
+                html += '<div class="zcc-cod zcc-cod--unavailable">' + ICONS.card + ' COD Not Available</div>';
+              }
             }
-            if (data.returnPolicy) {
+            if (cfg.showReturnPolicy !== false && data.returnPolicy) {
               html += '<div class="zcc-return-policy">' + ICONS.refresh + '<span>' + esc(data.returnPolicy) + '</span></div>';
             }
             html += '</div></div>';

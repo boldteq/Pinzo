@@ -213,11 +213,15 @@ async function handleZipCheck(shop: string | null, zip: string | null) {
     widgetConfig?.successMessage ??
     "Great news! We deliver to your area.";
 
+  // ETA: prefer the zip-level eta, then fall back to the matched delivery rule's
+  // estimatedDays so merchants only need to populate one place.
+  const etaValue = zipRecord.eta ?? matchedRule?.estimatedDays ?? null;
+
   return new Response(
     JSON.stringify({
       allowed: true,
       message: successMsg,
-      eta: widgetConfig?.showEta ? (zipRecord.eta ?? null) : null,
+      eta: widgetConfig?.showEta ? etaValue : null,
       zone: widgetConfig?.showZone ? (zipRecord.zone ?? null) : null,
       codAvailable: widgetConfig?.showCod !== false ? (zipRecord.codAvailable ?? null) : null,
       returnPolicy: widgetConfig?.showReturnPolicy !== false ? (zipRecord.returnPolicy ?? null) : null,

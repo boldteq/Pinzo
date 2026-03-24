@@ -109,14 +109,33 @@ type BadgeTone =
   | "warning"
   | "success"
   | "critical"
+  | "new"
+  | "magic"
+  | "info-strong"
+  | "success-strong"
+  | "warning-strong"
+  | "critical-strong"
+  | "attention-strong"
+  | "read-only"
+  | "enabled"
   | undefined;
 
 const STATUS_TONES: Record<string, BadgeTone> = {
   under_review: "attention",
   planned: "info",
-  in_progress: "warning",
+  in_progress: "warning-strong",
   done: "success",
-  shipped: "success",
+  shipped: "success-strong",
+};
+
+type BadgeProgress = "incomplete" | "partiallyComplete" | "complete" | undefined;
+
+const STATUS_PROGRESS: Record<string, BadgeProgress> = {
+  under_review: "incomplete",
+  planned: "incomplete",
+  in_progress: "partiallyComplete",
+  done: "complete",
+  shipped: "complete",
 };
 
 const CATEGORY_OPTIONS = [
@@ -972,7 +991,7 @@ export default function FeatureRequestsPage() {
                   </Text>
                 </EmptyState>
               ) : (
-                <BlockStack gap="300">
+                <BlockStack gap="400">
                   {paginatedFeatures.map((feature) => {
                     const isVoted = votedIds.has(feature.id);
                     const isOwner = feature.shop === shop;
@@ -1001,7 +1020,7 @@ export default function FeatureRequestsPage() {
                           wrap={false}
                         >
                           {/* Vote column */}
-                          <Box minWidth="56px">
+                          <Box minWidth="56px" width="56px">
                             <Box
                               padding="300"
                               background={isVoted ? "bg-surface-success" : "bg-surface-secondary"}
@@ -1046,7 +1065,7 @@ export default function FeatureRequestsPage() {
                                 align="space-between"
                                 blockAlign="center"
                                 wrap={false}
-                                gap="300"
+                                gap="400"
                               >
                                 <Text
                                   as="h3"
@@ -1071,6 +1090,7 @@ export default function FeatureRequestsPage() {
                                 ) : (
                                   <Badge
                                     tone={STATUS_TONES[feature.status]}
+                                    progress={STATUS_PROGRESS[feature.status]}
                                   >
                                     {STATUS_LABELS[feature.status] ??
                                       feature.status}
@@ -1103,7 +1123,7 @@ export default function FeatureRequestsPage() {
                                 wrap
                                 gap="200"
                               >
-                                <InlineStack gap="200" blockAlign="center" wrap>
+                                <InlineStack gap="200" blockAlign="center" wrap={false}>
                                   <Badge>{feature.category}</Badge>
                                   {isOwner && <Badge tone="info">Yours</Badge>}
                                   <Text as="p" tone="subdued" variant="bodySm">

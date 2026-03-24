@@ -336,6 +336,8 @@ function buildSharedMetaCss(W: string, cfg: WidgetConfig): string {
     W + " .zcc-result-message{font-weight:600;line-height:1.4}" +
     W + " .zcc-result.ok .zcc-result-icon{background:" + s + "15;border-radius:50%;padding:4px}" +
     W + " .zcc-result.ok .zcc-result-message{color:" + s + "}" +
+    W + " .zcc-result.fail .zcc-result-icon{background:" + cfg.errorColor + "15;border-radius:50%;padding:4px}" +
+    W + " .zcc-result.fail .zcc-result-message{color:" + cfg.errorColor + "}" +
     // Button icon/label structure
     W + " .zcc-btn-icon{display:inline-flex;align-items:center;flex-shrink:0}" +
     W + " .zcc-btn-icon svg{width:15px;height:15px;display:block}" +

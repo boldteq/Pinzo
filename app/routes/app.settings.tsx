@@ -26,7 +26,6 @@ import {
   Select,
   TextField,
   Banner,
-  InlineGrid,
   Icon,
   ProgressBar,
 } from "@shopify/polaris";
@@ -340,143 +339,88 @@ export default function SettingsPage() {
                   </Button>
                 </InlineStack>
                 <Divider />
-                {/* Usage grid */}
-                <InlineGrid columns={{ xs: 2, sm: 4 }} gap="300">
-                  <Box
-                    background="bg-surface-info"
-                    borderWidth="025"
-                    borderColor="border-info"
-                    borderRadius="300"
-                    padding="400"
-                  >
-                    <BlockStack gap="200" inlineAlign="center">
-                      <Box
-                        background="bg-surface-info"
-                        borderRadius="full"
-                        padding="300"
-                      >
-                        <Icon source={LocationIcon} tone="info" />
-                      </Box>
-                      <Text as="p" variant="headingLg" alignment="center" fontWeight="bold">
-                        {zipCount}
-                      </Text>
-                      <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-                        Zip Codes
-                      </Text>
-                      {limits.maxZipCodes < UNLIMITED && (
-                        <Box width="100%">
-                          <BlockStack gap="100">
-                            <ProgressBar
-                              progress={Math.min(100, (zipCount / limits.maxZipCodes) * 100)}
-                              size="small"
-                              tone={zipCount / limits.maxZipCodes > 0.8 ? "critical" : "primary"}
-                            />
-                            <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-                              {zipCount} of {limits.maxZipCodes}
-                            </Text>
-                          </BlockStack>
-                        </Box>
+                {/* Usage */}
+                <BlockStack gap="300">
+                  {/* Zip codes row — with progress bar */}
+                  <InlineStack align="space-between" blockAlign="center">
+                    <InlineStack gap="200" blockAlign="center">
+                      <Icon source={LocationIcon} tone="subdued" />
+                      <Text as="p" variant="bodyMd">Zip Codes</Text>
+                    </InlineStack>
+                    <InlineStack gap="200" blockAlign="center">
+                      {limits.maxZipCodes < UNLIMITED ? (
+                        <Text as="p" variant="bodyMd" fontWeight="semibold">
+                          {zipCount} / {limits.maxZipCodes}
+                        </Text>
+                      ) : (
+                        <>
+                          <Text as="p" variant="bodyMd" fontWeight="semibold">
+                            {zipCount}
+                          </Text>
+                          <Badge tone="success">Unlimited</Badge>
+                        </>
                       )}
-                      {limits.maxZipCodes >= UNLIMITED && (
-                        <Badge tone="info">Unlimited</Badge>
-                      )}
-                    </BlockStack>
-                  </Box>
-                  <Box
-                    background="bg-surface-success"
-                    borderWidth="025"
-                    borderColor="border-success"
-                    borderRadius="300"
-                    padding="400"
-                  >
-                    <BlockStack gap="200" inlineAlign="center">
-                      <Box
-                        background="bg-surface-success"
-                        borderRadius="full"
-                        padding="300"
-                      >
-                        <Icon source={DeliveryIcon} tone="success" />
-                      </Box>
-                      <Text as="p" variant="headingLg" alignment="center" fontWeight="bold">
-                        {limits.maxDeliveryRules >= UNLIMITED
-                          ? "\u221E"
-                          : limits.maxDeliveryRules === 0
-                            ? "\u2014"
-                            : String(limits.maxDeliveryRules)}
+                    </InlineStack>
+                  </InlineStack>
+                  {limits.maxZipCodes < UNLIMITED && (
+                    <ProgressBar
+                      progress={Math.min(100, (zipCount / limits.maxZipCodes) * 100)}
+                      size="small"
+                      tone={zipCount / limits.maxZipCodes > 0.8 ? "critical" : "primary"}
+                    />
+                  )}
+
+                  <Divider />
+
+                  {/* Delivery Rules row */}
+                  <InlineStack align="space-between" blockAlign="center">
+                    <InlineStack gap="200" blockAlign="center">
+                      <Icon source={DeliveryIcon} tone="subdued" />
+                      <Text as="p" variant="bodyMd">Delivery Rules</Text>
+                    </InlineStack>
+                    {limits.maxDeliveryRules >= UNLIMITED ? (
+                      <Badge tone="success">Unlimited</Badge>
+                    ) : limits.maxDeliveryRules === 0 ? (
+                      <Badge tone="critical">Not Available</Badge>
+                    ) : (
+                      <Text as="p" variant="bodyMd" fontWeight="semibold">
+                        Up to {limits.maxDeliveryRules}
                       </Text>
-                      <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-                        Delivery Rules
+                    )}
+                  </InlineStack>
+
+                  <Divider />
+
+                  {/* Waitlist row */}
+                  <InlineStack align="space-between" blockAlign="center">
+                    <InlineStack gap="200" blockAlign="center">
+                      <Icon source={PersonIcon} tone="subdued" />
+                      <Text as="p" variant="bodyMd">Waitlist Entries</Text>
+                    </InlineStack>
+                    {limits.maxWaitlist >= UNLIMITED ? (
+                      <Badge tone="success">Unlimited</Badge>
+                    ) : limits.maxWaitlist === 0 ? (
+                      <Badge tone="critical">Not Available</Badge>
+                    ) : (
+                      <Text as="p" variant="bodyMd" fontWeight="semibold">
+                        Up to {limits.maxWaitlist}
                       </Text>
-                      <Badge tone={limits.maxDeliveryRules === 0 ? "critical" : "success"}>
-                        {limits.maxDeliveryRules >= UNLIMITED
-                          ? "Unlimited"
-                          : limits.maxDeliveryRules === 0
-                            ? "Not Available"
-                            : `Up to ${limits.maxDeliveryRules}`}
-                      </Badge>
-                    </BlockStack>
-                  </Box>
-                  <Box
-                    background="bg-surface-warning"
-                    borderWidth="025"
-                    borderColor="border-warning"
-                    borderRadius="300"
-                    padding="400"
-                  >
-                    <BlockStack gap="200" inlineAlign="center">
-                      <Box
-                        background="bg-surface-warning"
-                        borderRadius="full"
-                        padding="300"
-                      >
-                        <Icon source={PersonIcon} tone="caution" />
-                      </Box>
-                      <Text as="p" variant="headingLg" alignment="center" fontWeight="bold">
-                        {limits.maxWaitlist >= UNLIMITED
-                          ? "\u221E"
-                          : limits.maxWaitlist === 0
-                            ? "\u2014"
-                            : String(limits.maxWaitlist)}
-                      </Text>
-                      <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-                        Waitlist
-                      </Text>
-                      <Badge tone={limits.maxWaitlist === 0 ? "critical" : "attention"}>
-                        {limits.maxWaitlist >= UNLIMITED
-                          ? "Unlimited"
-                          : limits.maxWaitlist === 0
-                            ? "Not Available"
-                            : `Up to ${limits.maxWaitlist}`}
-                      </Badge>
-                    </BlockStack>
-                  </Box>
-                  <Box
-                    background={limits.allowBlocked ? "bg-surface-success" : "bg-surface-critical"}
-                    borderWidth="025"
-                    borderColor={limits.allowBlocked ? "border-success" : "border-critical"}
-                    borderRadius="300"
-                    padding="400"
-                  >
-                    <BlockStack gap="200" inlineAlign="center">
-                      <Box
-                        background={limits.allowBlocked ? "bg-surface-success" : "bg-surface-critical"}
-                        borderRadius="full"
-                        padding="300"
-                      >
-                        <Icon source={DisabledIcon} tone={limits.allowBlocked ? "success" : "critical"} />
-                      </Box>
-                      <Text as="p" variant="headingLg" alignment="center" fontWeight="bold">
-                        {limits.allowBlocked ? "\u2713" : "\u2717"}
-                      </Text>
-                      <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-                        Block List
-                      </Text>
-                      <Badge tone={limits.allowBlocked ? "success" : "critical"}>
-                        {limits.allowBlocked ? "Enabled" : "Not Available"}
-                      </Badge>
-                    </BlockStack>
-                  </Box>
-                </InlineGrid>
+                    )}
+                  </InlineStack>
+
+                  <Divider />
+
+                  {/* Block List row */}
+                  <InlineStack align="space-between" blockAlign="center">
+                    <InlineStack gap="200" blockAlign="center">
+                      <Icon source={DisabledIcon} tone="subdued" />
+                      <Text as="p" variant="bodyMd">Block List</Text>
+                    </InlineStack>
+                    <Badge tone={limits.allowBlocked ? "success" : "critical"}>
+                      {limits.allowBlocked ? "Enabled" : "Not Available"}
+                    </Badge>
+                  </InlineStack>
+                </BlockStack>
               </BlockStack>
             </Card>
           </Layout.Section>

@@ -28,7 +28,6 @@ import {
   Banner,
   Pagination,
   Icon,
-  InlineGrid,
 } from "@shopify/polaris";
 import { PlusIcon, DeleteIcon, ChevronUpIcon, EditIcon, SearchIcon } from "@shopify/polaris-icons";
 
@@ -136,37 +135,6 @@ const STATUS_PROGRESS: Record<string, BadgeProgress> = {
   in_progress: "partiallyComplete",
   done: "complete",
   shipped: "complete",
-};
-
-type PolarisBackground =
-  | "bg-surface"
-  | "bg-surface-secondary"
-  | "bg-surface-info"
-  | "bg-surface-warning"
-  | "bg-surface-success"
-  | "bg-surface-critical";
-
-const STATUS_BACKGROUNDS: Record<string, PolarisBackground> = {
-  under_review: "bg-surface-warning",
-  planned: "bg-surface-info",
-  in_progress: "bg-surface-warning",
-  done: "bg-surface-success",
-  shipped: "bg-surface-success",
-};
-
-type PolarisBorderColor =
-  | "border"
-  | "border-info"
-  | "border-warning"
-  | "border-success"
-  | "border-critical";
-
-const STATUS_BORDERS: Record<string, PolarisBorderColor> = {
-  under_review: "border-warning",
-  planned: "border-info",
-  in_progress: "border-warning",
-  done: "border-success",
-  shipped: "border-success",
 };
 
 const CATEGORY_OPTIONS = [
@@ -862,102 +830,6 @@ export default function FeatureRequestsPage() {
       <Box paddingBlockEnd="1600">
         <Layout>
 
-          {/* ---- Stats Bar ---- */}
-          <Layout.Section>
-            <InlineGrid columns={{ xs: 2, sm: 2, md: 5 }} gap="400">
-              <Box
-                padding="400"
-                background="bg-surface"
-                borderWidth="025"
-                borderColor="border"
-                borderRadius="200"
-              >
-                <BlockStack gap="100">
-                  <Text as="p" tone="subdued" variant="bodySm">
-                    Total Requests
-                  </Text>
-                  <Text as="p" variant="headingXl" fontWeight="bold">
-                    {stats.total}
-                  </Text>
-                </BlockStack>
-              </Box>
-              <Box
-                padding="400"
-                background="bg-surface-warning"
-                borderWidth="025"
-                borderColor="border-warning"
-                borderRadius="200"
-              >
-                <BlockStack gap="100">
-                  <Text as="p" tone="caution" variant="bodySm">
-                    Under Review
-                  </Text>
-                  <Text
-                    as="p"
-                    variant="headingXl"
-                    fontWeight="bold"
-                    tone="caution"
-                  >
-                    {stats.under_review}
-                  </Text>
-                </BlockStack>
-              </Box>
-              <Box
-                padding="400"
-                background="bg-surface-info"
-                borderWidth="025"
-                borderColor="border-info"
-                borderRadius="200"
-              >
-                <BlockStack gap="100">
-                  <Text as="p" tone="subdued" variant="bodySm">
-                    Planned
-                  </Text>
-                  <Text as="p" variant="headingXl" fontWeight="bold">
-                    {stats.planned}
-                  </Text>
-                </BlockStack>
-              </Box>
-              <Box
-                padding="400"
-                background="bg-surface-magic"
-                borderWidth="025"
-                borderColor="border-magic"
-                borderRadius="200"
-              >
-                <BlockStack gap="100">
-                  <Text as="p" tone="subdued" variant="bodySm">
-                    In Progress
-                  </Text>
-                  <Text as="p" variant="headingXl" fontWeight="bold">
-                    {stats.in_progress}
-                  </Text>
-                </BlockStack>
-              </Box>
-              <Box
-                padding="400"
-                background="bg-surface-success"
-                borderWidth="025"
-                borderColor="border-success"
-                borderRadius="200"
-              >
-                <BlockStack gap="100">
-                  <Text as="p" tone="success" variant="bodySm">
-                    Done / Shipped
-                  </Text>
-                  <Text
-                    as="p"
-                    variant="headingXl"
-                    fontWeight="bold"
-                    tone="success"
-                  >
-                    {stats.done}
-                  </Text>
-                </BlockStack>
-              </Box>
-            </InlineGrid>
-          </Layout.Section>
-
           {/* ---- Filter Tabs + Sort + Search + List ---- */}
           <Layout.Section>
             <Card padding="0">
@@ -1042,9 +914,9 @@ export default function FeatureRequestsPage() {
                       <Box
                         key={feature.id}
                         padding="400"
-                        background={STATUS_BACKGROUNDS[feature.status] ?? "bg-surface"}
+                        background="bg-surface"
                         borderWidth="025"
-                        borderColor={STATUS_BORDERS[feature.status] ?? "border"}
+                        borderColor="border"
                         borderRadius="200"
                       >
                         <InlineStack

@@ -138,6 +138,37 @@ const STATUS_PROGRESS: Record<string, BadgeProgress> = {
   shipped: "complete",
 };
 
+type PolarisBackground =
+  | "bg-surface"
+  | "bg-surface-secondary"
+  | "bg-surface-info"
+  | "bg-surface-warning"
+  | "bg-surface-success"
+  | "bg-surface-critical";
+
+const STATUS_BACKGROUNDS: Record<string, PolarisBackground> = {
+  under_review: "bg-surface-warning",
+  planned: "bg-surface-info",
+  in_progress: "bg-surface-warning",
+  done: "bg-surface-success",
+  shipped: "bg-surface-success",
+};
+
+type PolarisBorderColor =
+  | "border"
+  | "border-info"
+  | "border-warning"
+  | "border-success"
+  | "border-critical";
+
+const STATUS_BORDERS: Record<string, PolarisBorderColor> = {
+  under_review: "border-warning",
+  planned: "border-info",
+  in_progress: "border-warning",
+  done: "border-success",
+  shipped: "border-success",
+};
+
 const CATEGORY_OPTIONS = [
   { label: "General", value: "General" },
   { label: "UI & Design", value: "UI & Design" },
@@ -1011,9 +1042,9 @@ export default function FeatureRequestsPage() {
                       <Box
                         key={feature.id}
                         padding="400"
-                        background="bg-surface"
+                        background={STATUS_BACKGROUNDS[feature.status] ?? "bg-surface"}
                         borderWidth="025"
-                        borderColor="border"
+                        borderColor={STATUS_BORDERS[feature.status] ?? "border"}
                         borderRadius="200"
                       >
                         <InlineStack

@@ -240,11 +240,11 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<
 
 function PlanFeature({ feature }: { feature: string }) {
   return (
-    <InlineStack gap="150" blockAlign="start" wrap={false}>
+    <InlineStack gap="200" blockAlign="start" wrap={false}>
       <Box>
         <Icon source={CheckCircleIcon} tone="success" />
       </Box>
-      <Text as="span" variant="bodyMd">
+      <Text as="span" variant="bodyLg">
         {feature}
       </Text>
     </InlineStack>
@@ -257,7 +257,7 @@ function ComparisonCell({ value, isCurrentPlan }: { value: FeatureValue; isCurre
       {typeof value === "string" ? (
         <Text
           as="p"
-          variant="bodyMd"
+          variant="bodyLg"
           fontWeight={isCurrentPlan ? "semibold" : "regular"}
           alignment="center"
         >
@@ -363,22 +363,22 @@ function PlanCard({
               {isCurrent && <Badge tone="success">Active</Badge>}
               {isBestValue && !isCurrent && <Badge tone="info-strong">Most popular</Badge>}
             </InlineStack>
-            <Text as="p" variant="bodySm" tone="subdued">
+            <Text as="p" variant="bodyMd" tone="subdued">
               {plan.description}
             </Text>
           </BlockStack>
 
           {/* Price */}
           <BlockStack gap="050">
-            <InlineStack gap="050" blockAlign="baseline" wrap={false}>
+            <InlineStack gap="100" blockAlign="baseline" wrap={false}>
               <Text as="p" variant="heading2xl" fontWeight="bold">
                 ${displayPrice}
               </Text>
-              <Text as="p" variant="bodySm" tone="subdued">
+              <Text as="p" variant="bodyMd" tone="subdued">
                 /mo
               </Text>
             </InlineStack>
-            <Text as="p" variant="bodySm" tone="subdued">
+            <Text as="p" variant="bodyMd" tone="subdued">
               {isAnnual
                 ? `$${plan.annualPrice} billed annually`
                 : `or $${plan.annualMonthlyPrice}/mo billed annually`}
@@ -400,7 +400,7 @@ function PlanCard({
           <Divider />
 
           {/* Features */}
-          <BlockStack gap="200">
+          <BlockStack gap="300">
             {plan.features.map((f) => (
               <PlanFeature key={f} feature={f} />
             ))}
@@ -508,16 +508,16 @@ export default function PricingPage() {
                       </Text>
                       {isFreeTier && <Badge tone="success">Active</Badge>}
                     </InlineStack>
-                    <Text as="p" variant="bodySm" tone="subdued">
+                    <Text as="p" variant="bodyMd" tone="subdued">
                       {PLANS_DATA.free.description}
                     </Text>
                   </BlockStack>
 
-                  <InlineStack gap="050" blockAlign="baseline" wrap={false}>
+                  <InlineStack gap="100" blockAlign="baseline" wrap={false}>
                     <Text as="p" variant="heading2xl" fontWeight="bold">
                       $0
                     </Text>
-                    <Text as="p" variant="bodySm" tone="subdued">
+                    <Text as="p" variant="bodyMd" tone="subdued">
                       forever
                     </Text>
                   </InlineStack>
@@ -543,7 +543,7 @@ export default function PricingPage() {
                 <Divider />
 
                 {/* Features */}
-                <InlineGrid columns={{ xs: 1, sm: 3 }} gap="200">
+                <InlineGrid columns={{ xs: 1, sm: 3 }} gap="300">
                   {PLANS_DATA.free.features.map((f) => (
                     <PlanFeature key={f} feature={f} />
                   ))}
@@ -578,7 +578,7 @@ export default function PricingPage() {
           </InlineGrid>
 
           {/* Trial note */}
-          <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+          <Text as="p" variant="bodyMd" tone="subdued" alignment="center">
             All paid plans include a 7-day free trial. No credit card charged until the trial ends.
           </Text>
 
@@ -591,33 +591,38 @@ export default function PricingPage() {
             <Card padding="0">
               <BlockStack gap="0">
                 {/* Header */}
-                <Box padding="400" paddingBlockEnd="300">
+                <Box padding="500" paddingBlockEnd="400">
                   <InlineGrid columns="4fr 2fr 2fr 2fr 2fr" gap="300" alignItems="end">
-                    <Text as="p" variant="bodySm" fontWeight="semibold" tone="subdued">
+                    <Text as="p" variant="bodyMd" fontWeight="semibold" tone="subdued">
                       Feature
                     </Text>
                     {PLAN_ORDER.map((id) => {
                       const plan = PLANS_DATA[id];
                       const isCurrentCol = currentTier === id;
                       return (
-                        <BlockStack key={id} gap="050" inlineAlign="center">
-                          <InlineStack gap="100" blockAlign="center">
-                            <Text
-                              as="p"
-                              variant="headingSm"
-                              fontWeight="bold"
-                              alignment="center"
-                            >
-                              {plan.name}
-                            </Text>
-                            {isCurrentCol && <Badge tone="success" size="small">Active</Badge>}
-                          </InlineStack>
-                          <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-                            {plan.monthlyPrice === 0
-                              ? "Free"
-                              : isAnnual
-                                ? `$${plan.annualMonthlyPrice}/mo`
-                                : `$${plan.monthlyPrice}/mo`}
+                        <BlockStack key={id} gap="100" inlineAlign="center">
+                          <Text
+                            as="p"
+                            variant="headingMd"
+                            fontWeight="bold"
+                            alignment="center"
+                          >
+                            {plan.name}
+                          </Text>
+                          <Text
+                            as="p"
+                            variant="bodyMd"
+                            tone={isCurrentCol ? "success" : "subdued"}
+                            fontWeight={isCurrentCol ? "semibold" : "regular"}
+                            alignment="center"
+                          >
+                            {isCurrentCol
+                              ? "Current"
+                              : plan.monthlyPrice === 0
+                                ? "Free"
+                                : isAnnual
+                                  ? `$${plan.annualMonthlyPrice}/mo`
+                                  : `$${plan.monthlyPrice}/mo`}
                           </Text>
                         </BlockStack>
                       );
@@ -631,12 +636,12 @@ export default function PricingPage() {
                 {FEATURE_ROWS.map((row, i) => (
                   <Box key={row.label}>
                     <Box
-                      padding="400"
-                      paddingBlock="300"
+                      padding="500"
+                      paddingBlock="400"
                       background={i % 2 === 0 ? "bg-surface" : "bg-surface-secondary"}
                     >
                       <InlineGrid columns="4fr 2fr 2fr 2fr 2fr" gap="300" alignItems="center">
-                        <Text as="p" variant="bodyMd">
+                        <Text as="p" variant="bodyLg">
                           {row.label}
                         </Text>
                         {PLAN_ORDER.map((id) => (

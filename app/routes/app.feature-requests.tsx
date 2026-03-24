@@ -915,14 +915,14 @@ export default function FeatureRequestsPage() {
                           <Box minWidth="56px" width="56px">
                             <Box
                               padding="300"
-                              background={isVoted ? "bg-surface-success" : "bg-surface-secondary"}
+                              background={isVoted ? "bg-surface-info" : "bg-surface-secondary"}
                               borderRadius="200"
                               borderWidth="025"
-                              borderColor={isVoted ? "border-success" : "border"}
+                              borderColor={isVoted ? "border-info" : "border"}
                             >
                               <BlockStack gap="050" inlineAlign="center">
                                 <Button
-                                  variant={isVoted ? "primary" : "tertiary"}
+                                  variant="tertiary"
                                   size="micro"
                                   icon={ChevronUpIcon}
                                   onClick={() => handleVote(feature.id)}
@@ -941,10 +941,15 @@ export default function FeatureRequestsPage() {
                                   variant="headingSm"
                                   fontWeight="bold"
                                   alignment="center"
-                                  tone={isVoted ? "success" : undefined}
+                                  tone={isVoted ? "magic" : "subdued"}
                                 >
                                   {feature.votesCount}
                                 </Text>
+                                {isVoted && (
+                                  <Text as="p" variant="bodySm" tone="magic">
+                                    voted
+                                  </Text>
+                                )}
                               </BlockStack>
                             </Box>
                           </Box>

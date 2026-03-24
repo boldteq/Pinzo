@@ -154,7 +154,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const shop = session.shop;
   const subscription = await getShopSubscription(shop);
   const isDev = process.env.NODE_ENV !== "production";
-  return { subscription, isDev };
+  const isAdmin = shop === "zip-code-checker.myshopify.com";
+  return { subscription, isDev, isAdmin };
 };
 
 // ─── Action ───────────────────────────────────────────────────────────────────
@@ -199,6 +200,9 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<
   }
 
   if (intent === "test-set-plan") {
+    if (shop !== "zip-code-checker.myshopify.com") {
+      return { error: "This action is only available for the admin store." };
+    }
     const tier = String(formData.get("tier")) as import("../plans").PlanTier;
     const validTiers = ["free", "starter", "pro", "ultimate"];
     if (!validTiers.includes(tier)) {
@@ -415,7 +419,7 @@ function PlanCard({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PricingPage() {
-  const { subscription, isDev } = useLoaderData<typeof loader>();
+  const { subscription, isDev, isAdmin } = useLoaderData<typeof loader>();
   const fetcher = useFetcher<typeof action>();
   const navigate = useNavigate();
   const shopify = useAppBridge();
@@ -660,8 +664,8 @@ export default function PricingPage() {
           </BlockStack>
 
           {/* Dev-only: Set plan manually */}
-          {isDev && (
-            <Banner tone="info" title="Development Mode: Set Plan Manually">
+          {isDev && isAdmin && (
+            <Banner tone="info" title="Admin: Set Plan Manually">
               <BlockStack gap="300">
                 <Text as="p" variant="bodySm">
                   This section is only visible in development. Select a plan to activate it directly in the database:

@@ -382,6 +382,9 @@ function buildSharedMetaCss(W: string, cfg: WidgetConfig): string {
     W + " .zcc-delivery-fee--paid{background:#f59e0b10;border:1px solid #f59e0b22;color:#92400e}" +
     // Waitlist
     W + " .zcc-wl-title{font-size:13px;font-weight:700;color:" + cfg.textColor + ";margin-bottom:10px}" +
+    W + " .zcc-wl-toggle{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:" + cfg.primaryColor + ";text-decoration:none;cursor:pointer;border:none;background:none;padding:0;margin-top:8px}" +
+    W + " .zcc-wl-toggle:hover{text-decoration:underline}" +
+    W + " .zcc-wl-toggle svg{width:14px;height:14px;flex-shrink:0}" +
     W + " .zcc-wl-btn-icon{display:inline-flex;align-items:center;flex-shrink:0}" +
     W + " .zcc-wl-btn-icon svg{width:14px;height:14px;display:block}" +
     W + " .zcc-wl-btn-label{display:inline}"
@@ -869,17 +872,24 @@ const WidgetPreview = memo(function WidgetPreview({
           </div>
           {cfg.showWaitlistOnFailure && (
             <div className="zcc-wl">
-              <div className="zcc-wl-title">Get notified when we deliver here</div>
-              <input className="zcc-wl-input" type="text" placeholder="Your name" readOnly />
-              <input className="zcc-wl-input" type="email" placeholder="Your email" readOnly />
-              <button className="zcc-wl-btn" type="button">
-                <span className="zcc-wl-btn-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, display: "block" }}>
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
-                  </svg>
-                </span>
-                <span className="zcc-wl-btn-label">Submit Request</span>
+              <button className="zcc-wl-toggle" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, display: "block" }}>
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                </svg>
+                {" "}Request delivery to your area
               </button>
+              <div style={{ marginTop: 12 }}>
+                <input className="zcc-wl-input" type="text" placeholder="Your name" readOnly />
+                <input className="zcc-wl-input" type="email" placeholder="Your email" readOnly />
+                <button className="zcc-wl-btn" type="button">
+                  <span className="zcc-wl-btn-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, display: "block" }}>
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                  </span>
+                  <span className="zcc-wl-btn-label">Submit Request</span>
+                </button>
+              </div>
             </div>
           )}
         </>

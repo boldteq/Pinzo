@@ -27,7 +27,6 @@ import {
   BlockStack,
   InlineStack,
   Text,
-  Badge,
   Button,
   ButtonGroup,
   Divider,
@@ -502,37 +501,81 @@ export default function PricingPage() {
             </ButtonGroup>
           </InlineStack>
 
-          {/* ── Section 2: Free plan — full-width compact bar ── */}
+          {/* ── Section 2: Free plan — full-width card ── */}
           <Box
-            background={isFreeTier ? "bg-surface" : "bg-surface-secondary"}
+            background="bg-surface"
             borderWidth="025"
             borderColor={isFreeTier ? "border-success" : "border"}
             borderRadius="300"
-            padding="400"
+            padding="0"
+            overflowX="hidden"
+            overflowY="hidden"
           >
-            <InlineStack align="space-between" blockAlign="center" wrap={false}>
-              <InlineStack gap="300" blockAlign="center" wrap={false}>
-                <BlockStack gap="100">
-                  <InlineStack gap="200" blockAlign="center">
-                    <Text as="h3" variant="headingMd" fontWeight="bold">
+            {isFreeTier && (
+              <Box background="bg-fill-success" paddingBlock="100" paddingInline="400">
+                <Text as="p" variant="bodySm" fontWeight="semibold" alignment="center" tone="text-inverse">
+                  Your Plan
+                </Text>
+              </Box>
+            )}
+            <Box padding="500" paddingBlockStart={isFreeTier ? "400" : "500"}>
+              <InlineGrid columns={{ xs: 1, md: "1fr 2fr" }} gap="500">
+                {/* Left column: name, price, button */}
+                <BlockStack gap="400">
+                  <BlockStack gap="100">
+                    <Text as="h3" variant="headingLg" fontWeight="bold">
                       Free
                     </Text>
-                    {isFreeTier && <Badge tone="success">Active</Badge>}
-                  </InlineStack>
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    20 zip codes · Basic widget · Unlimited searches · Email support
-                  </Text>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      {PLANS_DATA.free.description}
+                    </Text>
+                  </BlockStack>
+
+                  <BlockStack gap="050">
+                    <InlineStack gap="050" blockAlign="baseline" wrap={false}>
+                      <Text as="p" variant="heading2xl" fontWeight="bold">
+                        $0
+                      </Text>
+                      <Text as="p" variant="bodySm" tone="subdued">
+                        /mo
+                      </Text>
+                    </InlineStack>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      Free forever, no credit card required
+                    </Text>
+                  </BlockStack>
+
+                  {isFreeTier ? (
+                    <Button variant="tertiary" disabled fullWidth size="large">
+                      Current plan
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      tone="critical"
+                      onClick={() => setCancelModalOpen(true)}
+                      loading={loadingPlan === "cancel"}
+                      fullWidth
+                      size="large"
+                    >
+                      Downgrade to Free
+                    </Button>
+                  )}
                 </BlockStack>
-              </InlineStack>
-              <InlineStack gap="100" blockAlign="baseline" wrap={false}>
-                <Text as="p" variant="headingLg" fontWeight="bold">
-                  $0
-                </Text>
-                <Text as="p" variant="bodySm" tone="subdued">
-                  forever
-                </Text>
-              </InlineStack>
-            </InlineStack>
+
+                {/* Right column: features */}
+                <Box>
+                  <BlockStack gap="300">
+                    <Divider />
+                    <InlineGrid columns={{ xs: 1, sm: 2 }} gap="200">
+                      {PLANS_DATA.free.features.map((f) => (
+                        <PlanFeature key={f} feature={f} />
+                      ))}
+                    </InlineGrid>
+                  </BlockStack>
+                </Box>
+              </InlineGrid>
+            </Box>
           </Box>
 
           {/* ── Section 3: Paid plan cards — 3 columns ── */}
@@ -542,7 +585,6 @@ export default function PricingPage() {
               isAnnual={isAnnual}
               currentTier={currentTier}
               onSubscribe={handleSubscribe}
-
               loadingPlan={loadingPlan}
             />
             <PlanCard
@@ -550,7 +592,6 @@ export default function PricingPage() {
               isAnnual={isAnnual}
               currentTier={currentTier}
               onSubscribe={handleSubscribe}
-
               loadingPlan={loadingPlan}
             />
             <PlanCard
@@ -558,26 +599,14 @@ export default function PricingPage() {
               isAnnual={isAnnual}
               currentTier={currentTier}
               onSubscribe={handleSubscribe}
-
               loadingPlan={loadingPlan}
             />
           </InlineGrid>
 
-          {/* ── Section 4: Downgrade + trial note ── */}
-          <BlockStack gap="100" inlineAlign="center">
-            {!isFreeTier && (
-              <Button
-                variant="plain"
-                tone="critical"
-                onClick={() => setCancelModalOpen(true)}
-              >
-                Downgrade to Free plan
-              </Button>
-            )}
-            <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-              All paid plans include a 7-day free trial. No credit card charged until the trial ends.
-            </Text>
-          </BlockStack>
+          {/* ── Section 4: Trial note ── */}
+          <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+            All paid plans include a 7-day free trial. No credit card charged until the trial ends.
+          </Text>
 
           {/* ── Section 5: Feature comparison table ── */}
           <BlockStack gap="300">

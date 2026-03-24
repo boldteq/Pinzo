@@ -313,11 +313,9 @@ function PlanCard({
                     {isCurrent && <Badge tone="success">Active</Badge>}
                   </InlineStack>
                 </InlineStack>
-                <Box minHeight="40px">
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    {plan.description}
-                  </Text>
-                </Box>
+                <Text as="p" variant="bodySm" tone="subdued">
+                  {plan.description}
+                </Text>
               </BlockStack>
 
               <Divider />
@@ -523,12 +521,20 @@ export default function PricingPage() {
               )}
             </BlockStack>
 
-            {/* Plan cards — 4 columns */}
-            <InlineGrid columns={{ xs: 1, sm: 2, md: 4 }} gap="400">
+            {/* Free plan banner */}
+            {currentTier === "free" && (
+              <Banner tone="info">
+                <Text as="p" variant="bodyMd">
+                  You&rsquo;re on the <Text as="span" fontWeight="bold">Free plan</Text> (20 zip codes, basic widget). Upgrade below to unlock delivery rules, waitlist, ETA, COD, and more.
+                </Text>
+              </Banner>
+            )}
+
+            {/* Paid plan cards — 3 columns */}
+            <InlineGrid columns={{ xs: 1, sm: 3 }} gap="400">
               {(
-                Object.values(
-                  PLANS_DATA,
-                ) as (typeof PLANS_DATA)[keyof typeof PLANS_DATA][]
+                Object.values(PLANS_DATA)
+                  .filter((plan) => plan.id !== "free") as (typeof PLANS_DATA)[keyof typeof PLANS_DATA][]
               ).map((plan) => (
                 <PlanCard
                   key={plan.id}
@@ -541,6 +547,19 @@ export default function PricingPage() {
                 />
               ))}
             </InlineGrid>
+
+            {/* Downgrade to Free option */}
+            {currentTier !== "free" && (
+              <InlineStack align="center">
+                <Button
+                  variant="plain"
+                  tone="critical"
+                  onClick={() => setCancelModalOpen(true)}
+                >
+                  Downgrade to Free plan
+                </Button>
+              </InlineStack>
+            )}
 
             {/* Trial footnote */}
             {(currentTier === "free" || currentTier === "starter") && (

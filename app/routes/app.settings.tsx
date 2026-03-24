@@ -44,9 +44,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session, admin } = await authenticate.admin(request);
   const shop = session.shop;
 
-  const [subscription, zipCount, shopSettings, shopResponse] = await Promise.all([
+  const [subscription, zipCount, deliveryRuleCount, waitlistCount, blockedZipCount, shopSettings, shopResponse] = await Promise.all([
     getShopSubscription(shop),
     db.zipCode.count({ where: { shop } }),
+    db.deliveryRule.count({ where: { shop } }),
+    db.waitlistEntry.count({ where: { shop } }),
+    db.zipCode.count({ where: { shop, type: "blocked" } }),
     db.shopSettings.findUnique({ where: { shop } }),
     admin.graphql(`{ shop { name } }`),
   ]);
@@ -64,6 +67,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return {
     subscription,
     zipCount,
+    deliveryRuleCount,
+    waitlistCount,
+    blockedZipCount,
     shop,
     shopName,
     defaultBehavior: shopSettings?.defaultBehavior ?? "block",
@@ -147,7 +153,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 // ---------------------------------------------------------------------------
 
 export default function SettingsPage() {
-  const { subscription, zipCount, shopName, defaultBehavior, notificationEmail, emailSenderName, emailReplyTo } =
+  const { subscription, zipCount, deliveryRuleCount, waitlistCount, blockedZipCount, shopName, defaultBehavior, notificationEmail, emailSenderName, emailReplyTo } =
     useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const shopify = useAppBridge();
@@ -340,85 +346,115 @@ export default function SettingsPage() {
                 </InlineStack>
                 <Divider />
                 {/* Usage */}
-                <BlockStack gap="300">
-                  {/* Zip codes row — with progress bar */}
-                  <InlineStack align="space-between" blockAlign="center">
-                    <InlineStack gap="200" blockAlign="center">
-                      <Icon source={LocationIcon} tone="subdued" />
-                      <Text as="p" variant="bodyMd">Zip Codes</Text>
-                    </InlineStack>
-                    <InlineStack gap="200" blockAlign="center">
+                <BlockStack gap="400">
+                  {/* Zip Codes */}
+                  <BlockStack gap="200">
+                    <InlineStack align="space-between" blockAlign="center">
+                      <InlineStack gap="200" blockAlign="center">
+                        <Icon source={LocationIcon} tone="subdued" />
+                        <Text as="p" variant="bodyMd">Zip Codes</Text>
+                      </InlineStack>
                       {limits.maxZipCodes < UNLIMITED ? (
                         <Text as="p" variant="bodyMd" fontWeight="semibold">
                           {zipCount} / {limits.maxZipCodes}
+                          <Text as="span" tone="subdued" variant="bodySm"> used</Text>
                         </Text>
                       ) : (
-                        <>
-                          <Text as="p" variant="bodyMd" fontWeight="semibold">
-                            {zipCount}
-                          </Text>
+                        <InlineStack gap="200" blockAlign="center">
+                          <Text as="p" variant="bodyMd" fontWeight="semibold">{zipCount}</Text>
                           <Badge tone="success">Unlimited</Badge>
-                        </>
+                        </InlineStack>
                       )}
                     </InlineStack>
-                  </InlineStack>
-                  {limits.maxZipCodes < UNLIMITED && (
-                    <ProgressBar
-                      progress={Math.min(100, (zipCount / limits.maxZipCodes) * 100)}
-                      size="small"
-                      tone={zipCount / limits.maxZipCodes > 0.8 ? "critical" : "primary"}
-                    />
-                  )}
-
-                  <Divider />
-
-                  {/* Delivery Rules row */}
-                  <InlineStack align="space-between" blockAlign="center">
-                    <InlineStack gap="200" blockAlign="center">
-                      <Icon source={DeliveryIcon} tone="subdued" />
-                      <Text as="p" variant="bodyMd">Delivery Rules</Text>
-                    </InlineStack>
-                    {limits.maxDeliveryRules >= UNLIMITED ? (
-                      <Badge tone="success">Unlimited</Badge>
-                    ) : limits.maxDeliveryRules === 0 ? (
-                      <Badge tone="critical">Not Available</Badge>
-                    ) : (
-                      <Text as="p" variant="bodyMd" fontWeight="semibold">
-                        Up to {limits.maxDeliveryRules}
-                      </Text>
+                    {limits.maxZipCodes < UNLIMITED && (
+                      <ProgressBar
+                        progress={Math.min(100, (zipCount / limits.maxZipCodes) * 100)}
+                        size="small"
+                        tone={zipCount / limits.maxZipCodes > 0.8 ? "critical" : "primary"}
+                      />
                     )}
-                  </InlineStack>
+                  </BlockStack>
 
                   <Divider />
 
-                  {/* Waitlist row */}
-                  <InlineStack align="space-between" blockAlign="center">
-                    <InlineStack gap="200" blockAlign="center">
-                      <Icon source={PersonIcon} tone="subdued" />
-                      <Text as="p" variant="bodyMd">Waitlist Entries</Text>
+                  {/* Delivery Rules */}
+                  <BlockStack gap="200">
+                    <InlineStack align="space-between" blockAlign="center">
+                      <InlineStack gap="200" blockAlign="center">
+                        <Icon source={DeliveryIcon} tone="subdued" />
+                        <Text as="p" variant="bodyMd">Delivery Rules</Text>
+                      </InlineStack>
+                      {limits.maxDeliveryRules >= UNLIMITED ? (
+                        <InlineStack gap="200" blockAlign="center">
+                          <Text as="p" variant="bodyMd" fontWeight="semibold">{deliveryRuleCount}</Text>
+                          <Badge tone="success">Unlimited</Badge>
+                        </InlineStack>
+                      ) : limits.maxDeliveryRules === 0 ? (
+                        <Badge tone="critical">Not Available</Badge>
+                      ) : (
+                        <Text as="p" variant="bodyMd" fontWeight="semibold">
+                          {deliveryRuleCount} / {limits.maxDeliveryRules}
+                          <Text as="span" tone="subdued" variant="bodySm"> used</Text>
+                        </Text>
+                      )}
                     </InlineStack>
-                    {limits.maxWaitlist >= UNLIMITED ? (
-                      <Badge tone="success">Unlimited</Badge>
-                    ) : limits.maxWaitlist === 0 ? (
-                      <Badge tone="critical">Not Available</Badge>
-                    ) : (
-                      <Text as="p" variant="bodyMd" fontWeight="semibold">
-                        Up to {limits.maxWaitlist}
-                      </Text>
+                    {limits.maxDeliveryRules > 0 && limits.maxDeliveryRules < UNLIMITED && (
+                      <ProgressBar
+                        progress={Math.min(100, (deliveryRuleCount / limits.maxDeliveryRules) * 100)}
+                        size="small"
+                        tone={deliveryRuleCount / limits.maxDeliveryRules > 0.8 ? "critical" : "primary"}
+                      />
                     )}
-                  </InlineStack>
+                  </BlockStack>
 
                   <Divider />
 
-                  {/* Block List row */}
+                  {/* Waitlist Entries */}
+                  <BlockStack gap="200">
+                    <InlineStack align="space-between" blockAlign="center">
+                      <InlineStack gap="200" blockAlign="center">
+                        <Icon source={PersonIcon} tone="subdued" />
+                        <Text as="p" variant="bodyMd">Waitlist Entries</Text>
+                      </InlineStack>
+                      {limits.maxWaitlist >= UNLIMITED ? (
+                        <InlineStack gap="200" blockAlign="center">
+                          <Text as="p" variant="bodyMd" fontWeight="semibold">{waitlistCount}</Text>
+                          <Badge tone="success">Unlimited</Badge>
+                        </InlineStack>
+                      ) : limits.maxWaitlist === 0 ? (
+                        <Badge tone="critical">Not Available</Badge>
+                      ) : (
+                        <Text as="p" variant="bodyMd" fontWeight="semibold">
+                          {waitlistCount} / {limits.maxWaitlist}
+                          <Text as="span" tone="subdued" variant="bodySm"> used</Text>
+                        </Text>
+                      )}
+                    </InlineStack>
+                    {limits.maxWaitlist > 0 && limits.maxWaitlist < UNLIMITED && (
+                      <ProgressBar
+                        progress={Math.min(100, (waitlistCount / limits.maxWaitlist) * 100)}
+                        size="small"
+                        tone={waitlistCount / limits.maxWaitlist > 0.8 ? "critical" : "primary"}
+                      />
+                    )}
+                  </BlockStack>
+
+                  <Divider />
+
+                  {/* Block List */}
                   <InlineStack align="space-between" blockAlign="center">
                     <InlineStack gap="200" blockAlign="center">
                       <Icon source={DisabledIcon} tone="subdued" />
                       <Text as="p" variant="bodyMd">Block List</Text>
                     </InlineStack>
-                    <Badge tone={limits.allowBlocked ? "success" : "critical"}>
-                      {limits.allowBlocked ? "Enabled" : "Not Available"}
-                    </Badge>
+                    {limits.allowBlocked ? (
+                      <InlineStack gap="200" blockAlign="center">
+                        <Text as="p" variant="bodyMd" fontWeight="semibold">{blockedZipCount} blocked</Text>
+                        <Badge tone="success">Enabled</Badge>
+                      </InlineStack>
+                    ) : (
+                      <Badge tone="critical">Not Available</Badge>
+                    )}
                   </InlineStack>
                 </BlockStack>
               </BlockStack>

@@ -37,7 +37,7 @@ import {
   Modal,
   InlineGrid,
 } from "@shopify/polaris";
-import { CheckCircleIcon } from "@shopify/polaris-icons";
+import { CheckCircleIcon, XCircleIcon } from "@shopify/polaris-icons";
 
 // ─── Plan data ────────────────────────────────────────────────────────────────
 
@@ -117,6 +117,28 @@ const PLANS_DATA = {
     shopifyPlanAnnual: PLAN_ULTIMATE_ANNUAL,
   },
 };
+
+// ─── Feature comparison rows ─────────────────────────────────────────────────
+
+type FeatureValue = boolean | string;
+
+const FEATURE_ROWS: { label: string; free: FeatureValue; starter: FeatureValue; pro: FeatureValue; ultimate: FeatureValue }[] = [
+  { label: "Zip codes", free: "20", starter: "500", pro: "Unlimited", ultimate: "Unlimited" },
+  { label: "Blocked zip codes", free: false, starter: false, pro: true, ultimate: true },
+  { label: "Delivery rules", free: false, starter: "3", pro: "Unlimited", ultimate: "Unlimited" },
+  { label: "Waitlist entries", free: false, starter: "25", pro: "Unlimited", ultimate: "Unlimited" },
+  { label: "Widget customization", free: false, starter: true, pro: true, ultimate: true },
+  { label: "Delivery ETA & COD", free: false, starter: true, pro: true, ultimate: true },
+  { label: "Zone organization", free: false, starter: true, pro: true, ultimate: true },
+  { label: "CSV import", free: false, starter: true, pro: true, ultimate: true },
+  { label: "CSV export", free: false, starter: false, pro: true, ultimate: true },
+  { label: "Cart & checkout blocking", free: false, starter: false, pro: true, ultimate: true },
+  { label: "Custom widget CSS", free: false, starter: false, pro: false, ultimate: true },
+  { label: "API access", free: false, starter: false, pro: false, ultimate: true },
+  { label: "Priority support", free: false, starter: false, pro: true, ultimate: "24/7 VIP" },
+];
+
+const PLAN_ORDER = ["free", "starter", "pro", "ultimate"] as const;
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
@@ -584,6 +606,87 @@ export default function PricingPage() {
                 charged until the trial ends.
               </Text>
             )}
+
+            {/* Full Feature Comparison */}
+            <BlockStack gap="400">
+              <Text as="h2" variant="headingLg" alignment="center">
+                Full Feature Comparison
+              </Text>
+              <Box
+                background="bg-surface"
+                borderWidth="025"
+                borderColor="border"
+                borderRadius="300"
+                padding="400"
+              >
+                <BlockStack gap="0">
+                  {/* Header row */}
+                  <Box paddingBlockEnd="300">
+                    <InlineStack align="space-between">
+                      <Box minWidth="180px">
+                        <Text as="p" variant="bodySm" tone="subdued" fontWeight="semibold">
+                          Feature
+                        </Text>
+                      </Box>
+                      {PLAN_ORDER.map((id) => {
+                        const plan = PLANS_DATA[id];
+                        return (
+                          <Box key={id} minWidth="90px">
+                            <BlockStack gap="050" inlineAlign="center">
+                              <Text as="p" variant="headingSm" fontWeight="bold" alignment="center">
+                                {plan.name}
+                              </Text>
+                              <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                                {plan.monthlyPrice === 0
+                                  ? "Free"
+                                  : isAnnual
+                                    ? `$${plan.annualMonthlyPrice}/mo`
+                                    : `$${plan.monthlyPrice}/mo`}
+                              </Text>
+                            </BlockStack>
+                          </Box>
+                        );
+                      })}
+                    </InlineStack>
+                  </Box>
+
+                  <Divider />
+
+                  {/* Feature rows */}
+                  {FEATURE_ROWS.map((row, i) => (
+                    <Box key={row.label} paddingBlock="200">
+                      <InlineStack align="space-between" blockAlign="center">
+                        <Box minWidth="180px">
+                          <Text as="p" variant="bodyMd">
+                            {row.label}
+                          </Text>
+                        </Box>
+                        {PLAN_ORDER.map((id) => {
+                          const val = row[id];
+                          return (
+                            <Box key={id} minWidth="90px">
+                              <InlineStack align="center">
+                                {typeof val === "string" ? (
+                                  <Text as="p" variant="bodyMd" fontWeight="semibold" alignment="center">
+                                    {val}
+                                  </Text>
+                                ) : (
+                                  <Icon
+                                    source={val ? CheckCircleIcon : XCircleIcon}
+                                    tone={val ? "success" : "subdued"}
+                                  />
+                                )}
+                              </InlineStack>
+                            </Box>
+                          );
+                        })}
+                      </InlineStack>
+                      {i < FEATURE_ROWS.length - 1 && <Box paddingBlockStart="200"><Divider /></Box>}
+                    </Box>
+                  ))}
+                </BlockStack>
+              </Box>
+            </BlockStack>
 
             {/* Set plan directly (for custom app testing) */}
             <Banner tone="info" title="Set Plan Manually">

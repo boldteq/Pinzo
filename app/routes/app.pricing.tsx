@@ -23,7 +23,7 @@ import {
 import db from "../db.server";
 import {
   Page,
-  Layout,
+  Card,
   BlockStack,
   InlineStack,
   Text,
@@ -107,7 +107,7 @@ const PLANS_DATA = {
     annualMonthlyPrice: 12.42,
     description: "Enterprise-grade power and flexibility",
     features: [
-      "Everything in Pro",
+      "Everything in Pro, plus:",
       "Custom widget CSS",
       "API access",
       "24/7 VIP support",
@@ -140,6 +140,13 @@ const FEATURE_ROWS: { label: string; free: FeatureValue; starter: FeatureValue; 
 
 const PLAN_ORDER = ["free", "starter", "pro", "ultimate"] as const;
 
+const TIER_ORDER: Record<string, number> = {
+  free: 0,
+  starter: 1,
+  pro: 2,
+  ultimate: 3,
+};
+
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -167,8 +174,6 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<
     const returnUrl = `${process.env.SHOPIFY_APP_URL}/app/pricing`;
     try {
       /* eslint-disable @typescript-eslint/no-explicit-any */
-      // billing.request() throws a redirect Response to Shopify's
-      // billing confirmation page — we must let it propagate.
       await billing.request({
         plan: plan as any,
         isTest: process.env.NODE_ENV !== "production",
@@ -177,14 +182,11 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<
       /* eslint-enable @typescript-eslint/no-explicit-any */
       return null;
     } catch (error) {
-      // Re-throw Response redirects so React Router / App Bridge handles them
       if (error instanceof Response) throw error;
-      // BillingError has errorData with Shopify userErrors
       const errorData = (error as { errorData?: Array<{ field?: string; message?: string }> }).errorData;
       const details = errorData?.map((e) => e.message).join(", ");
       const message = details || (error instanceof Error ? error.message : String(error));
 
-      // Provide a helpful message for common billing errors
       if (message.includes("Custom apps cannot use the Billing API")) {
         return {
           error: "Billing is not available for custom apps. Please change your app distribution to 'Public' in the Shopify Partner Dashboard.",
@@ -196,7 +198,6 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<
     }
   }
 
-  // Set plan directly in database (for custom apps where Billing API is unavailable)
   if (intent === "test-set-plan") {
     const tier = String(formData.get("tier")) as import("../plans").PlanTier;
     const validTiers = ["free", "starter", "pro", "ultimate"];
@@ -235,7 +236,7 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<
   return null;
 };
 
-// ─── Feature row ─────────────────────────────────────────────────────────────
+// ─── Feature row component ───────────────────────────────────────────────────
 
 function PlanFeature({ feature }: { feature: string }) {
   return (
@@ -274,12 +275,6 @@ function PlanCard({
   const isCurrentPaid = currentTier !== "free";
   const isDowngradeToFree = plan.id === "free" && isCurrentPaid;
 
-  const TIER_ORDER: Record<string, number> = {
-    free: 0,
-    starter: 1,
-    pro: 2,
-    ultimate: 3,
-  };
   const isUpgrade =
     !isCurrent &&
     plan.id !== "free" &&
@@ -317,56 +312,80 @@ function PlanCard({
     <Box
       background="bg-surface"
       borderWidth="025"
-      borderColor={isBestValue ? "border-info" : "border"}
+      borderColor={isCurrent ? "border-success" : isBestValue ? "border-info" : "border"}
       borderRadius="300"
       padding="0"
       overflowX="hidden"
       overflowY="hidden"
     >
-      {/* Best value ribbon */}
-      {isBestValue && (
-        <Box background="bg-fill-info" padding="200">
+      {/* Best value / Current ribbon */}
+      {isBestValue && !isCurrent && (
+        <Box background="bg-fill-info" paddingBlock="150" paddingInline="400">
           <Text as="p" variant="bodySm" fontWeight="semibold" alignment="center" tone="text-inverse">
             Most Popular
           </Text>
         </Box>
       )}
+      {isCurrent && (
+        <Box background="bg-fill-success" paddingBlock="150" paddingInline="400">
+          <Text as="p" variant="bodySm" fontWeight="semibold" alignment="center" tone="text-inverse">
+            Current Plan
+          </Text>
+        </Box>
+      )}
+      {!isBestValue && !isCurrent && (
+        <Box paddingBlock="150" paddingInline="400">
+          <Text as="p" variant="bodySm" alignment="center">
+            &nbsp;
+          </Text>
+        </Box>
+      )}
 
-      <Box padding="400">
+      <Box padding="500">
         <BlockStack gap="400">
-          {/* Plan name + badge */}
-          <InlineStack align="space-between" blockAlign="center">
-            <Text as="h3" variant="headingMd" fontWeight="bold">
+          {/* Plan name + description */}
+          <BlockStack gap="100">
+            <Text as="h3" variant="headingLg" fontWeight="bold">
               {plan.name}
             </Text>
-            {isCurrent && <Badge tone="success">Active</Badge>}
-          </InlineStack>
+            <Text as="p" variant="bodySm" tone="subdued">
+              {plan.description}
+            </Text>
+          </BlockStack>
 
           {/* Price */}
-          <BlockStack gap="050">
-            <InlineStack gap="100" blockAlign="baseline">
-              <Text as="p" variant="headingXl" fontWeight="bold">
+          <BlockStack gap="100">
+            <InlineStack gap="100" blockAlign="baseline" wrap={false}>
+              <Text as="p" variant="heading2xl" fontWeight="bold">
                 ${displayPrice}
               </Text>
-              <Text as="p" variant="bodySm" tone="subdued">
-                / month
+              <Text as="p" variant="bodyMd" tone="subdued">
+                /month
               </Text>
             </InlineStack>
-            <Text as="p" variant="bodySm" tone="subdued">
-              {isAnnual
-                ? `billed $${plan.annualPrice} / year`
-                : `or $${plan.annualMonthlyPrice}/mo billed annually`}
-            </Text>
+            {plan.monthlyPrice > 0 && (
+              <Text as="p" variant="bodySm" tone="subdued">
+                {isAnnual
+                  ? `$${plan.annualPrice} billed annually`
+                  : `or $${plan.annualMonthlyPrice}/mo billed annually`}
+              </Text>
+            )}
+            {plan.monthlyPrice === 0 && (
+              <Text as="p" variant="bodySm" tone="subdued">
+                Free forever
+              </Text>
+            )}
           </BlockStack>
 
           {/* CTA Button */}
           <Button
-            variant={isCurrent ? "secondary" : "primary"}
+            variant={isCurrent ? "tertiary" : isUpgrade ? "primary" : "secondary"}
             tone={isDowngradeToFree ? "critical" : undefined}
             onClick={handleClick}
             disabled={isCurrent}
             loading={isThisLoading}
             fullWidth
+            size="large"
           >
             {buttonContent}
           </Button>
@@ -375,8 +394,8 @@ function PlanCard({
 
           {/* Features list */}
           <BlockStack gap="200">
-            <Text as="p" variant="bodySm" fontWeight="semibold" tone="subdued">
-              {plan.id === "ultimate" ? "Everything in Pro, plus:" : "Includes:"}
+            <Text as="p" variant="bodySm" fontWeight="semibold">
+              Includes:
             </Text>
             {plan.features.map((f) => (
               <PlanFeature key={f} feature={f} />
@@ -384,6 +403,32 @@ function PlanCard({
           </BlockStack>
         </BlockStack>
       </Box>
+    </Box>
+  );
+}
+
+// ─── Comparison cell ──────────────────────────────────────────────────────────
+
+function ComparisonCell({ value, isCurrentPlan }: { value: FeatureValue; isCurrentPlan: boolean }) {
+  return (
+    <Box>
+      <InlineStack align="center" blockAlign="center">
+        {typeof value === "string" ? (
+          <Text
+            as="p"
+            variant="bodyMd"
+            fontWeight={isCurrentPlan ? "semibold" : "regular"}
+            alignment="center"
+          >
+            {value}
+          </Text>
+        ) : (
+          <Icon
+            source={value ? CheckCircleIcon : XCircleIcon}
+            tone={value ? "success" : "subdued"}
+          />
+        )}
+      </InlineStack>
     </Box>
   );
 }
@@ -405,7 +450,6 @@ export default function PricingPage() {
   const data = fetcher.data;
   const isFetching = fetcher.state !== "idle";
 
-  // Toast for success, Banner for errors (errors must not auto-dismiss)
   useEffect(() => {
     if (!isFetching) setLoadingPlan(null);
     if (data && "message" in data && data.message) {
@@ -444,77 +488,37 @@ export default function PricingPage() {
       backAction={{ onAction: () => navigate("/app") }}
     >
       <Box paddingBlockEnd="1600">
-      <Layout>
-        {actionError && (
-          <Layout.Section>
+        <BlockStack gap="800">
+
+          {/* Error banner */}
+          {actionError && (
             <Banner tone="critical" title="Billing error">
               <Text as="p" variant="bodyMd">{actionError}</Text>
             </Banner>
-          </Layout.Section>
-        )}
-        <Layout.Section>
-          <BlockStack gap="600">
+          )}
 
-            {/* Billing toggle */}
-            <BlockStack gap="200" inlineAlign="center">
-              <ButtonGroup variant="segmented">
-                <Button
-                  pressed={!isAnnual}
-                  onClick={() => setIsAnnual(false)}
-                >
-                  Monthly
-                </Button>
-                <Button
-                  pressed={isAnnual}
-                  onClick={() => setIsAnnual(true)}
-                >
-                  Annual · Save up to 38%
-                </Button>
-              </ButtonGroup>
-              {isAnnual && (
-                <Badge tone="success">You save up to 38% per year</Badge>
-              )}
-            </BlockStack>
+          {/* Billing toggle */}
+          <InlineStack align="center">
+            <ButtonGroup variant="segmented">
+              <Button
+                pressed={!isAnnual}
+                onClick={() => setIsAnnual(false)}
+              >
+                Monthly
+              </Button>
+              <Button
+                pressed={isAnnual}
+                onClick={() => setIsAnnual(true)}
+              >
+                Annual · Save up to 38%
+              </Button>
+            </ButtonGroup>
+          </InlineStack>
 
-            {/* Free plan — compact card */}
-            <Box
-              background="bg-surface"
-              borderWidth="025"
-              borderColor="border"
-              borderRadius="300"
-              padding="400"
-            >
-              <InlineStack align="space-between" blockAlign="center" wrap>
-                <InlineStack gap="300" blockAlign="center">
-                  <BlockStack gap="050">
-                    <InlineStack gap="200" blockAlign="center">
-                      <Text as="h3" variant="headingSm" fontWeight="bold">
-                        Free
-                      </Text>
-                      {currentTier === "free" && <Badge tone="success">Active</Badge>}
-                    </InlineStack>
-                    <Text as="p" variant="bodySm" tone="subdued">
-                      20 zip codes &middot; Basic widget &middot; Unlimited searches
-                    </Text>
-                  </BlockStack>
-                </InlineStack>
-                <InlineStack gap="200" blockAlign="center">
-                  <Text as="p" variant="headingSm" fontWeight="bold">
-                    $0
-                  </Text>
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    forever
-                  </Text>
-                </InlineStack>
-              </InlineStack>
-            </Box>
-
-            {/* Paid plan cards — 3 columns */}
-            <InlineGrid columns={{ xs: 1, sm: 3 }} gap="400">
-              {(
-                Object.values(PLANS_DATA)
-                  .filter((plan) => plan.id !== "free") as (typeof PLANS_DATA)[keyof typeof PLANS_DATA][]
-              ).map((plan) => (
+          {/* Plan cards — 4 columns */}
+          <InlineGrid columns={{ xs: 1, sm: 2, lg: 4 }} gap="400">
+            {(Object.values(PLANS_DATA) as (typeof PLANS_DATA)[keyof typeof PLANS_DATA][]).map(
+              (plan) => (
                 <PlanCard
                   key={plan.id}
                   plan={plan}
@@ -524,123 +528,105 @@ export default function PricingPage() {
                   onRequestCancel={() => setCancelModalOpen(true)}
                   loadingPlan={loadingPlan}
                 />
-              ))}
-            </InlineGrid>
+              ),
+            )}
+          </InlineGrid>
 
-            {/* Downgrade to Free option */}
+          {/* Downgrade + Trial footnote */}
+          <BlockStack gap="200" inlineAlign="center">
             {currentTier !== "free" && (
-              <Box paddingBlockStart="100">
-                <InlineStack align="center">
-                  <Button
-                    variant="plain"
-                    tone="critical"
-                    onClick={() => setCancelModalOpen(true)}
-                  >
-                    Downgrade to Free plan
-                  </Button>
-                </InlineStack>
-              </Box>
+              <Button
+                variant="plain"
+                tone="critical"
+                onClick={() => setCancelModalOpen(true)}
+              >
+                Downgrade to Free plan
+              </Button>
             )}
-
-            {/* Trial footnote */}
             {(currentTier === "free" || currentTier === "starter") && (
-              <Text
-                as="p"
-                variant="bodySm"
-                tone="subdued"
-                alignment="center"
-              >
-                All paid plans include a 7-day free trial. No credit card
-                charged until the trial ends.
+              <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                All paid plans include a 7-day free trial. No credit card charged until the trial ends.
               </Text>
             )}
+          </BlockStack>
 
-            {/* Full Feature Comparison */}
-            <BlockStack gap="400">
-              <Text as="h2" variant="headingLg" alignment="center">
-                Full Feature Comparison
-              </Text>
-              <Box
-                background="bg-surface"
-                borderWidth="025"
-                borderColor="border"
-                borderRadius="300"
-                padding="400"
-              >
+          {/* Full Feature Comparison */}
+          <BlockStack gap="400">
+            <Text as="h2" variant="headingLg" alignment="center">
+              Full Feature Comparison
+            </Text>
+
+            <Card padding="0">
+              <Box padding="400">
                 <BlockStack gap="0">
                   {/* Header row */}
                   <Box paddingBlockEnd="300">
-                    <InlineStack align="space-between">
-                      <Box minWidth="180px">
-                        <Text as="p" variant="bodySm" tone="subdued" fontWeight="semibold">
-                          Feature
-                        </Text>
-                      </Box>
+                    <InlineGrid columns="5fr 2fr 2fr 2fr 2fr" gap="200" alignItems="center">
+                      <Text as="p" variant="bodySm" fontWeight="semibold" tone="subdued">
+                        Feature
+                      </Text>
                       {PLAN_ORDER.map((id) => {
                         const plan = PLANS_DATA[id];
+                        const isCurrentCol = currentTier === id;
                         return (
-                          <Box key={id} minWidth="90px">
-                            <BlockStack gap="050" inlineAlign="center">
-                              <Text as="p" variant="headingSm" fontWeight="bold" alignment="center">
+                          <BlockStack key={id} gap="050" inlineAlign="center">
+                            <InlineStack gap="100" blockAlign="center">
+                              <Text
+                                as="p"
+                                variant="headingSm"
+                                fontWeight="bold"
+                                alignment="center"
+                              >
                                 {plan.name}
                               </Text>
-                              <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-                                {plan.monthlyPrice === 0
-                                  ? "Free"
-                                  : isAnnual
-                                    ? `$${plan.annualMonthlyPrice}/mo`
-                                    : `$${plan.monthlyPrice}/mo`}
-                              </Text>
-                            </BlockStack>
-                          </Box>
+                              {isCurrentCol && <Badge tone="success" size="small">Active</Badge>}
+                            </InlineStack>
+                            <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                              {plan.monthlyPrice === 0
+                                ? "Free"
+                                : isAnnual
+                                  ? `$${plan.annualMonthlyPrice}/mo`
+                                  : `$${plan.monthlyPrice}/mo`}
+                            </Text>
+                          </BlockStack>
                         );
                       })}
-                    </InlineStack>
+                    </InlineGrid>
                   </Box>
 
                   <Divider />
 
                   {/* Feature rows */}
                   {FEATURE_ROWS.map((row, i) => (
-                    <Box key={row.label} paddingBlock="200">
-                      <InlineStack align="space-between" blockAlign="center">
-                        <Box minWidth="180px">
+                    <Box key={row.label}>
+                      <Box paddingBlock="300">
+                        <InlineGrid columns="5fr 2fr 2fr 2fr 2fr" gap="200" alignItems="center">
                           <Text as="p" variant="bodyMd">
                             {row.label}
                           </Text>
-                        </Box>
-                        {PLAN_ORDER.map((id) => {
-                          const val = row[id];
-                          return (
-                            <Box key={id} minWidth="90px">
-                              <InlineStack align="center">
-                                {typeof val === "string" ? (
-                                  <Text as="p" variant="bodyMd" fontWeight="semibold" alignment="center">
-                                    {val}
-                                  </Text>
-                                ) : (
-                                  <Icon
-                                    source={val ? CheckCircleIcon : XCircleIcon}
-                                    tone={val ? "success" : "subdued"}
-                                  />
-                                )}
-                              </InlineStack>
-                            </Box>
-                          );
-                        })}
-                      </InlineStack>
-                      {i < FEATURE_ROWS.length - 1 && <Box paddingBlockStart="200"><Divider /></Box>}
+                          {PLAN_ORDER.map((id) => (
+                            <ComparisonCell
+                              key={id}
+                              value={row[id]}
+                              isCurrentPlan={currentTier === id}
+                            />
+                          ))}
+                        </InlineGrid>
+                      </Box>
+                      {i < FEATURE_ROWS.length - 1 && <Divider />}
                     </Box>
                   ))}
                 </BlockStack>
               </Box>
-            </BlockStack>
+            </Card>
+          </BlockStack>
 
-            {/* Set plan directly (for custom app testing — dev only) */}
-            {isDev && <Banner tone="info" title="Set Plan Manually">
+          {/* Dev-only: Set plan manually */}
+          {isDev && (
+            <Banner tone="info" title="Development Mode: Set Plan Manually">
               <BlockStack gap="300">
                 <Text as="p" variant="bodySm">
-                  Select a plan to activate it directly:
+                  This section is only visible in development. Select a plan to activate it directly in the database:
                 </Text>
                 <InlineStack gap="200">
                   {(["free", "starter", "pro", "ultimate"] as const).map((tier) => (
@@ -661,11 +647,10 @@ export default function PricingPage() {
                   ))}
                 </InlineStack>
               </BlockStack>
-            </Banner>}
+            </Banner>
+          )}
 
-          </BlockStack>
-        </Layout.Section>
-      </Layout>
+        </BlockStack>
       </Box>
 
       {/* Downgrade confirmation modal */}
@@ -702,7 +687,9 @@ export default function PricingPage() {
                 "Cart & checkout blocking",
               ].map((item) => (
                 <InlineStack key={item} gap="200" blockAlign="start" wrap={false}>
-                  <Text as="span" variant="bodyMd" tone="subdued">·</Text>
+                  <Box>
+                    <Icon source={XCircleIcon} tone="critical" />
+                  </Box>
                   <Text as="p" variant="bodyMd">{item}</Text>
                 </InlineStack>
               ))}

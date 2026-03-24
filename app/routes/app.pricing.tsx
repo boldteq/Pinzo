@@ -27,6 +27,7 @@ import {
   BlockStack,
   InlineStack,
   Text,
+  Badge,
   Button,
   ButtonGroup,
   Divider,
@@ -312,7 +313,10 @@ function PlanCard({
   let buttonContent = "Start free trial";
   let buttonVariant: "primary" | "secondary" = "primary";
 
-  if (isUpgrade) {
+  if (isCurrent) {
+    buttonContent = "Current plan";
+    buttonVariant = "secondary";
+  } else if (isUpgrade) {
     buttonContent = `Upgrade to ${plan.name}`;
     buttonVariant = "primary";
   } else if (isDowngrade) {
@@ -331,60 +335,26 @@ function PlanCard({
 
   const isThisLoading = loadingPlan === (shopifyPlan ?? "cancel");
 
-  // Ribbon config — every card gets a ribbon area for consistent alignment
-  const hasColoredRibbon = isBestValue || isCurrent;
-  const ribbonBg = isCurrent
-    ? "bg-fill-success"
-    : isBestValue
-      ? "bg-fill-info"
-      : "bg-surface";
-  const ribbonText = isCurrent
-    ? "Your Plan"
-    : isBestValue
-      ? "Most Popular"
-      : "";
-
   return (
-    <Box
-      background="bg-surface"
-      borderWidth="025"
-      borderColor={isCurrent ? "border-success" : isBestValue ? "border-info" : "border"}
-      borderRadius="300"
-      padding="0"
-      overflowX="hidden"
-      overflowY="hidden"
-    >
-      {/* Ribbon area — always rendered for height alignment across cards */}
-      <Box
-        background={ribbonBg}
-        paddingBlock="100"
-        paddingInline="400"
-      >
-        <Text
-          as="p"
-          variant="bodySm"
-          fontWeight="semibold"
-          alignment="center"
-          tone={hasColoredRibbon ? "text-inverse" : undefined}
-        >
-          {ribbonText || "\u00A0"}
-        </Text>
-      </Box>
-
-      <Box padding="500" paddingBlockStart="400">
+    <Card padding="0">
+      <Box padding="500">
         <BlockStack gap="400">
 
-          {/* Header: name + description */}
+          {/* Plan name + badges */}
           <BlockStack gap="100">
-            <Text as="h3" variant="headingLg" fontWeight="bold">
-              {plan.name}
-            </Text>
+            <InlineStack gap="200" blockAlign="center" wrap={false}>
+              <Text as="h3" variant="headingLg" fontWeight="bold">
+                {plan.name}
+              </Text>
+              {isCurrent && <Badge tone="success">Active</Badge>}
+              {isBestValue && !isCurrent && <Badge tone="info">Popular</Badge>}
+            </InlineStack>
             <Text as="p" variant="bodySm" tone="subdued">
               {plan.description}
             </Text>
           </BlockStack>
 
-          {/* Price block */}
+          {/* Price */}
           <BlockStack gap="050">
             <InlineStack gap="050" blockAlign="baseline" wrap={false}>
               <Text as="p" variant="heading2xl" fontWeight="bold">
@@ -402,29 +372,16 @@ function PlanCard({
           </BlockStack>
 
           {/* CTA */}
-          {isCurrent ? (
-            <Box
-              background="bg-surface-success"
-              borderRadius="200"
-              paddingBlock="200"
-              paddingInline="400"
-            >
-              <Text as="p" variant="bodyMd" fontWeight="semibold" alignment="center" tone="success">
-                Current plan
-              </Text>
-            </Box>
-          ) : (
-            <Button
-              variant={buttonVariant}
-
-              onClick={handleClick}
-              loading={isThisLoading}
-              fullWidth
-              size="large"
-            >
-              {buttonContent}
-            </Button>
-          )}
+          <Button
+            variant={buttonVariant}
+            onClick={handleClick}
+            disabled={isCurrent}
+            loading={isThisLoading}
+            fullWidth
+            size="large"
+          >
+            {buttonContent}
+          </Button>
 
           <Divider />
 
@@ -437,7 +394,7 @@ function PlanCard({
 
         </BlockStack>
       </Box>
-    </Box>
+    </Card>
   );
 }
 
@@ -506,7 +463,7 @@ export default function PricingPage() {
             </Banner>
           )}
 
-          {/* ── Section 1: Billing toggle ── */}
+          {/* Billing toggle */}
           <InlineStack align="center">
             <ButtonGroup variant="segmented">
               <Button
@@ -524,41 +481,19 @@ export default function PricingPage() {
             </ButtonGroup>
           </InlineStack>
 
-          {/* ── Section 2: Free plan — full-width card ── */}
-          <Box
-            background="bg-surface"
-            borderWidth="025"
-            borderColor={isFreeTier ? "border-success" : "border"}
-            borderRadius="300"
-            padding="0"
-            overflowX="hidden"
-            overflowY="hidden"
-          >
-            {/* Ribbon — consistent with paid cards */}
-            <Box
-              background={isFreeTier ? "bg-fill-success" : "bg-surface"}
-              paddingBlock="100"
-              paddingInline="400"
-            >
-              <Text
-                as="p"
-                variant="bodySm"
-                fontWeight="semibold"
-                alignment="center"
-                tone={isFreeTier ? "text-inverse" : undefined}
-              >
-                {isFreeTier ? "Your Plan" : "\u00A0"}
-              </Text>
-            </Box>
-
-            <Box padding="500" paddingBlockStart="400">
+          {/* Free plan — full-width card */}
+          <Card padding="0">
+            <Box padding="500">
               <BlockStack gap="400">
-                {/* Top row: plan info + price + button */}
-                <InlineGrid columns={{ xs: 1, md: "1fr auto auto" }} gap="500" alignItems="center">
+                {/* Top row: info + price + button */}
+                <InlineGrid columns={{ xs: 1, md: "1fr auto auto" }} gap="400" alignItems="center">
                   <BlockStack gap="050">
-                    <Text as="h3" variant="headingLg" fontWeight="bold">
-                      Free
-                    </Text>
+                    <InlineStack gap="200" blockAlign="center" wrap={false}>
+                      <Text as="h3" variant="headingLg" fontWeight="bold">
+                        Free
+                      </Text>
+                      {isFreeTier && <Badge tone="success">Active</Badge>}
+                    </InlineStack>
                     <Text as="p" variant="bodySm" tone="subdued">
                       {PLANS_DATA.free.description}
                     </Text>
@@ -573,26 +508,17 @@ export default function PricingPage() {
                     </Text>
                   </InlineStack>
 
-                  <Box minWidth="200px">
+                  <Box minWidth="180px">
                     {isFreeTier ? (
-                      <Box
-                        background="bg-surface-success"
-                        borderRadius="200"
-                        paddingBlock="200"
-                        paddingInline="400"
-                      >
-                        <Text as="p" variant="bodyMd" fontWeight="semibold" alignment="center" tone="success">
-                          Current plan
-                        </Text>
-                      </Box>
+                      <Button variant="secondary" disabled fullWidth size="large">
+                        Current plan
+                      </Button>
                     ) : (
                       <Button
-                        variant="secondary"
+                        variant="plain"
                         tone="critical"
                         onClick={() => setCancelModalOpen(true)}
                         loading={loadingPlan === "cancel"}
-                        fullWidth
-                        size="large"
                       >
                         Downgrade to Free
                       </Button>
@@ -602,7 +528,7 @@ export default function PricingPage() {
 
                 <Divider />
 
-                {/* Features row */}
+                {/* Features */}
                 <InlineGrid columns={{ xs: 1, sm: 3 }} gap="200">
                   {PLANS_DATA.free.features.map((f) => (
                     <PlanFeature key={f} feature={f} />
@@ -610,9 +536,9 @@ export default function PricingPage() {
                 </InlineGrid>
               </BlockStack>
             </Box>
-          </Box>
+          </Card>
 
-          {/* ── Section 3: Paid plan cards — 3 columns ── */}
+          {/* Paid plan cards — 3 columns */}
           <InlineGrid columns={{ xs: 1, md: 3 }} gap="400">
             <PlanCard
               plan={PLANS_DATA.starter}
@@ -637,12 +563,12 @@ export default function PricingPage() {
             />
           </InlineGrid>
 
-          {/* ── Section 4: Trial note ── */}
+          {/* Trial note */}
           <Text as="p" variant="bodySm" tone="subdued" alignment="center">
             All paid plans include a 7-day free trial. No credit card charged until the trial ends.
           </Text>
 
-          {/* ── Section 5: Feature comparison table ── */}
+          {/* Feature comparison table */}
           <BlockStack gap="300">
             <Text as="h2" variant="headingLg" alignment="center">
               Full Feature Comparison
@@ -650,43 +576,36 @@ export default function PricingPage() {
 
             <Card padding="0">
               <BlockStack gap="0">
-                {/* Table header */}
+                {/* Header */}
                 <Box padding="400" paddingBlockEnd="300">
                   <InlineGrid columns="4fr 2fr 2fr 2fr 2fr" gap="300" alignItems="end">
-                    <Box>
-                      <Text as="p" variant="bodySm" fontWeight="semibold" tone="subdued">
-                        Feature
-                      </Text>
-                    </Box>
+                    <Text as="p" variant="bodySm" fontWeight="semibold" tone="subdued">
+                      Feature
+                    </Text>
                     {PLAN_ORDER.map((id) => {
                       const plan = PLANS_DATA[id];
                       const isCurrentCol = currentTier === id;
                       return (
-                        <Box
-                          key={id}
-                          background={isCurrentCol ? "bg-surface-success" : undefined}
-                          borderRadius="200"
-                          padding="200"
-                        >
-                          <BlockStack gap="050" inlineAlign="center">
+                        <BlockStack key={id} gap="050" inlineAlign="center">
+                          <InlineStack gap="100" blockAlign="center">
                             <Text
                               as="p"
                               variant="headingSm"
                               fontWeight="bold"
                               alignment="center"
-                              tone={isCurrentCol ? "success" : undefined}
                             >
                               {plan.name}
                             </Text>
-                            <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-                              {plan.monthlyPrice === 0
-                                ? "Free"
-                                : isAnnual
-                                  ? `$${plan.annualMonthlyPrice}/mo`
-                                  : `$${plan.monthlyPrice}/mo`}
-                            </Text>
-                          </BlockStack>
-                        </Box>
+                            {isCurrentCol && <Badge tone="success" size="small">Active</Badge>}
+                          </InlineStack>
+                          <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                            {plan.monthlyPrice === 0
+                              ? "Free"
+                              : isAnnual
+                                ? `$${plan.annualMonthlyPrice}/mo`
+                                : `$${plan.monthlyPrice}/mo`}
+                          </Text>
+                        </BlockStack>
                       );
                     })}
                   </InlineGrid>
@@ -694,7 +613,7 @@ export default function PricingPage() {
 
                 <Divider />
 
-                {/* Table rows */}
+                {/* Rows */}
                 {FEATURE_ROWS.map((row, i) => (
                   <Box key={row.label}>
                     <Box
@@ -721,7 +640,7 @@ export default function PricingPage() {
             </Card>
           </BlockStack>
 
-          {/* ── Dev-only: Set plan manually ── */}
+          {/* Dev-only: Set plan manually */}
           {isDev && (
             <Banner tone="info" title="Development Mode: Set Plan Manually">
               <BlockStack gap="300">
@@ -753,7 +672,7 @@ export default function PricingPage() {
         </BlockStack>
       </Box>
 
-      {/* ── Downgrade confirmation modal ── */}
+      {/* Downgrade confirmation modal */}
       <Modal
         open={cancelModalOpen}
         onClose={() => setCancelModalOpen(false)}

@@ -336,7 +336,21 @@ function PlanCard({
   const isThisLoading = loadingPlan === (shopifyPlan ?? "cancel");
 
   return (
-    <Card padding="0">
+    <Box
+      background="bg-surface"
+      borderWidth="025"
+      borderColor="border"
+      borderRadius="300"
+      padding="0"
+      overflowX="hidden"
+      overflowY="hidden"
+    >
+      {/* Top accent — thin bar for recommended plan, transparent spacer for others */}
+      <Box
+        background={isBestValue && !isCurrent ? "bg-fill-info" : undefined}
+        minHeight="4px"
+      />
+
       <Box padding="500">
         <BlockStack gap="400">
 
@@ -347,7 +361,7 @@ function PlanCard({
                 {plan.name}
               </Text>
               {isCurrent && <Badge tone="success">Active</Badge>}
-              {isBestValue && !isCurrent && <Badge tone="info">Popular</Badge>}
+              {isBestValue && !isCurrent && <Badge tone="info-strong">Most popular</Badge>}
             </InlineStack>
             <Text as="p" variant="bodySm" tone="subdued">
               {plan.description}
@@ -394,7 +408,7 @@ function PlanCard({
 
         </BlockStack>
       </Box>
-    </Card>
+    </Box>
   );
 }
 

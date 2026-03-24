@@ -334,6 +334,8 @@ function buildSharedMetaCss(W: string, cfg: WidgetConfig): string {
     W + " .zcc-result-icon svg{width:22px;height:22px;display:block}" +
     W + " .zcc-result-content{flex:1;min-width:0}" +
     W + " .zcc-result-message{font-weight:600;line-height:1.4}" +
+    W + " .zcc-result.ok .zcc-result-icon{background:" + s + "15;border-radius:50%;padding:4px}" +
+    W + " .zcc-result.ok .zcc-result-message{color:" + s + "}" +
     // Button icon/label structure
     W + " .zcc-btn-icon{display:inline-flex;align-items:center;flex-shrink:0}" +
     W + " .zcc-btn-icon svg{width:15px;height:15px;display:block}" +
@@ -356,6 +358,26 @@ function buildSharedMetaCss(W: string, cfg: WidgetConfig): string {
     W + " .zcc-cod svg{width:13px;height:13px;flex-shrink:0}" +
     W + " .zcc-cod--available{background:" + s + "12;border:1px solid " + s + "25;color:" + s + "}" +
     W + " .zcc-cod--unavailable{background:#d72c0d10;border:1px solid #d72c0d22;color:#d72c0d}" +
+    // Delivery date
+    W + " .zcc-delivery-date{margin-top:5px;font-size:12px;color:#4b5563;display:flex;align-items:center;gap:7px;line-height:1.4}" +
+    W + " .zcc-delivery-date svg{width:14px;height:14px;flex-shrink:0;opacity:0.7}" +
+    W + " .zcc-delivery-date strong{font-weight:600;color:" + cfg.textColor + "}" +
+    // Countdown timer
+    W + " .zcc-countdown{margin-top:5px;font-size:12px;display:flex;align-items:center;gap:7px;line-height:1.4}" +
+    W + " .zcc-countdown svg{width:13px;height:13px;flex-shrink:0;opacity:0.7}" +
+    W + " .zcc-countdown strong{font-weight:700}" +
+    W + " .zcc-countdown--green{color:#16a34a}" +
+    W + " .zcc-countdown--green strong{color:#16a34a}" +
+    W + " .zcc-countdown--amber{color:#d97706}" +
+    W + " .zcc-countdown--amber strong{color:#d97706}" +
+    W + " .zcc-countdown--red{color:#dc2626}" +
+    W + " .zcc-countdown--red strong{color:#dc2626}" +
+    W + " .zcc-countdown--passed{color:#6d7175}" +
+    // Delivery fee
+    W + " .zcc-delivery-fee{margin-top:8px;display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600}" +
+    W + " .zcc-delivery-fee svg{width:13px;height:13px;flex-shrink:0}" +
+    W + " .zcc-delivery-fee--free{background:" + s + "12;border:1px solid " + s + "25;color:" + s + "}" +
+    W + " .zcc-delivery-fee--paid{background:#f59e0b10;border:1px solid #f59e0b22;color:#92400e}" +
     // Waitlist
     W + " .zcc-wl-title{font-size:13px;font-weight:700;color:" + cfg.textColor + ";margin-bottom:10px}" +
     W + " .zcc-wl-btn-icon{display:inline-flex;align-items:center;flex-shrink:0}" +
@@ -797,230 +819,40 @@ const WidgetPreview = memo(function WidgetPreview({
         </button>
       </div>
 
-      {/* Success result — modern card-based preview layout */}
+      {/* Success result — uses same CSS classes as storefront widget */}
       {previewState === "success" && (
-        <div style={{
-          marginTop: 12,
-          borderRadius: 12,
-          overflow: "hidden",
-          border: `1px solid ${effectiveCfg.successColor}22`,
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-          animation: "zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1)",
-        }}>
-          {/* Success header strip */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "10px 14px",
-            background: `linear-gradient(135deg, ${effectiveCfg.successColor}14, ${effectiveCfg.successColor}08)`,
-            borderBottom: `1px solid ${effectiveCfg.successColor}18`,
-          }}>
-            <span style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 26,
-              height: 26,
-              borderRadius: "50%",
-              background: `${effectiveCfg.successColor}18`,
-              flexShrink: 0,
-            }}>
-              {checkCircleIcon}
-            </span>
-            <span style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: effectiveCfg.successColor,
-              lineHeight: 1.4,
-              flex: 1,
-            }}>
-              {cfg.successMessage}
-            </span>
+        <div className="zcc-result ok">
+          <div className="zcc-result-icon">{checkCircleIcon}</div>
+          <div className="zcc-result-content">
+            <div className="zcc-result-message">{cfg.successMessage}</div>
+            {effectiveCfg.showEta && (
+              <div className="zcc-meta">{truckIcon}<span>Estimated delivery: <strong>2-3 business days</strong></span></div>
+            )}
+            {effectiveCfg.showDeliveryDate && effectiveCfg.showEta && (
+              <div className="zcc-meta zcc-delivery-date">{calendarIcon}<span>Expected by <strong>Friday, Mar 28</strong></span></div>
+            )}
+            {effectiveCfg.showZone && (
+              <div className="zcc-meta">{locationIcon}<span>Zone: <strong>North</strong></span></div>
+            )}
+            {effectiveCfg.showDeliveryDays && (
+              <div className="zcc-meta zcc-days">{calendarIcon}<span>Mon &middot; Tue &middot; Wed &middot; Thu &middot; Fri</span></div>
+            )}
+            {effectiveCfg.showCutoffTime && (
+              <div className="zcc-meta zcc-cutoff">{clockIcon}<span>Order by <strong>2:00 PM</strong> for same-day</span></div>
+            )}
+            {effectiveCfg.showCountdown && effectiveCfg.showCutoffTime && (
+              <div className="zcc-countdown zcc-countdown--amber">{clockIcon}<span>Order within <strong>2h 14m</strong> for same-day dispatch</span></div>
+            )}
+            {effectiveCfg.showCod && (
+              <div className="zcc-cod zcc-cod--available">{cardIcon} COD Available</div>
+            )}
+            {effectiveCfg.showDeliveryFee && (
+              <div className="zcc-delivery-fee zcc-delivery-fee--free">{truckIcon} Free Delivery</div>
+            )}
+            {effectiveCfg.showReturnPolicy && (
+              <div className="zcc-return-policy">{refreshIcon}<span>7-day easy returns</span></div>
+            )}
           </div>
-
-          {/* Info cards row — ETA + Zone */}
-          {(effectiveCfg.showEta || effectiveCfg.showZone) && (
-            <div style={{
-              display: "flex",
-              gap: 0,
-              background: effectiveCfg.backgroundColor,
-              borderBottom: `1px solid ${effectiveCfg.successColor}12`,
-            }}>
-              {effectiveCfg.showEta && (
-                <div style={{
-                  flex: 1,
-                  padding: "10px 14px",
-                  borderRight: effectiveCfg.showZone ? `1px solid ${effectiveCfg.successColor}14` : "none",
-                  display: "flex",
-                  flexDirection: "column" as const,
-                  gap: 3,
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                    <span style={{ color: effectiveCfg.successColor, display: "inline-flex" }}>
-                      {truckIcon}
-                    </span>
-                    <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
-                      Delivery ETA
-                    </span>
-                  </div>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: effectiveCfg.textColor, lineHeight: 1.2 }}>
-                    2–3 days
-                  </span>
-                  <span style={{ fontSize: 11, color: "#64748b" }}>business days</span>
-                </div>
-              )}
-              {effectiveCfg.showZone && (
-                <div style={{
-                  flex: 1,
-                  padding: "10px 14px",
-                  display: "flex",
-                  flexDirection: "column" as const,
-                  gap: 3,
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                    <span style={{ color: effectiveCfg.primaryColor, display: "inline-flex" }}>
-                      {locationIcon}
-                    </span>
-                    <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
-                      Zone
-                    </span>
-                  </div>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: effectiveCfg.textColor, lineHeight: 1.2 }}>
-                    North
-                  </span>
-                  <span style={{ fontSize: 11, color: "#64748b" }}>delivery zone</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Schedule row — delivery days + cutoff */}
-          {(effectiveCfg.showDeliveryDays || effectiveCfg.showCutoffTime) && (
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 0,
-              padding: "8px 14px",
-              background: effectiveCfg.backgroundColor,
-              borderBottom: `1px solid ${effectiveCfg.successColor}12`,
-            }}>
-              {effectiveCfg.showDeliveryDays && (
-                <div style={{ display: "flex", alignItems: "center", gap: 5, flex: 1 }}>
-                  <span style={{ color: "#94a3b8", display: "inline-flex" }}>{calendarIcon}</span>
-                  <span style={{ fontSize: 12, color: "#4b5563" }}>
-                    Mon &middot; Tue &middot; Wed &middot; Thu &middot; Fri
-                  </span>
-                </div>
-              )}
-              {effectiveCfg.showDeliveryDays && effectiveCfg.showCutoffTime && (
-                <div style={{ width: 1, height: 16, background: "#e2e8f0", flexShrink: 0, margin: "0 10px" }} />
-              )}
-              {effectiveCfg.showCutoffTime && (
-                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <span style={{ color: "#94a3b8", display: "inline-flex" }}>{clockIcon}</span>
-                  <span style={{ fontSize: 12, color: "#4b5563" }}>
-                    Order by <strong style={{ color: effectiveCfg.textColor, fontWeight: 600 }}>2:00 PM</strong>
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Delivery Date row */}
-          {effectiveCfg.showDeliveryDate && effectiveCfg.showEta && (
-            <div style={{
-              display: "flex", alignItems: "center", gap: 5,
-              padding: "8px 14px",
-              background: effectiveCfg.backgroundColor,
-              borderBottom: `1px solid ${effectiveCfg.successColor}12`,
-            }}>
-              <span style={{ color: effectiveCfg.successColor, display: "inline-flex" }}>{calendarIcon}</span>
-              <span style={{ fontSize: 12, color: "#4b5563" }}>
-                Expected by <strong style={{ color: effectiveCfg.textColor, fontWeight: 600 }}>Friday, Mar 28</strong>
-              </span>
-            </div>
-          )}
-
-          {/* Countdown Timer row */}
-          {effectiveCfg.showCountdown && effectiveCfg.showCutoffTime && (
-            <div style={{
-              display: "flex", alignItems: "center", gap: 5,
-              padding: "8px 14px",
-              background: effectiveCfg.backgroundColor,
-              borderBottom: `1px solid ${effectiveCfg.successColor}12`,
-            }}>
-              <span style={{ color: "#f59e0b", display: "inline-flex" }}>{clockIcon}</span>
-              <span style={{ fontSize: 12, color: "#4b5563" }}>
-                Order within <strong style={{ color: "#f59e0b", fontWeight: 700 }}>2h 14m</strong> for same-day dispatch
-              </span>
-            </div>
-          )}
-
-          {/* Delivery Fee row */}
-          {effectiveCfg.showDeliveryFee && (
-            <div style={{
-              display: "flex", alignItems: "center", gap: 5,
-              padding: "8px 14px",
-              background: effectiveCfg.backgroundColor,
-              borderBottom: (effectiveCfg.showCod || effectiveCfg.showReturnPolicy)
-                ? `1px solid ${effectiveCfg.successColor}12` : "none",
-            }}>
-              <div style={{
-                display: "inline-flex", alignItems: "center", gap: 5,
-                padding: "4px 10px", borderRadius: 20,
-                background: `${effectiveCfg.successColor}12`,
-                border: `1px solid ${effectiveCfg.successColor}28`,
-                fontSize: 12, fontWeight: 600, color: effectiveCfg.successColor,
-              }}>
-                <span style={{ display: "inline-flex" }}>{truckIcon}</span>
-                Free Delivery
-              </div>
-            </div>
-          )}
-
-          {/* COD badge + return policy footer */}
-          {(effectiveCfg.showCod || effectiveCfg.showReturnPolicy) && (
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap" as const,
-              gap: 6,
-              padding: "8px 14px",
-              background: effectiveCfg.backgroundColor,
-            }}>
-              {effectiveCfg.showCod && (
-                <div style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 5,
-                  padding: "4px 10px",
-                  borderRadius: 20,
-                  background: `${effectiveCfg.successColor}12`,
-                  border: `1px solid ${effectiveCfg.successColor}28`,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: effectiveCfg.successColor,
-                }}>
-                  <span style={{ display: "inline-flex", color: effectiveCfg.successColor }}>{cardIcon}</span>
-                  COD Available
-                </div>
-              )}
-              {effectiveCfg.showReturnPolicy && (
-                <div style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 5,
-                  fontSize: 11,
-                  color: "#94a3b8",
-                }}>
-                  <span style={{ display: "inline-flex" }}>{refreshIcon}</span>
-                  7-day easy returns
-                </div>
-              )}
-            </div>
-          )}
         </div>
       )}
 

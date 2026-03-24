@@ -912,15 +912,15 @@ export default function FeatureRequestsPage() {
                           wrap={false}
                         >
                           {/* Vote column */}
-                          <Box minWidth="56px" width="56px">
+                          <Box minWidth="64px" width="64px">
                             <Box
-                              padding="300"
-                              background={isVoted ? "bg-surface-info" : "bg-surface-secondary"}
+                              padding="200"
+                              background={isVoted ? "bg-fill-success" : "bg-surface-secondary"}
                               borderRadius="200"
                               borderWidth="025"
-                              borderColor={isVoted ? "border-info" : "border"}
+                              borderColor={isVoted ? "border-success" : "border"}
                             >
-                              <BlockStack gap="050" inlineAlign="center">
+                              <BlockStack gap="0" inlineAlign="center">
                                 <Button
                                   variant="tertiary"
                                   size="micro"
@@ -941,15 +941,19 @@ export default function FeatureRequestsPage() {
                                   variant="headingSm"
                                   fontWeight="bold"
                                   alignment="center"
-                                  tone={isVoted ? "magic" : "subdued"}
+                                  tone={isVoted ? "text-inverse" : "subdued"}
                                 >
                                   {feature.votesCount}
                                 </Text>
-                                {isVoted && (
-                                  <Text as="p" variant="bodySm" tone="magic">
-                                    voted
-                                  </Text>
-                                )}
+                                <Text
+                                  as="p"
+                                  variant="bodySm"
+                                  fontWeight="medium"
+                                  alignment="center"
+                                  tone={isVoted ? "text-inverse" : "subdued"}
+                                >
+                                  {isVoted ? "Voted" : "Vote"}
+                                </Text>
                               </BlockStack>
                             </Box>
                           </Box>

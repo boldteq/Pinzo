@@ -292,84 +292,91 @@ function PlanCard({
   const isThisLoading = loadingPlan === (shopifyPlan ?? "cancel");
 
   return (
-    <Card>
-      <BlockStack gap="400">
-
-        {/* Plan name + badges */}
-        <BlockStack gap="100">
-          <InlineStack align="space-between" blockAlign="center">
-            <Text as="h3" variant="headingMd" fontWeight="bold">
-              {plan.name}
-            </Text>
-            <InlineStack gap="150">
-              {isBestValue && (
-                <Badge tone="info" icon={StarIcon}>
-                  Most popular
-                </Badge>
-              )}
-              {isCurrent && <Badge tone="success">Active</Badge>}
-            </InlineStack>
-          </InlineStack>
-          <Text as="p" variant="bodySm" tone="subdued">
-            {plan.description}
-          </Text>
-        </BlockStack>
-
-        <Divider />
-
-        {/* Price */}
-        <BlockStack gap="100">
-          {plan.monthlyPrice === 0 ? (
-            <>
-              <Text as="p" variant="headingXl" fontWeight="bold">
-                Free
-              </Text>
-              <Text as="p" variant="bodySm" tone="subdued">
-                forever
-              </Text>
-            </>
-          ) : (
-            <>
-              <InlineStack gap="100" blockAlign="baseline">
-                <Text as="p" variant="headingXl" fontWeight="bold">
-                  ${displayPrice}
-                </Text>
+    <div style={{ height: "100%" }}>
+      <Card>
+        <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+          {/* Top section — flex-grow pushes button to a consistent position */}
+          <div style={{ flex: 1 }}>
+            <BlockStack gap="400">
+              {/* Plan name + badges */}
+              <BlockStack gap="100">
+                <InlineStack align="space-between" blockAlign="center">
+                  <Text as="h3" variant="headingMd" fontWeight="bold">
+                    {plan.name}
+                  </Text>
+                  <InlineStack gap="150">
+                    {isBestValue && (
+                      <Badge tone="info" icon={StarIcon}>
+                        Most popular
+                      </Badge>
+                    )}
+                    {isCurrent && <Badge tone="success">Active</Badge>}
+                  </InlineStack>
+                </InlineStack>
                 <Text as="p" variant="bodySm" tone="subdued">
-                  / month
+                  {plan.description}
                 </Text>
-              </InlineStack>
-              <Text as="p" variant="bodySm" tone="subdued">
-                {isAnnual
-                  ? `billed $${plan.annualPrice} / year`
-                  : `or $${plan.annualMonthlyPrice}/mo billed annually`}
-              </Text>
-            </>
-          )}
-        </BlockStack>
+              </BlockStack>
 
-        {/* CTA button */}
-        <Button
-          variant={isCurrent ? "secondary" : "primary"}
-          tone={isDowngradeToFree ? "critical" : undefined}
-          onClick={handleClick}
-          disabled={isCurrent}
-          loading={isThisLoading}
-          fullWidth
-        >
-          {buttonContent}
-        </Button>
+              <Divider />
 
-        <Divider />
+              {/* Price */}
+              <BlockStack gap="100">
+                {plan.monthlyPrice === 0 ? (
+                  <>
+                    <Text as="p" variant="headingXl" fontWeight="bold">
+                      Free
+                    </Text>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      forever
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <InlineStack gap="100" blockAlign="baseline">
+                      <Text as="p" variant="headingXl" fontWeight="bold">
+                        ${displayPrice}
+                      </Text>
+                      <Text as="p" variant="bodySm" tone="subdued">
+                        / month
+                      </Text>
+                    </InlineStack>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      {isAnnual
+                        ? `billed $${plan.annualPrice} / year`
+                        : `or $${plan.annualMonthlyPrice}/mo billed annually`}
+                    </Text>
+                  </>
+                )}
+              </BlockStack>
+            </BlockStack>
+          </div>
 
-        {/* Features list */}
-        <BlockStack gap="300">
-          {plan.features.map((f) => (
-            <PlanFeature key={f} feature={f} />
-          ))}
-        </BlockStack>
+          {/* Bottom section — button + features stay aligned across cards */}
+          <BlockStack gap="400">
+            <Button
+              variant={isCurrent ? "secondary" : "primary"}
+              tone={isDowngradeToFree ? "critical" : undefined}
+              onClick={handleClick}
+              disabled={isCurrent}
+              loading={isThisLoading}
+              fullWidth
+            >
+              {buttonContent}
+            </Button>
 
-      </BlockStack>
-    </Card>
+            <Divider />
+
+            {/* Features list */}
+            <BlockStack gap="300">
+              {plan.features.map((f) => (
+                <PlanFeature key={f} feature={f} />
+              ))}
+            </BlockStack>
+          </BlockStack>
+        </div>
+      </Card>
+    </div>
   );
 }
 

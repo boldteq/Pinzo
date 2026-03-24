@@ -13,7 +13,6 @@ import {
   Button,
   Divider,
   Box,
-  Banner,
   Collapsible,
   Icon,
   InlineGrid,
@@ -25,7 +24,6 @@ import {
   ChatIcon,
   EmailNewsletterIcon,
   LightbulbIcon,
-  ClockIcon,
   CalendarTimeIcon,
   SmileyHappyIcon,
 } from "@shopify/polaris-icons";

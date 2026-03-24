@@ -711,23 +711,54 @@
       if (e.key === "Enter") checkZip();
     });
 
-    // Re-enable buttons when customer clears the input
-    inp.addEventListener('input', function() {
-      if (!inp.value.trim() && cfg.blockCartOnInvalid) {
+    // When the customer edits the ZIP input after a successful check, re-block
+    // cart buttons until they verify the new ZIP. Cart buttons must ONLY be
+    // re-enabled by a successful API response (data.allowed === true).
+    // Note: we track whether the last verification was successful so we only
+    // re-block when the value actually changes away from the verified ZIP.
+    if (cfg.blockCartOnInvalid) {
+      inp.addEventListener('input', function() {
         try {
-          var blocked = document.querySelectorAll('[data-zcc-blocked="true"]');
-          blocked.forEach(function(b) {
-            b.disabled = false;
-            b.style.opacity = '';
-            b.title = b.getAttribute('data-zcc-orig-title') || '';
-            b.removeAttribute('data-zcc-blocked');
-            b.removeAttribute('data-zcc-orig-title');
-          });
-          sessionStorage.removeItem('zcc:valid');
-          sessionStorage.removeItem('zcc:zip');
+          var lastValidZip = sessionStorage.getItem('zcc:zip');
+          var lastValid = sessionStorage.getItem('zcc:valid') === 'true';
+          // If the last check was successful, re-block as soon as the input
+          // changes (any change away from the verified value is unverified).
+          if (lastValid && lastValidZip) {
+            var currentVal = normalizeZip(inp.value);
+            if (currentVal !== lastValidZip) {
+              // Mark as unverified immediately
+              sessionStorage.setItem('zcc:valid', 'false');
+              sessionStorage.removeItem('zcc:zip');
+              // Re-block ATC buttons until the new ZIP is verified
+              var ATC_SELECTORS = [
+                'button[name="add"]',
+                '.product-form__submit',
+                '[data-product-add]',
+                '.btn--add-to-cart',
+                '.product-form button[type="submit"]',
+                'button.shopify-payment-button__button',
+                '.shopify-payment-button button',
+                'button.product-form__cart-submit'
+              ].join(',');
+              var atcBtns = document.querySelectorAll(ATC_SELECTORS);
+              atcBtns.forEach(function(b) {
+                if (!b.closest('[data-zcc-widget]')) {
+                  if (!b.getAttribute('data-zcc-blocked')) {
+                    b.setAttribute('data-zcc-orig-title', b.title || '');
+                  }
+                  b.disabled = true;
+                  b.style.opacity = '0.5';
+                  b.title = 'Please check ZIP code availability first';
+                  b.setAttribute('data-zcc-blocked', 'true');
+                }
+              });
+            }
+          }
+          // If the last check was NOT successful (buttons are already blocked),
+          // do nothing — clearing or changing the input must never unblock buttons.
         } catch(e) {}
-      }
-    });
+      });
+    }
   }
 
   function joinWaitlist(zip, email, name, wBtn) {

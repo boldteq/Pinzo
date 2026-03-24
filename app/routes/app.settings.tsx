@@ -26,6 +26,7 @@ import {
   Select,
   TextField,
   Banner,
+  InlineGrid,
 } from "@shopify/polaris";
 
 // ---------------------------------------------------------------------------
@@ -348,84 +349,90 @@ export default function SettingsPage() {
                 </InlineStack>
                 <Divider />
                 {/* Usage grid */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
-                  <div style={{ background: "#f8f8f8", borderRadius: 10, padding: "12px 16px", textAlign: "center" }}>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: "#1a1a1a", fontFamily: "system-ui" }}>
-                      {zipCount}
-                    </div>
-                    <div style={{ fontSize: 12, color: "#6b6b6b", fontFamily: "system-ui", marginTop: 2 }}>
-                      Zip Codes
-                    </div>
-                    {limits.maxZipCodes < UNLIMITED && (
-                      <div style={{ marginTop: 6 }}>
-                        <div style={{ background: "#e5e5e5", borderRadius: 4, height: 4, overflow: "hidden" }}>
-                          <div style={{
-                            background: zipCount / limits.maxZipCodes > 0.8 ? "#ef4444" : "#22c55e",
-                            height: 4, borderRadius: 4,
-                            width: `${Math.min(100, (zipCount / limits.maxZipCodes) * 100)}%`,
-                          }} />
-                        </div>
-                        <div style={{ fontSize: 10, color: "#8c8c8c", fontFamily: "system-ui", marginTop: 2 }}>
-                          of {limits.maxZipCodes}
-                        </div>
-                      </div>
-                    )}
-                    {limits.maxZipCodes >= UNLIMITED && (
-                      <div style={{ fontSize: 10, color: "#22c55e", fontFamily: "system-ui", marginTop: 4, fontWeight: 600 }}>
-                        Unlimited
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ background: "#f8f8f8", borderRadius: 10, padding: "12px 16px", textAlign: "center" }}>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: "#1a1a1a", fontFamily: "system-ui" }}>
-                      {limits.maxDeliveryRules >= UNLIMITED
-                        ? "\u221E"
-                        : limits.maxDeliveryRules === 0
-                          ? "\u2014"
-                          : limits.maxDeliveryRules}
-                    </div>
-                    <div style={{ fontSize: 12, color: "#6b6b6b", fontFamily: "system-ui", marginTop: 2 }}>
-                      Delivery Rules
-                    </div>
-                    <div style={{ fontSize: 10, fontFamily: "system-ui", marginTop: 4, fontWeight: 600, color: limits.maxDeliveryRules === 0 ? "#ef4444" : "#22c55e" }}>
-                      {limits.maxDeliveryRules >= UNLIMITED
-                        ? "Unlimited"
-                        : limits.maxDeliveryRules === 0
-                          ? "Not Available"
-                          : `Up to ${limits.maxDeliveryRules}`}
-                    </div>
-                  </div>
-                  <div style={{ background: "#f8f8f8", borderRadius: 10, padding: "12px 16px", textAlign: "center" }}>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: "#1a1a1a", fontFamily: "system-ui" }}>
-                      {limits.maxWaitlist >= UNLIMITED
-                        ? "\u221E"
-                        : limits.maxWaitlist === 0
-                          ? "\u2014"
-                          : limits.maxWaitlist}
-                    </div>
-                    <div style={{ fontSize: 12, color: "#6b6b6b", fontFamily: "system-ui", marginTop: 2 }}>
-                      Waitlist
-                    </div>
-                    <div style={{ fontSize: 10, fontFamily: "system-ui", marginTop: 4, fontWeight: 600, color: limits.maxWaitlist === 0 ? "#ef4444" : "#22c55e" }}>
-                      {limits.maxWaitlist >= UNLIMITED
-                        ? "Unlimited"
-                        : limits.maxWaitlist === 0
-                          ? "Not Available"
-                          : `Up to ${limits.maxWaitlist}`}
-                    </div>
-                  </div>
-                  <div style={{ background: "#f8f8f8", borderRadius: 10, padding: "12px 16px", textAlign: "center" }}>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: "#1a1a1a", fontFamily: "system-ui" }}>
-                      {limits.allowBlocked ? "\u2713" : "\u2717"}
-                    </div>
-                    <div style={{ fontSize: 12, color: "#6b6b6b", fontFamily: "system-ui", marginTop: 2 }}>
-                      Block List
-                    </div>
-                    <div style={{ fontSize: 10, fontFamily: "system-ui", marginTop: 4, fontWeight: 600, color: limits.allowBlocked ? "#22c55e" : "#ef4444" }}>
-                      {limits.allowBlocked ? "Enabled" : "Not Available"}
-                    </div>
-                  </div>
-                </div>
+                <InlineGrid columns={4} gap="300">
+                  <Box background="bg-surface-secondary" borderRadius="300" padding="400">
+                    <BlockStack gap="100" inlineAlign="center">
+                      <Text as="p" variant="headingLg" alignment="center" fontWeight="bold">
+                        {zipCount}
+                      </Text>
+                      <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                        Zip Codes
+                      </Text>
+                      {limits.maxZipCodes < UNLIMITED && (
+                        <BlockStack gap="100">
+                          <div style={{ background: "#e5e5e5", borderRadius: 4, height: 4, overflow: "hidden" }}>
+                            <div style={{
+                              background: zipCount / limits.maxZipCodes > 0.8 ? "#e51c00" : "#008060",
+                              height: 4, borderRadius: 4,
+                              width: `${Math.min(100, (zipCount / limits.maxZipCodes) * 100)}%`,
+                            }} />
+                          </div>
+                          <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                            of {limits.maxZipCodes}
+                          </Text>
+                        </BlockStack>
+                      )}
+                      {limits.maxZipCodes >= UNLIMITED && (
+                        <Badge tone="success">Unlimited</Badge>
+                      )}
+                    </BlockStack>
+                  </Box>
+                  <Box background="bg-surface-secondary" borderRadius="300" padding="400">
+                    <BlockStack gap="100" inlineAlign="center">
+                      <Text as="p" variant="headingLg" alignment="center" fontWeight="bold">
+                        {limits.maxDeliveryRules >= UNLIMITED
+                          ? "\u221E"
+                          : limits.maxDeliveryRules === 0
+                            ? "\u2014"
+                            : String(limits.maxDeliveryRules)}
+                      </Text>
+                      <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                        Delivery Rules
+                      </Text>
+                      <Badge tone={limits.maxDeliveryRules === 0 ? "critical" : "success"}>
+                        {limits.maxDeliveryRules >= UNLIMITED
+                          ? "Unlimited"
+                          : limits.maxDeliveryRules === 0
+                            ? "Not Available"
+                            : `Up to ${limits.maxDeliveryRules}`}
+                      </Badge>
+                    </BlockStack>
+                  </Box>
+                  <Box background="bg-surface-secondary" borderRadius="300" padding="400">
+                    <BlockStack gap="100" inlineAlign="center">
+                      <Text as="p" variant="headingLg" alignment="center" fontWeight="bold">
+                        {limits.maxWaitlist >= UNLIMITED
+                          ? "\u221E"
+                          : limits.maxWaitlist === 0
+                            ? "\u2014"
+                            : String(limits.maxWaitlist)}
+                      </Text>
+                      <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                        Waitlist
+                      </Text>
+                      <Badge tone={limits.maxWaitlist === 0 ? "critical" : "success"}>
+                        {limits.maxWaitlist >= UNLIMITED
+                          ? "Unlimited"
+                          : limits.maxWaitlist === 0
+                            ? "Not Available"
+                            : `Up to ${limits.maxWaitlist}`}
+                      </Badge>
+                    </BlockStack>
+                  </Box>
+                  <Box background="bg-surface-secondary" borderRadius="300" padding="400">
+                    <BlockStack gap="100" inlineAlign="center">
+                      <Text as="p" variant="headingLg" alignment="center" fontWeight="bold">
+                        {limits.allowBlocked ? "\u2713" : "\u2717"}
+                      </Text>
+                      <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                        Block List
+                      </Text>
+                      <Badge tone={limits.allowBlocked ? "success" : "critical"}>
+                        {limits.allowBlocked ? "Enabled" : "Not Available"}
+                      </Badge>
+                    </BlockStack>
+                  </Box>
+                </InlineGrid>
               </BlockStack>
             </Card>
           </Layout.Section>

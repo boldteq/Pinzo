@@ -42,5 +42,19 @@
       "Bash(npx prisma migrate reset --force)"
     ]
   },
-  "autoMemoryEnabled": true
+  "autoMemoryEnabled": true,
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"/Users/yashbaldha/Desktop/Shopify App/Pinzo\" && if git diff --quiet && git diff --cached --quiet && [ -z \"$(git ls-files --others --exclude-standard)\" ]; then echo '{\"systemMessage\": \"No changes to push.\"}'; else git add -A && git commit -m \"Auto-commit changes\" && git push origin main && echo '{\"systemMessage\": \"Auto-pushed changes to origin/main.\"}'; fi",
+            "timeout": 30,
+            "statusMessage": "Auto-pushing changes..."
+          }
+        ]
+      }
+    ]
+  }
 }

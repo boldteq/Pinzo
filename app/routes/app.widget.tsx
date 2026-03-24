@@ -407,151 +407,109 @@ function FloatingPreview({
     <>
       {/* eslint-disable-next-line react/no-danger */}
       <style dangerouslySetInnerHTML={{ __html: css }} />
-      {/* Mock storefront page */}
-      <div
-        style={{
-          position: "relative",
-          minHeight: "480px",
-          background: "linear-gradient(180deg, #fafafa 0%, #f1f1f1 100%)",
-          borderRadius: "10px",
-          overflow: "visible",
-        }}
-      >
-        {/* Realistic product page skeleton */}
-        <div style={{ padding: "16px", display: "flex", gap: "14px" }}>
-          {/* Product image placeholder */}
-          <div style={{ width: 120, height: 120, borderRadius: 10, background: "linear-gradient(135deg, #f0f0f0, #e8e8e8)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" style={{ width: 32, height: 32 }}>
-              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-3.086-3.086a2 2 0 00-2.828 0L6 21"/>
-            </svg>
-          </div>
-          {/* Product details */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ width: "85%", height: 12, background: "#e0e0e0", borderRadius: 4, marginBottom: 8 }} />
-            <div style={{ width: "40%", height: 10, background: "#d4d4d4", borderRadius: 4, marginBottom: 6 }} />
-            <div style={{ display: "flex", gap: 3, marginBottom: 12 }}>
-              {[1,2,3,4,5].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: i <= 4 ? "#fbbf24" : "#e5e7eb" }} />)}
-            </div>
-            <div style={{ height: 36, background: "#222", borderRadius: 8, marginBottom: 8 }} />
-            <div style={{ height: 32, border: "1.5px solid #ddd", borderRadius: 8 }} />
-          </div>
-        </div>
-
-        {/* Floating UI anchored bottom-right */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 14,
-            right: 14,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-end",
-            gap: 10,
-            zIndex: 2,
-          }}
-        >
-          {/* Panel */}
-          {panelOpen && (
-            <div
-              style={{
-                background: cfg.backgroundColor,
-                borderRadius: 16,
-                boxShadow: "0 16px 48px rgba(0,0,0,.14), 0 4px 16px rgba(0,0,0,.06)",
-                width: 280,
-                maxWidth: "calc(100% - 16px)",
-                overflow: "hidden",
-                animation: "zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1)",
-              }}
-            >
-              {/* Panel header */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "14px 16px",
-                  background: `linear-gradient(135deg, ${cfg.primaryColor}08, ${cfg.primaryColor}03)`,
-                  borderBottom: "1px solid rgba(0,0,0,0.06)",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: cfg.textColor,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  <span style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    background: cfg.primaryColor + "18",
-                  }}>
-                    {pinIcon}
-                  </span>
-                  Delivery Check
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setPanelOpen(false)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: cfg.textColor,
-                    opacity: 0.5,
-                    borderRadius: 6,
-                    padding: 4,
-                    lineHeight: 1,
-                    transition: "all 0.15s",
-                  }}
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
-                    <path d="M18 6L6 18" /><path d="M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              {/* Panel body */}
-              <div style={{ padding: "16px 20px 20px" }}>
-                <style dangerouslySetInnerHTML={{ __html: `#${wid} .zcc-heading{display:none}` }} />
-                {widgetHtml}
-              </div>
-            </div>
-          )}
-
-          {/* Trigger button — pill with text, matching storefront */}
-          <button
-            type="button"
-            onClick={() => setPanelOpen(!panelOpen)}
+      {/* Floating layout — panel + trigger, no storefront mockup */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-end" }}>
+        {/* Panel */}
+        {panelOpen && (
+          <div
             style={{
-              background: cfg.primaryColor,
-              color: "#fff",
-              border: "none",
-              borderRadius: 50,
-              padding: "14px 22px",
-              fontSize: 14,
-              fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              cursor: "pointer",
-              boxShadow: `0 4px 16px ${cfg.primaryColor}40`,
-              transition: "all 0.2s ease",
-              whiteSpace: "nowrap" as const,
+              background: cfg.backgroundColor,
+              borderRadius: 14,
+              boxShadow: "0 8px 32px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.06)",
+              width: "100%",
+              overflow: "hidden",
+              border: "1px solid rgba(0,0,0,0.06)",
             }}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
-            </svg>
-            {cfg.buttonText || "Check Delivery"}
-          </button>
-        </div>
+            {/* Panel header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 14px",
+                background: `linear-gradient(135deg, ${cfg.primaryColor}08, ${cfg.primaryColor}03)`,
+                borderBottom: "1px solid rgba(0,0,0,0.06)",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: cfg.textColor,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <span style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 26,
+                  height: 26,
+                  borderRadius: "50%",
+                  background: cfg.primaryColor + "18",
+                }}>
+                  {pinIcon}
+                </span>
+                Delivery Check
+              </div>
+              <button
+                type="button"
+                onClick={() => setPanelOpen(false)}
+                style={{
+                  background: "rgba(0,0,0,0.05)",
+                  border: "none",
+                  cursor: "pointer",
+                  color: cfg.textColor,
+                  borderRadius: 6,
+                  width: 24,
+                  height: 24,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 0,
+                }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                  <path d="M18 6L6 18" /><path d="M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            {/* Panel body */}
+            <div style={{ padding: "12px 14px 14px" }}>
+              <style dangerouslySetInnerHTML={{ __html: `#${wid} .zcc-heading{display:none}` }} />
+              {widgetHtml}
+            </div>
+          </div>
+        )}
+
+        {/* Trigger button */}
+        <button
+          type="button"
+          onClick={() => setPanelOpen(!panelOpen)}
+          style={{
+            background: cfg.primaryColor,
+            color: "#fff",
+            border: "none",
+            borderRadius: 50,
+            padding: "12px 20px",
+            fontSize: 13,
+            fontWeight: 600,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 7,
+            cursor: "pointer",
+            boxShadow: `0 4px 12px ${cfg.primaryColor}30`,
+            whiteSpace: "nowrap" as const,
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
+          </svg>
+          {cfg.buttonText || "Check Delivery"}
+        </button>
       </div>
     </>
   );

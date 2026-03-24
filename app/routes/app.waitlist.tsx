@@ -861,14 +861,27 @@ export default function WaitlistPage() {
           <Layout.Section>
             <Card>
               <BlockStack gap="400">
-                <BlockStack gap="100">
-                  <Text as="h2" variant="headingMd" fontWeight="semibold">
-                    Notify Waiting Customers by ZIP Code
-                  </Text>
-                  <Text as="p" tone="subdued" variant="bodySm">
-                    Select the ZIP codes where you&apos;ve expanded delivery, then notify all waiting customers in those areas.
-                  </Text>
-                </BlockStack>
+                <InlineStack align="space-between" blockAlign="start" wrap={false}>
+                  <BlockStack gap="100">
+                    <Text as="h2" variant="headingMd" fontWeight="semibold">
+                      Notify Waiting Customers by ZIP Code
+                    </Text>
+                    <Text as="p" tone="subdued" variant="bodySm">
+                      Select individual ZIP codes below, or notify everyone at once.
+                    </Text>
+                  </BlockStack>
+                  <Button
+                    variant="primary"
+                    icon={EmailIcon}
+                    onClick={() => {
+                      handleSelectAllZips(true);
+                      setNotifyModalOpen(true);
+                    }}
+                    loading={fetcher.state !== "idle"}
+                  >
+                    {`Notify All (${stats.waiting})`}
+                  </Button>
+                </InlineStack>
                 <Divider />
                 <BlockStack gap="0">
                   {/* Select All row */}

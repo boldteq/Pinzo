@@ -292,7 +292,7 @@ function PlanCard({
   const isThisLoading = loadingPlan === (shopifyPlan ?? "cancel");
 
   return (
-    <div style={{ height: "100%", display: "grid" }}>
+    <div style={{ height: "100%" }}>
       <Card>
         <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
           {/* Top section — flex-grow pushes button to a consistent position */}
@@ -313,9 +313,11 @@ function PlanCard({
                     {isCurrent && <Badge tone="success">Active</Badge>}
                   </InlineStack>
                 </InlineStack>
-                <Text as="p" variant="bodySm" tone="subdued">
-                  {plan.description}
-                </Text>
+                <Box minHeight="40px">
+                  <Text as="p" variant="bodySm" tone="subdued">
+                    {plan.description}
+                  </Text>
+                </Box>
               </BlockStack>
 
               <Divider />

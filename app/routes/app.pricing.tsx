@@ -146,7 +146,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const shop = session.shop;
   const subscription = await getShopSubscription(shop);
-  return { subscription };
+  const isDev = process.env.NODE_ENV !== "production";
+  return { subscription, isDev };
 };
 
 // ─── Action ───────────────────────────────────────────────────────────────────
@@ -390,7 +391,7 @@ function PlanCard({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PricingPage() {
-  const { subscription } = useLoaderData<typeof loader>();
+  const { subscription, isDev } = useLoaderData<typeof loader>();
   const fetcher = useFetcher<typeof action>();
   const navigate = useNavigate();
   const shopify = useAppBridge();
@@ -435,16 +436,6 @@ export default function PricingPage() {
   }, [fetcher]);
 
   const currentTier = subscription.planTier;
-  const currentPlanName =
-    PLANS_DATA[currentTier as keyof typeof PLANS_DATA]?.name ?? "Free";
-
-  // Suggest next tier for upgrade banner
-  const nextTier =
-    currentTier === "free"
-      ? "starter"
-      : currentTier === "starter"
-        ? "pro"
-        : null;
 
   return (
     <Page
@@ -463,49 +454,6 @@ export default function PricingPage() {
         )}
         <Layout.Section>
           <BlockStack gap="600">
-
-            {/* Current plan status */}
-            {nextTier ? (
-              <Banner
-                tone="info"
-                title={`You're on the ${currentPlanName} plan`}
-                action={{
-                  content: `Upgrade to ${PLANS_DATA[nextTier].name}`,
-                  onAction: () => {
-                    const plan = isAnnual
-                      ? PLANS_DATA[nextTier].shopifyPlanAnnual
-                      : PLANS_DATA[nextTier].shopifyPlanMonthly;
-                    if (plan) handleSubscribe(plan);
-                  },
-                }}
-              >
-                <Text as="p" variant="bodyMd">
-                  {currentTier === "free"
-                    ? "You have up to 20 allowed zip codes and basic widget access. Upgrade to unlock more features."
-                    : "Upgrade to Pro for unlimited zip codes, blocked areas, full waitlist, and more."}
-                </Text>
-              </Banner>
-            ) : (
-              <Banner tone="success" title={`You're on the ${currentPlanName} plan`}>
-                <InlineStack gap="200" blockAlign="center">
-                  <Badge tone="success">Active</Badge>
-                  <Text as="p" variant="bodyMd">
-                    {currentTier === "ultimate"
-                      ? "You have full access to all features including VIP support and API access."
-                      : "You have unlimited zip codes, blocked areas, delivery rules, and more."}
-                  </Text>
-                </InlineStack>
-              </Banner>
-            )}
-
-            {/* Action feedback banners */}
-            {data && "success" in data && data.success && (
-              <Banner tone="success">
-                {data && "message" in data
-                  ? String(data.message)
-                  : "Plan updated successfully."}
-              </Banner>
-            )}
 
             {/* Billing toggle */}
             <BlockStack gap="200" inlineAlign="center">
@@ -688,8 +636,8 @@ export default function PricingPage() {
               </Box>
             </BlockStack>
 
-            {/* Set plan directly (for custom app testing) */}
-            <Banner tone="info" title="Set Plan Manually">
+            {/* Set plan directly (for custom app testing — dev only) */}
+            {isDev && <Banner tone="info" title="Set Plan Manually">
               <BlockStack gap="300">
                 <Text as="p" variant="bodySm">
                   Select a plan to activate it directly:
@@ -713,7 +661,7 @@ export default function PricingPage() {
                   ))}
                 </InlineStack>
               </BlockStack>
-            </Banner>
+            </Banner>}
 
           </BlockStack>
         </Layout.Section>

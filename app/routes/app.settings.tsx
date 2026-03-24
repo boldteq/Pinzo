@@ -341,19 +341,21 @@ export default function SettingsPage() {
                 </InlineStack>
                 <Divider />
                 {/* Usage grid */}
-                <InlineGrid columns={4} gap="300">
+                <InlineGrid columns={{ xs: 2, sm: 4 }} gap="300">
                   <Box
-                    background="bg-surface-secondary"
+                    background="bg-surface-info"
+                    borderWidth="025"
+                    borderColor="border-info"
                     borderRadius="300"
                     padding="400"
                   >
                     <BlockStack gap="200" inlineAlign="center">
                       <Box
-                        background="bg-fill-info"
+                        background="bg-surface-info"
                         borderRadius="full"
-                        padding="200"
+                        padding="300"
                       >
-                        <Icon source={LocationIcon} tone="base" />
+                        <Icon source={LocationIcon} tone="info" />
                       </Box>
                       <Text as="p" variant="headingLg" alignment="center" fontWeight="bold">
                         {zipCount}
@@ -367,7 +369,7 @@ export default function SettingsPage() {
                             <ProgressBar
                               progress={Math.min(100, (zipCount / limits.maxZipCodes) * 100)}
                               size="small"
-                              tone={zipCount / limits.maxZipCodes > 0.8 ? "critical" : "success"}
+                              tone={zipCount / limits.maxZipCodes > 0.8 ? "critical" : "primary"}
                             />
                             <Text as="p" variant="bodySm" tone="subdued" alignment="center">
                               {zipCount} of {limits.maxZipCodes}
@@ -376,22 +378,24 @@ export default function SettingsPage() {
                         </Box>
                       )}
                       {limits.maxZipCodes >= UNLIMITED && (
-                        <Badge tone="success">Unlimited</Badge>
+                        <Badge tone="info">Unlimited</Badge>
                       )}
                     </BlockStack>
                   </Box>
                   <Box
-                    background="bg-surface-secondary"
+                    background="bg-surface-success"
+                    borderWidth="025"
+                    borderColor="border-success"
                     borderRadius="300"
                     padding="400"
                   >
                     <BlockStack gap="200" inlineAlign="center">
                       <Box
-                        background="bg-fill-success"
+                        background="bg-surface-success"
                         borderRadius="full"
-                        padding="200"
+                        padding="300"
                       >
-                        <Icon source={DeliveryIcon} tone="base" />
+                        <Icon source={DeliveryIcon} tone="success" />
                       </Box>
                       <Text as="p" variant="headingLg" alignment="center" fontWeight="bold">
                         {limits.maxDeliveryRules >= UNLIMITED
@@ -413,17 +417,19 @@ export default function SettingsPage() {
                     </BlockStack>
                   </Box>
                   <Box
-                    background="bg-surface-secondary"
+                    background="bg-surface-warning"
+                    borderWidth="025"
+                    borderColor="border-warning"
                     borderRadius="300"
                     padding="400"
                   >
                     <BlockStack gap="200" inlineAlign="center">
                       <Box
-                        background="bg-fill-warning"
+                        background="bg-surface-warning"
                         borderRadius="full"
-                        padding="200"
+                        padding="300"
                       >
-                        <Icon source={PersonIcon} tone="base" />
+                        <Icon source={PersonIcon} tone="caution" />
                       </Box>
                       <Text as="p" variant="headingLg" alignment="center" fontWeight="bold">
                         {limits.maxWaitlist >= UNLIMITED
@@ -435,7 +441,7 @@ export default function SettingsPage() {
                       <Text as="p" variant="bodySm" tone="subdued" alignment="center">
                         Waitlist
                       </Text>
-                      <Badge tone={limits.maxWaitlist === 0 ? "critical" : "success"}>
+                      <Badge tone={limits.maxWaitlist === 0 ? "critical" : "attention"}>
                         {limits.maxWaitlist >= UNLIMITED
                           ? "Unlimited"
                           : limits.maxWaitlist === 0
@@ -445,17 +451,19 @@ export default function SettingsPage() {
                     </BlockStack>
                   </Box>
                   <Box
-                    background="bg-surface-secondary"
+                    background={limits.allowBlocked ? "bg-surface-success" : "bg-surface-critical"}
+                    borderWidth="025"
+                    borderColor={limits.allowBlocked ? "border-success" : "border-critical"}
                     borderRadius="300"
                     padding="400"
                   >
                     <BlockStack gap="200" inlineAlign="center">
                       <Box
-                        background={limits.allowBlocked ? "bg-fill-success" : "bg-fill-critical"}
+                        background={limits.allowBlocked ? "bg-surface-success" : "bg-surface-critical"}
                         borderRadius="full"
-                        padding="200"
+                        padding="300"
                       >
-                        <Icon source={DisabledIcon} tone="base" />
+                        <Icon source={DisabledIcon} tone={limits.allowBlocked ? "success" : "critical"} />
                       </Box>
                       <Text as="p" variant="headingLg" alignment="center" fontWeight="bold">
                         {limits.allowBlocked ? "\u2713" : "\u2717"}

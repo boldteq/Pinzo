@@ -310,25 +310,20 @@ function PlanCard({
   const displayPrice = isAnnual ? plan.annualMonthlyPrice : plan.monthlyPrice;
 
   let buttonContent = "Start free trial";
-  let buttonVariant: "primary" | "secondary" | "tertiary" = "primary";
-  let buttonTone: "critical" | undefined;
+  let buttonVariant: "primary" | "secondary" = "primary";
 
-  if (isCurrent) {
-    buttonContent = "Current plan";
-    buttonVariant = "tertiary";
-  } else if (isUpgrade) {
+  if (isUpgrade) {
     buttonContent = `Upgrade to ${plan.name}`;
     buttonVariant = "primary";
-  } else if (isDowngrade && isCurrentPaid) {
+  } else if (isDowngrade) {
     buttonContent = `Switch to ${plan.name}`;
     buttonVariant = "secondary";
-  } else if (!isCurrent && plan.id !== "free" && isCurrentPaid) {
+  } else if (!isCurrent && isCurrentPaid) {
     buttonContent = `Switch to ${plan.name}`;
     buttonVariant = "secondary";
   }
 
   const handleClick = () => {
-    if (isCurrent) return;
     if (shopifyPlan) {
       onSubscribe(shopifyPlan);
     }
@@ -336,10 +331,18 @@ function PlanCard({
 
   const isThisLoading = loadingPlan === (shopifyPlan ?? "cancel");
 
-  // Determine ribbon
-  const showRibbon = isBestValue || isCurrent;
-  const ribbonBg = isCurrent ? "bg-fill-success" : "bg-fill-info";
-  const ribbonText = isCurrent ? "Your Plan" : "Most Popular";
+  // Ribbon config — every card gets a ribbon area for consistent alignment
+  const hasColoredRibbon = isBestValue || isCurrent;
+  const ribbonBg = isCurrent
+    ? "bg-fill-success"
+    : isBestValue
+      ? "bg-fill-info"
+      : "bg-surface";
+  const ribbonText = isCurrent
+    ? "Your Plan"
+    : isBestValue
+      ? "Most Popular"
+      : "";
 
   return (
     <Box
@@ -351,17 +354,25 @@ function PlanCard({
       overflowX="hidden"
       overflowY="hidden"
     >
-      {/* Ribbon — only for current plan or best value */}
-      {showRibbon && (
-        <Box background={ribbonBg} paddingBlock="100" paddingInline="400">
-          <Text as="p" variant="bodySm" fontWeight="semibold" alignment="center" tone="text-inverse">
-            {ribbonText}
-          </Text>
-        </Box>
-      )}
+      {/* Ribbon area — always rendered for height alignment across cards */}
+      <Box
+        background={ribbonBg}
+        paddingBlock="100"
+        paddingInline="400"
+      >
+        <Text
+          as="p"
+          variant="bodySm"
+          fontWeight="semibold"
+          alignment="center"
+          tone={hasColoredRibbon ? "text-inverse" : undefined}
+        >
+          {ribbonText || "\u00A0"}
+        </Text>
+      </Box>
 
-      <Box padding="500" paddingBlockStart={showRibbon ? "400" : "500"}>
-        <BlockStack gap="500">
+      <Box padding="500" paddingBlockStart="400">
+        <BlockStack gap="400">
 
           {/* Header: name + description */}
           <BlockStack gap="100">
@@ -391,17 +402,29 @@ function PlanCard({
           </BlockStack>
 
           {/* CTA */}
-          <Button
-            variant={buttonVariant}
-            tone={buttonTone}
-            onClick={handleClick}
-            disabled={isCurrent}
-            loading={isThisLoading}
-            fullWidth
-            size="large"
-          >
-            {buttonContent}
-          </Button>
+          {isCurrent ? (
+            <Box
+              background="bg-surface-success"
+              borderRadius="200"
+              paddingBlock="200"
+              paddingInline="400"
+            >
+              <Text as="p" variant="bodyMd" fontWeight="semibold" alignment="center" tone="success">
+                Current plan
+              </Text>
+            </Box>
+          ) : (
+            <Button
+              variant={buttonVariant}
+
+              onClick={handleClick}
+              loading={isThisLoading}
+              fullWidth
+              size="large"
+            >
+              {buttonContent}
+            </Button>
+          )}
 
           <Divider />
 
@@ -511,18 +534,28 @@ export default function PricingPage() {
             overflowX="hidden"
             overflowY="hidden"
           >
-            {isFreeTier && (
-              <Box background="bg-fill-success" paddingBlock="100" paddingInline="400">
-                <Text as="p" variant="bodySm" fontWeight="semibold" alignment="center" tone="text-inverse">
-                  Your Plan
-                </Text>
-              </Box>
-            )}
-            <Box padding="500" paddingBlockStart={isFreeTier ? "400" : "500"}>
-              <InlineGrid columns={{ xs: 1, md: "1fr 2fr" }} gap="500">
-                {/* Left column: name, price, button */}
-                <BlockStack gap="400">
-                  <BlockStack gap="100">
+            {/* Ribbon — consistent with paid cards */}
+            <Box
+              background={isFreeTier ? "bg-fill-success" : "bg-surface"}
+              paddingBlock="100"
+              paddingInline="400"
+            >
+              <Text
+                as="p"
+                variant="bodySm"
+                fontWeight="semibold"
+                alignment="center"
+                tone={isFreeTier ? "text-inverse" : undefined}
+              >
+                {isFreeTier ? "Your Plan" : "\u00A0"}
+              </Text>
+            </Box>
+
+            <Box padding="500" paddingBlockStart="400">
+              <BlockStack gap="400">
+                {/* Top row: plan info + price + button */}
+                <InlineGrid columns={{ xs: 1, md: "1fr auto auto" }} gap="500" alignItems="center">
+                  <BlockStack gap="050">
                     <Text as="h3" variant="headingLg" fontWeight="bold">
                       Free
                     </Text>
@@ -531,50 +564,51 @@ export default function PricingPage() {
                     </Text>
                   </BlockStack>
 
-                  <BlockStack gap="050">
-                    <InlineStack gap="050" blockAlign="baseline" wrap={false}>
-                      <Text as="p" variant="heading2xl" fontWeight="bold">
-                        $0
-                      </Text>
-                      <Text as="p" variant="bodySm" tone="subdued">
-                        /mo
-                      </Text>
-                    </InlineStack>
-                    <Text as="p" variant="bodySm" tone="subdued">
-                      Free forever, no credit card required
+                  <InlineStack gap="050" blockAlign="baseline" wrap={false}>
+                    <Text as="p" variant="heading2xl" fontWeight="bold">
+                      $0
                     </Text>
-                  </BlockStack>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      forever
+                    </Text>
+                  </InlineStack>
 
-                  {isFreeTier ? (
-                    <Button variant="tertiary" disabled fullWidth size="large">
-                      Current plan
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="secondary"
-                      tone="critical"
-                      onClick={() => setCancelModalOpen(true)}
-                      loading={loadingPlan === "cancel"}
-                      fullWidth
-                      size="large"
-                    >
-                      Downgrade to Free
-                    </Button>
-                  )}
-                </BlockStack>
+                  <Box minWidth="200px">
+                    {isFreeTier ? (
+                      <Box
+                        background="bg-surface-success"
+                        borderRadius="200"
+                        paddingBlock="200"
+                        paddingInline="400"
+                      >
+                        <Text as="p" variant="bodyMd" fontWeight="semibold" alignment="center" tone="success">
+                          Current plan
+                        </Text>
+                      </Box>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        tone="critical"
+                        onClick={() => setCancelModalOpen(true)}
+                        loading={loadingPlan === "cancel"}
+                        fullWidth
+                        size="large"
+                      >
+                        Downgrade to Free
+                      </Button>
+                    )}
+                  </Box>
+                </InlineGrid>
 
-                {/* Right column: features */}
-                <Box>
-                  <BlockStack gap="300">
-                    <Divider />
-                    <InlineGrid columns={{ xs: 1, sm: 2 }} gap="200">
-                      {PLANS_DATA.free.features.map((f) => (
-                        <PlanFeature key={f} feature={f} />
-                      ))}
-                    </InlineGrid>
-                  </BlockStack>
-                </Box>
-              </InlineGrid>
+                <Divider />
+
+                {/* Features row */}
+                <InlineGrid columns={{ xs: 1, sm: 3 }} gap="200">
+                  {PLANS_DATA.free.features.map((f) => (
+                    <PlanFeature key={f} feature={f} />
+                  ))}
+                </InlineGrid>
+              </BlockStack>
             </Box>
           </Box>
 
@@ -626,19 +660,33 @@ export default function PricingPage() {
                     </Box>
                     {PLAN_ORDER.map((id) => {
                       const plan = PLANS_DATA[id];
+                      const isCurrentCol = currentTier === id;
                       return (
-                        <BlockStack key={id} gap="050" inlineAlign="center">
-                          <Text as="p" variant="headingSm" fontWeight="bold" alignment="center">
-                            {plan.name}
-                          </Text>
-                          <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-                            {plan.monthlyPrice === 0
-                              ? "Free"
-                              : isAnnual
-                                ? `$${plan.annualMonthlyPrice}/mo`
-                                : `$${plan.monthlyPrice}/mo`}
-                          </Text>
-                        </BlockStack>
+                        <Box
+                          key={id}
+                          background={isCurrentCol ? "bg-surface-success" : undefined}
+                          borderRadius="200"
+                          padding="200"
+                        >
+                          <BlockStack gap="050" inlineAlign="center">
+                            <Text
+                              as="p"
+                              variant="headingSm"
+                              fontWeight="bold"
+                              alignment="center"
+                              tone={isCurrentCol ? "success" : undefined}
+                            >
+                              {plan.name}
+                            </Text>
+                            <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                              {plan.monthlyPrice === 0
+                                ? "Free"
+                                : isAnnual
+                                  ? `$${plan.annualMonthlyPrice}/mo`
+                                  : `$${plan.monthlyPrice}/mo`}
+                            </Text>
+                          </BlockStack>
+                        </Box>
                       );
                     })}
                   </InlineGrid>

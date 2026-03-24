@@ -16,6 +16,47 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import db from "../db.server";
 import { normalizeZipCode } from "../utils/zip";
 
+function calculateDeliveryDate(
+  estimatedDays: string,
+  daysOfWeek: string | null,
+): string | null {
+  const match = estimatedDays.match(/^(\d+)/);
+  if (!match) return null;
+  const minDays = parseInt(match[1], 10);
+  if (isNaN(minDays) || minDays < 0) return null;
+
+  const deliveryDayNames = daysOfWeek
+    ? daysOfWeek.split(",").map((d) => d.trim().toLowerCase())
+    : ["mon", "tue", "wed", "thu", "fri"];
+
+  const dayMap: Record<string, number> = {
+    sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6,
+  };
+  const deliveryDayNumbers = new Set(
+    deliveryDayNames.map((d) => dayMap[d]).filter((n) => n !== undefined),
+  );
+
+  if (deliveryDayNumbers.size === 0) {
+    [1, 2, 3, 4, 5].forEach((d) => deliveryDayNumbers.add(d));
+  }
+
+  const date = new Date();
+  let businessDaysAdded = 0;
+
+  while (businessDaysAdded < minDays) {
+    date.setDate(date.getDate() + 1);
+    if (deliveryDayNumbers.has(date.getDay())) {
+      businessDaysAdded++;
+    }
+  }
+
+  while (!deliveryDayNumbers.has(date.getDay())) {
+    date.setDate(date.getDate() + 1);
+  }
+
+  return date.toISOString().split("T")[0];
+}
+
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -217,6 +258,20 @@ async function handleZipCheck(shop: string | null, zip: string | null) {
   // estimatedDays so merchants only need to populate one place.
   const etaValue = zipRecord.eta ?? matchedRule?.estimatedDays ?? null;
 
+  const estimatedDeliveryDate =
+    widgetConfig?.showDeliveryDate !== false && etaValue
+      ? calculateDeliveryDate(etaValue, matchedRule?.daysOfWeek ?? null)
+      : null;
+
+  const deliveryFeeValue =
+    widgetConfig?.showDeliveryFee !== false
+      ? (matchedRule?.deliveryFee ?? null)
+      : null;
+  const freeShippingAboveValue =
+    widgetConfig?.showDeliveryFee !== false
+      ? (matchedRule?.freeShippingAbove ?? null)
+      : null;
+
   return new Response(
     JSON.stringify({
       allowed: true,
@@ -229,6 +284,9 @@ async function handleZipCheck(shop: string | null, zip: string | null) {
       waitlistCount: 0,
       cutoffTime: widgetConfig?.showCutoffTime !== false ? (matchedRule?.cutoffTime ?? null) : null,
       daysOfWeek: widgetConfig?.showDeliveryDays !== false ? (matchedRule?.daysOfWeek ?? null) : null,
+      estimatedDeliveryDate,
+      deliveryFee: deliveryFeeValue,
+      freeShippingAbove: freeShippingAboveValue,
     }),
     { status: 200, headers: SUCCESS_HEADERS },
   );

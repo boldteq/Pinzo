@@ -134,6 +134,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         showReturnPolicy: formData.get("showReturnPolicy") === "true",
         showCutoffTime: formData.get("showCutoffTime") === "true",
         showDeliveryDays: formData.get("showDeliveryDays") === "true",
+        showDeliveryDate: formData.get("showDeliveryDate") === "true",
+        showCountdown: formData.get("showCountdown") === "true",
+        showDeliveryFee: formData.get("showDeliveryFee") === "true",
         blockCartOnInvalid: formData.get("blockCartOnInvalid") === "true",
         blockCheckoutInCart: formData.get("blockCheckoutInCart") === "true",
         showSocialProof: formData.get("showSocialProof") === "true",
@@ -159,6 +162,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         data.showReturnPolicy = false;
         data.showCutoffTime = false;
         data.showDeliveryDays = false;
+        data.showDeliveryDate = false;
+        data.showCountdown = false;
+        data.showDeliveryFee = false;
       }
       if (!limits.customCss) {
         data.customCss = null;
@@ -200,6 +206,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         showReturnPolicy: true,
         showCutoffTime: true,
         showDeliveryDays: true,
+        showDeliveryDate: true,
+        showCountdown: true,
+        showDeliveryFee: true,
         blockCartOnInvalid: false,
         blockCheckoutInCart: false,
         showSocialProof: true,
@@ -247,6 +256,9 @@ type WidgetConfig = {
   showReturnPolicy: boolean;
   showCutoffTime: boolean;
   showDeliveryDays: boolean;
+  showDeliveryDate: boolean;
+  showCountdown: boolean;
+  showDeliveryFee: boolean;
   blockCartOnInvalid: boolean;
   blockCheckoutInCart: boolean;
   showSocialProof: boolean;
@@ -275,6 +287,9 @@ const DEFAULTS = {
   showReturnPolicy: true,
   showCutoffTime: true,
   showDeliveryDays: true,
+  showDeliveryDate: true,
+  showCountdown: true,
+  showDeliveryFee: true,
   blockCartOnInvalid: false,
   blockCheckoutInCart: false,
   showSocialProof: true,
@@ -693,6 +708,9 @@ const WidgetPreview = memo(function WidgetPreview({
       c.showReturnPolicy = false;
       c.showCutoffTime = false;
       c.showDeliveryDays = false;
+      c.showDeliveryDate = false;
+      c.showCountdown = false;
+      c.showDeliveryFee = false;
     }
     return c;
   }, [cfg, widgetFullCustom, showEtaCodReturn]);
@@ -909,6 +927,58 @@ const WidgetPreview = memo(function WidgetPreview({
             </div>
           )}
 
+          {/* Delivery Date row */}
+          {effectiveCfg.showDeliveryDate && effectiveCfg.showEta && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 5,
+              padding: "8px 14px",
+              background: effectiveCfg.backgroundColor,
+              borderBottom: `1px solid ${effectiveCfg.successColor}12`,
+            }}>
+              <span style={{ color: effectiveCfg.successColor, display: "inline-flex" }}>{calendarIcon}</span>
+              <span style={{ fontSize: 12, color: "#4b5563" }}>
+                Expected by <strong style={{ color: effectiveCfg.textColor, fontWeight: 600 }}>Friday, Mar 28</strong>
+              </span>
+            </div>
+          )}
+
+          {/* Countdown Timer row */}
+          {effectiveCfg.showCountdown && effectiveCfg.showCutoffTime && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 5,
+              padding: "8px 14px",
+              background: effectiveCfg.backgroundColor,
+              borderBottom: `1px solid ${effectiveCfg.successColor}12`,
+            }}>
+              <span style={{ color: "#f59e0b", display: "inline-flex" }}>{clockIcon}</span>
+              <span style={{ fontSize: 12, color: "#4b5563" }}>
+                Order within <strong style={{ color: "#f59e0b", fontWeight: 700 }}>2h 14m</strong> for same-day dispatch
+              </span>
+            </div>
+          )}
+
+          {/* Delivery Fee row */}
+          {effectiveCfg.showDeliveryFee && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 5,
+              padding: "8px 14px",
+              background: effectiveCfg.backgroundColor,
+              borderBottom: (effectiveCfg.showCod || effectiveCfg.showReturnPolicy)
+                ? `1px solid ${effectiveCfg.successColor}12` : "none",
+            }}>
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                padding: "4px 10px", borderRadius: 20,
+                background: `${effectiveCfg.successColor}12`,
+                border: `1px solid ${effectiveCfg.successColor}28`,
+                fontSize: 12, fontWeight: 600, color: effectiveCfg.successColor,
+              }}>
+                <span style={{ display: "inline-flex" }}>{truckIcon}</span>
+                Free Delivery
+              </div>
+            </div>
+          )}
+
           {/* COD badge + return policy footer */}
           {(effectiveCfg.showCod || effectiveCfg.showReturnPolicy) && (
             <div style={{
@@ -1106,6 +1176,9 @@ export default function WidgetPage() {
   const [showReturnPolicy, setShowReturnPolicy] = useState(c.showReturnPolicy ?? true);
   const [showCutoffTime, setShowCutoffTime] = useState(c.showCutoffTime ?? true);
   const [showDeliveryDays, setShowDeliveryDays] = useState(c.showDeliveryDays ?? true);
+  const [showDeliveryDate, setShowDeliveryDate] = useState(c.showDeliveryDate ?? true);
+  const [showCountdown, setShowCountdown] = useState(c.showCountdown ?? true);
+  const [showDeliveryFee, setShowDeliveryFee] = useState(c.showDeliveryFee ?? true);
   const [blockCartOnInvalid, setBlockCartOnInvalid] = useState(c.blockCartOnInvalid ?? false);
   const [blockCheckoutInCart, setBlockCheckoutInCart] = useState(c.blockCheckoutInCart ?? false);
   const [showSocialProof, setShowSocialProof] = useState(c.showSocialProof ?? true);
@@ -1161,6 +1234,9 @@ export default function WidgetPage() {
   const handleShowReturnPolicyChange = useCallback((v: boolean) => { setShowReturnPolicy(v); mark(); }, [mark]);
   const handleShowCutoffTimeChange = useCallback((v: boolean) => { setShowCutoffTime(v); mark(); }, [mark]);
   const handleShowDeliveryDaysChange = useCallback((v: boolean) => { setShowDeliveryDays(v); mark(); }, [mark]);
+  const handleShowDeliveryDateChange = useCallback((v: boolean) => { setShowDeliveryDate(v); mark(); }, [mark]);
+  const handleShowCountdownChange = useCallback((v: boolean) => { setShowCountdown(v); mark(); }, [mark]);
+  const handleShowDeliveryFeeChange = useCallback((v: boolean) => { setShowDeliveryFee(v); mark(); }, [mark]);
   const handleBlockCartOnInvalidChange = useCallback((v: boolean) => { setBlockCartOnInvalid(v); mark(); }, [mark]);
   const handleBlockCheckoutInCartChange = useCallback((v: boolean) => { setBlockCheckoutInCart(v); mark(); }, [mark]);
   const handleShowSocialProofChange = useCallback((v: boolean) => { setShowSocialProof(v); mark(); }, [mark]);
@@ -1189,6 +1265,9 @@ export default function WidgetPage() {
     fd.set("showReturnPolicy", String(showReturnPolicy));
     fd.set("showCutoffTime", String(showCutoffTime));
     fd.set("showDeliveryDays", String(showDeliveryDays));
+    fd.set("showDeliveryDate", String(showDeliveryDate));
+    fd.set("showCountdown", String(showCountdown));
+    fd.set("showDeliveryFee", String(showDeliveryFee));
     fd.set("blockCartOnInvalid", String(blockCartOnInvalid));
     fd.set("blockCheckoutInCart", String(blockCheckoutInCart));
     fd.set("showSocialProof", String(showSocialProof));
@@ -1200,7 +1279,8 @@ export default function WidgetPage() {
     position, primaryColor, successColor, errorColor, backgroundColor,
     textColor, heading, placeholder, buttonText, successMessage, errorMessage,
     notFoundMessage, showEta, showZone, showWaitlistOnFailure, showCod,
-    showReturnPolicy, showCutoffTime, showDeliveryDays, blockCartOnInvalid,
+    showReturnPolicy, showCutoffTime, showDeliveryDays, showDeliveryDate,
+    showCountdown, showDeliveryFee, blockCartOnInvalid,
     blockCheckoutInCart, showSocialProof, borderRadius, customCss,
     fetcher, shopify,
   ]);
@@ -1228,6 +1308,9 @@ export default function WidgetPage() {
     setShowReturnPolicy(DEFAULTS.showReturnPolicy);
     setShowCutoffTime(DEFAULTS.showCutoffTime);
     setShowDeliveryDays(DEFAULTS.showDeliveryDays);
+    setShowDeliveryDate(DEFAULTS.showDeliveryDate);
+    setShowCountdown(DEFAULTS.showCountdown);
+    setShowDeliveryFee(DEFAULTS.showDeliveryFee);
     setBlockCartOnInvalid(DEFAULTS.blockCartOnInvalid);
     setBlockCheckoutInCart(DEFAULTS.blockCheckoutInCart);
     setShowSocialProof(DEFAULTS.showSocialProof);
@@ -1244,13 +1327,15 @@ export default function WidgetPage() {
     position, primaryColor, successColor, errorColor, backgroundColor,
     textColor, heading, placeholder, buttonText, successMessage, errorMessage,
     notFoundMessage, showEta, showZone, showWaitlistOnFailure, showCod,
-    showReturnPolicy, showCutoffTime, showDeliveryDays, blockCartOnInvalid,
+    showReturnPolicy, showCutoffTime, showDeliveryDays, showDeliveryDate,
+    showCountdown, showDeliveryFee, blockCartOnInvalid,
     blockCheckoutInCart, showSocialProof, borderRadius, customCss,
   }), [
     position, primaryColor, successColor, errorColor, backgroundColor,
     textColor, heading, placeholder, buttonText, successMessage, errorMessage,
     notFoundMessage, showEta, showZone, showWaitlistOnFailure, showCod,
-    showReturnPolicy, showCutoffTime, showDeliveryDays, blockCartOnInvalid,
+    showReturnPolicy, showCutoffTime, showDeliveryDays, showDeliveryDate,
+    showCountdown, showDeliveryFee, blockCartOnInvalid,
     blockCheckoutInCart, showSocialProof, borderRadius, customCss,
   ]);
 
@@ -1274,6 +1359,9 @@ export default function WidgetPage() {
     setShowReturnPolicy(c.showReturnPolicy ?? true);
     setShowCutoffTime(c.showCutoffTime ?? true);
     setShowDeliveryDays(c.showDeliveryDays ?? true);
+    setShowDeliveryDate(c.showDeliveryDate ?? true);
+    setShowCountdown(c.showCountdown ?? true);
+    setShowDeliveryFee(c.showDeliveryFee ?? true);
     setBlockCartOnInvalid(c.blockCartOnInvalid ?? false);
     setBlockCheckoutInCart(c.blockCheckoutInCart ?? false);
     setShowSocialProof(c.showSocialProof ?? true);
@@ -1650,6 +1738,27 @@ export default function WidgetPage() {
                       checked={showDeliveryDays}
                       onChange={handleShowDeliveryDaysChange}
                       helpText="Display which days of the week delivery is available (from the matched delivery rule)."
+                    />
+                    <Checkbox
+                      label="Show estimated delivery date"
+                      checked={showDeliveryDate}
+                      onChange={handleShowDeliveryDateChange}
+                      disabled={!limits.showEtaCodReturn}
+                      helpText='Calculates and shows "Expected by Friday, Mar 27" from ETA.'
+                    />
+                    <Checkbox
+                      label="Show countdown timer"
+                      checked={showCountdown}
+                      onChange={handleShowCountdownChange}
+                      disabled={!limits.showEtaCodReturn}
+                      helpText='Live countdown to order cutoff with urgency colors.'
+                    />
+                    <Checkbox
+                      label="Show delivery fee"
+                      checked={showDeliveryFee}
+                      onChange={handleShowDeliveryFeeChange}
+                      disabled={!limits.showEtaCodReturn}
+                      helpText='Shows "Free Delivery" or delivery cost from your rules.'
                     />
                     <Checkbox
                       label="Show COD (Cash on Delivery) availability"

@@ -184,6 +184,9 @@
       showReturnPolicy: true,
       showCutoffTime: true,
       showDeliveryDays: true,
+      showDeliveryDate: true,
+      showCountdown: true,
+      showDeliveryFee: true,
       customCss: "",
       blockCartOnInvalid: false,
       showSocialProof: true,
@@ -328,6 +331,70 @@
     return result;
   }
 
+  // ── Delivery date formatter ───────────────────────────────────────────────────
+  function formatDeliveryDate(isoDate) {
+    if (!isoDate) return null;
+    try {
+      var parts = isoDate.split('-');
+      var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return days[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate();
+    } catch(e) { return null; }
+  }
+
+  // ── Countdown timer functions ─────────────────────────────────────────────────
+  function getCountdownData(cutoffTime) {
+    if (!cutoffTime) return null;
+    var parts = cutoffTime.split(':');
+    var cutoffHr = parseInt(parts[0], 10);
+    var cutoffMin = parseInt(parts[1] || '0', 10);
+    var now = new Date();
+    var cutoff = new Date();
+    cutoff.setHours(cutoffHr, cutoffMin, 0, 0);
+    var diff = cutoff - now;
+    if (diff <= 0) return { passed: true, hours: 0, minutes: 0 };
+    var hours = Math.floor(diff / 3600000);
+    var minutes = Math.floor((diff % 3600000) / 60000);
+    return { passed: false, hours: hours, minutes: minutes };
+  }
+
+  function buildCountdownHtml(cutoffTime, widgetId) {
+    var cd = getCountdownData(cutoffTime);
+    if (!cd) return '';
+    var colorClass, text;
+    if (cd.passed) {
+      colorClass = 'zcc-countdown--passed';
+      text = 'Order now for next business day dispatch';
+    } else {
+      var totalMinutes = cd.hours * 60 + cd.minutes;
+      if (totalMinutes > 180) colorClass = 'zcc-countdown--green';
+      else if (totalMinutes > 60) colorClass = 'zcc-countdown--amber';
+      else colorClass = 'zcc-countdown--red';
+      text = 'Order within <strong>' + cd.hours + 'h ' + cd.minutes + 'm</strong> for same-day dispatch';
+    }
+    return '<div class="zcc-countdown ' + colorClass + '" id="' + widgetId + '-countdown">' + ICONS.clock + '<span>' + text + '</span></div>';
+  }
+
+  function startCountdownUpdater(widgetId, cutoffTime) {
+    if (!cutoffTime) return;
+    setInterval(function() {
+      var el = document.getElementById(widgetId + '-countdown');
+      if (!el) return;
+      var cd = getCountdownData(cutoffTime);
+      if (!cd) return;
+      if (cd.passed) {
+        el.className = 'zcc-countdown zcc-countdown--passed';
+        el.innerHTML = ICONS.clock + '<span>Order now for next business day dispatch</span>';
+        return;
+      }
+      var totalMinutes = cd.hours * 60 + cd.minutes;
+      var cls = totalMinutes > 180 ? 'zcc-countdown--green' : totalMinutes > 60 ? 'zcc-countdown--amber' : 'zcc-countdown--red';
+      el.className = 'zcc-countdown ' + cls;
+      el.innerHTML = ICONS.clock + '<span>Order within <strong>' + cd.hours + 'h ' + cd.minutes + 'm</strong> for same-day dispatch</span>';
+    }, 30000);
+  }
+
   // ── Shared meta/waitlist CSS — injected by all three style presets ──────────
   function buildSharedCss(W, cfg) {
     return (
@@ -367,6 +434,26 @@
       W + " .zcc-return-policy{margin-top:5px !important;font-size:12px !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:7px !important}" +
       W + " .zcc-return-policy svg{width:13px !important;height:13px !important;flex-shrink:0 !important;opacity:0.6 !important}" +
       W + " .zcc-return-policy span{flex:1 !important}" +
+      // Delivery date
+      W + " .zcc-delivery-date{margin-top:5px !important;font-size:12px !important;color:#4b5563 !important;display:flex !important;align-items:center !important;gap:7px !important;line-height:1.4 !important}" +
+      W + " .zcc-delivery-date svg{width:14px !important;height:14px !important;flex-shrink:0 !important;opacity:0.7 !important}" +
+      W + " .zcc-delivery-date strong{font-weight:600 !important;color:" + cfg.textColor + " !important}" +
+      // Countdown
+      W + " .zcc-countdown{margin-top:5px !important;font-size:12px !important;display:flex !important;align-items:center !important;gap:7px !important;line-height:1.4 !important}" +
+      W + " .zcc-countdown svg{width:13px !important;height:13px !important;flex-shrink:0 !important;opacity:0.7 !important}" +
+      W + " .zcc-countdown strong{font-weight:700 !important}" +
+      W + " .zcc-countdown--green{color:#16a34a !important}" +
+      W + " .zcc-countdown--green strong{color:#16a34a !important}" +
+      W + " .zcc-countdown--amber{color:#d97706 !important}" +
+      W + " .zcc-countdown--amber strong{color:#d97706 !important}" +
+      W + " .zcc-countdown--red{color:#dc2626 !important}" +
+      W + " .zcc-countdown--red strong{color:#dc2626 !important}" +
+      W + " .zcc-countdown--passed{color:#6d7175 !important}" +
+      // Delivery fee
+      W + " .zcc-delivery-fee{margin-top:8px !important;display:inline-flex !important;align-items:center !important;gap:5px !important;border-radius:20px !important;padding:4px 10px !important;font-size:12px !important;font-weight:600 !important}" +
+      W + " .zcc-delivery-fee svg{width:13px !important;height:13px !important;flex-shrink:0 !important}" +
+      W + " .zcc-delivery-fee--free{background:" + cfg.successColor + "12 !important;border:1px solid " + cfg.successColor + "25 !important;color:" + cfg.successColor + " !important}" +
+      W + " .zcc-delivery-fee--paid{background:#f59e0b10 !important;border:1px solid #f59e0b22 !important;color:#92400e !important}" +
       // Waitlist toggle
       W + " .zcc-wl-toggle{display:inline-flex !important;align-items:center !important;gap:6px !important;font-size:13px !important;font-weight:600 !important;color:" + cfg.primaryColor + " !important;text-decoration:none !important;cursor:pointer !important;border:none !important;background:none !important;padding:0 !important;margin-top:8px !important}" +
       W + " .zcc-wl-toggle:hover{text-decoration:underline !important}" +
@@ -566,6 +653,13 @@
             if (cfg.showEta && data.eta) {
               html += '<div class="zcc-meta">' + ICONS.truck + '<span>Estimated delivery: <strong>' + esc(data.eta) + '</strong></span></div>';
             }
+            // Delivery Date
+            if (cfg.showDeliveryDate && data.estimatedDeliveryDate) {
+              var dateStr = formatDeliveryDate(data.estimatedDeliveryDate);
+              if (dateStr) {
+                html += '<div class="zcc-meta zcc-delivery-date">' + ICONS.calendar + '<span>Expected by <strong>' + esc(dateStr) + '</strong></span></div>';
+              }
+            }
             if (cfg.showZone && data.zone) {
               html += '<div class="zcc-meta">' + ICONS.location + '<span>Zone: <strong>' + esc(data.zone) + '</strong></span></div>';
             }
@@ -581,6 +675,10 @@
               var hr12 = hr % 12 || 12;
               html += '<div class="zcc-meta zcc-cutoff">' + ICONS.clock + '<span>Order by <strong>' + hr12 + ':' + min + ' ' + ampm + '</strong> for same-day</span></div>';
             }
+            // Countdown Timer
+            if (cfg.showCountdown && data.cutoffTime) {
+              html += buildCountdownHtml(data.cutoffTime, wid);
+            }
             if (cfg.showCod !== false) {
               if (data.codAvailable === true) {
                 html += '<div class="zcc-cod zcc-cod--available">' + ICONS.card + ' Cash on Delivery Available</div>';
@@ -591,8 +689,22 @@
             if (cfg.showReturnPolicy !== false && data.returnPolicy) {
               html += '<div class="zcc-return-policy">' + ICONS.refresh + '<span>' + esc(data.returnPolicy) + '</span></div>';
             }
+            // Delivery Fee
+            if (cfg.showDeliveryFee !== false) {
+              if (data.deliveryFee === 0 || data.deliveryFee === null) {
+                html += '<div class="zcc-delivery-fee zcc-delivery-fee--free">' + ICONS.truck + ' Free Delivery</div>';
+              } else if (data.deliveryFee != null && data.deliveryFee > 0) {
+                html += '<div class="zcc-delivery-fee zcc-delivery-fee--paid">' + ICONS.truck + ' Delivery: $' + data.deliveryFee.toFixed(2) + '</div>';
+              }
+              if (data.freeShippingAbove != null && data.freeShippingAbove > 0 && (data.deliveryFee == null || data.deliveryFee > 0)) {
+                html += '<div class="zcc-meta" style="margin-top:3px !important"><span style="font-size:11px !important;color:#6d7175 !important">Free delivery on orders over $' + data.freeShippingAbove.toFixed(2) + '</span></div>';
+              }
+            }
             html += '</div></div>';
             res.innerHTML = html;
+            if (cfg.showCountdown && data.cutoffTime) {
+              startCountdownUpdater(wid, data.cutoffTime);
+            }
           } else {
             var html = '<div class="zcc-result fail">' +
               '<div class="zcc-result-icon">' + ICONS.xCircle + '</div>' +

@@ -713,6 +713,11 @@ const WidgetPreview = memo(function WidgetPreview({
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
     </svg>
   );
+  const locationIcon = (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={metaIconStyle}>
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>
+    </svg>
+  );
   const checkCircleIcon = (
     <svg viewBox="0 0 24 24" fill="none" stroke={effectiveCfg.successColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={iconStyle}>
       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>
@@ -774,31 +779,178 @@ const WidgetPreview = memo(function WidgetPreview({
         </button>
       </div>
 
-      {/* Success result — matches storefront rendering */}
+      {/* Success result — modern card-based preview layout */}
       {previewState === "success" && (
-        <div className="zcc-result ok">
-          <div className="zcc-result-icon">{checkCircleIcon}</div>
-          <div className="zcc-result-content">
-            <div className="zcc-result-message" style={{ color: effectiveCfg.successColor }}>{cfg.successMessage}</div>
-            {effectiveCfg.showEta && (
-              <div className="zcc-meta">{truckIcon}<span>Estimated delivery: <strong>2-3 business days</strong></span></div>
-            )}
-            {effectiveCfg.showZone && (
-              <div className="zcc-meta">{pinIcon}<span>Zone: <strong>North</strong></span></div>
-            )}
-            {effectiveCfg.showDeliveryDays && (
-              <div className="zcc-meta zcc-days">{calendarIcon}<span>Mon &middot; Tue &middot; Wed &middot; Thu &middot; Fri</span></div>
-            )}
-            {effectiveCfg.showCutoffTime && (
-              <div className="zcc-meta zcc-cutoff">{clockIcon}<span>Order by <strong>2:00 PM</strong> for same-day</span></div>
-            )}
-            {effectiveCfg.showCod && (
-              <div className="zcc-cod zcc-cod--available">{cardIcon} Cash on Delivery Available</div>
-            )}
-            {effectiveCfg.showReturnPolicy && (
-              <div className="zcc-return-policy">{refreshIcon}<span>7-day easy returns</span></div>
-            )}
+        <div style={{
+          marginTop: 12,
+          borderRadius: 12,
+          overflow: "hidden",
+          border: `1px solid ${effectiveCfg.successColor}22`,
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          animation: "zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+        }}>
+          {/* Success header strip */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "10px 14px",
+            background: `linear-gradient(135deg, ${effectiveCfg.successColor}14, ${effectiveCfg.successColor}08)`,
+            borderBottom: `1px solid ${effectiveCfg.successColor}18`,
+          }}>
+            <span style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 26,
+              height: 26,
+              borderRadius: "50%",
+              background: `${effectiveCfg.successColor}18`,
+              flexShrink: 0,
+            }}>
+              {checkCircleIcon}
+            </span>
+            <span style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: effectiveCfg.successColor,
+              lineHeight: 1.4,
+              flex: 1,
+            }}>
+              {cfg.successMessage}
+            </span>
           </div>
+
+          {/* Info cards row — ETA + Zone */}
+          {(effectiveCfg.showEta || effectiveCfg.showZone) && (
+            <div style={{
+              display: "flex",
+              gap: 0,
+              background: effectiveCfg.backgroundColor,
+              borderBottom: `1px solid ${effectiveCfg.successColor}12`,
+            }}>
+              {effectiveCfg.showEta && (
+                <div style={{
+                  flex: 1,
+                  padding: "10px 14px",
+                  borderRight: effectiveCfg.showZone ? `1px solid ${effectiveCfg.successColor}14` : "none",
+                  display: "flex",
+                  flexDirection: "column" as const,
+                  gap: 3,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <span style={{ color: effectiveCfg.successColor, display: "inline-flex" }}>
+                      {truckIcon}
+                    </span>
+                    <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
+                      Delivery ETA
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: effectiveCfg.textColor, lineHeight: 1.2 }}>
+                    2–3 days
+                  </span>
+                  <span style={{ fontSize: 11, color: "#64748b" }}>business days</span>
+                </div>
+              )}
+              {effectiveCfg.showZone && (
+                <div style={{
+                  flex: 1,
+                  padding: "10px 14px",
+                  display: "flex",
+                  flexDirection: "column" as const,
+                  gap: 3,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <span style={{ color: effectiveCfg.primaryColor, display: "inline-flex" }}>
+                      {locationIcon}
+                    </span>
+                    <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
+                      Zone
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: effectiveCfg.textColor, lineHeight: 1.2 }}>
+                    North
+                  </span>
+                  <span style={{ fontSize: 11, color: "#64748b" }}>delivery zone</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Schedule row — delivery days + cutoff */}
+          {(effectiveCfg.showDeliveryDays || effectiveCfg.showCutoffTime) && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0,
+              padding: "8px 14px",
+              background: effectiveCfg.backgroundColor,
+              borderBottom: `1px solid ${effectiveCfg.successColor}12`,
+            }}>
+              {effectiveCfg.showDeliveryDays && (
+                <div style={{ display: "flex", alignItems: "center", gap: 5, flex: 1 }}>
+                  <span style={{ color: "#94a3b8", display: "inline-flex" }}>{calendarIcon}</span>
+                  <span style={{ fontSize: 12, color: "#4b5563" }}>
+                    Mon &middot; Tue &middot; Wed &middot; Thu &middot; Fri
+                  </span>
+                </div>
+              )}
+              {effectiveCfg.showDeliveryDays && effectiveCfg.showCutoffTime && (
+                <div style={{ width: 1, height: 16, background: "#e2e8f0", flexShrink: 0, margin: "0 10px" }} />
+              )}
+              {effectiveCfg.showCutoffTime && (
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <span style={{ color: "#94a3b8", display: "inline-flex" }}>{clockIcon}</span>
+                  <span style={{ fontSize: 12, color: "#4b5563" }}>
+                    Order by <strong style={{ color: effectiveCfg.textColor, fontWeight: 600 }}>2:00 PM</strong>
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* COD badge + return policy footer */}
+          {(effectiveCfg.showCod || effectiveCfg.showReturnPolicy) && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap" as const,
+              gap: 6,
+              padding: "8px 14px",
+              background: effectiveCfg.backgroundColor,
+            }}>
+              {effectiveCfg.showCod && (
+                <div style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  padding: "4px 10px",
+                  borderRadius: 20,
+                  background: `${effectiveCfg.successColor}12`,
+                  border: `1px solid ${effectiveCfg.successColor}28`,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: effectiveCfg.successColor,
+                }}>
+                  <span style={{ display: "inline-flex", color: effectiveCfg.successColor }}>{cardIcon}</span>
+                  COD Available
+                </div>
+              )}
+              {effectiveCfg.showReturnPolicy && (
+                <div style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  fontSize: 11,
+                  color: "#94a3b8",
+                }}>
+                  <span style={{ display: "inline-flex" }}>{refreshIcon}</span>
+                  7-day easy returns
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

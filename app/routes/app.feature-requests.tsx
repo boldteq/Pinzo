@@ -214,9 +214,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   };
 
   const isAdmin = shop === ADMIN_SHOP;
-  const isDev = process.env.NODE_ENV !== "production";
 
-  return { features, votedIds, shop, stats, isAdmin, isDev };
+  return { features, votedIds, shop, stats, isAdmin };
 };
 
 // ---------------------------------------------------------------------------
@@ -363,9 +362,8 @@ export const action = async ({
       }
 
       case "update-status": {
-        const isDev = process.env.NODE_ENV !== "production";
-        if (!isAdmin || !isDev) {
-          return { error: "Status changes are only allowed for admins in development mode." };
+        if (!isAdmin) {
+          return { error: "Only the app admin can change request statuses." };
         }
 
         const statusId = String(formData.get("id") ?? "").trim();
@@ -410,7 +408,6 @@ export default function FeatureRequestsPage() {
     shop,
     stats,
     isAdmin,
-    isDev,
   } = useLoaderData<typeof loader>();
 
   // Separate fetchers for independent actions
@@ -981,7 +978,7 @@ export default function FeatureRequestsPage() {
                                 >
                                   {feature.title}
                                 </Text>
-                                {isAdmin && isDev ? (
+                                {isAdmin ? (
                                   <Box minWidth="140px">
                                     <Select
                                       label="Status"

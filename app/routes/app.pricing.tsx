@@ -515,9 +515,50 @@ export default function PricingPage() {
             </ButtonGroup>
           </InlineStack>
 
-          {/* Plan cards — 4 columns */}
-          <InlineGrid columns={{ xs: 1, sm: 2, lg: 4 }} gap="400">
-            {(Object.values(PLANS_DATA) as (typeof PLANS_DATA)[keyof typeof PLANS_DATA][]).map(
+          {/* Free plan — full-width card */}
+          <Box
+            background="bg-surface"
+            borderWidth="025"
+            borderColor={currentTier === "free" ? "border-success" : "border"}
+            borderRadius="300"
+            padding="500"
+          >
+            <InlineGrid columns={{ xs: 1, md: "1fr auto" }} gap="400" alignItems="start">
+              {/* Left: plan info + features */}
+              <BlockStack gap="300">
+                <InlineStack gap="200" blockAlign="center">
+                  <Text as="h3" variant="headingMd" fontWeight="bold">
+                    Free
+                  </Text>
+                  {currentTier === "free" && <Badge tone="success">Active</Badge>}
+                </InlineStack>
+                <Text as="p" variant="bodySm" tone="subdued">
+                  {PLANS_DATA.free.description}
+                </Text>
+                <InlineGrid columns={{ xs: 1, sm: 2 }} gap="200">
+                  {PLANS_DATA.free.features.map((f) => (
+                    <PlanFeature key={f} feature={f} />
+                  ))}
+                </InlineGrid>
+              </BlockStack>
+
+              {/* Right: price */}
+              <BlockStack gap="200" inlineAlign="end">
+                <InlineStack gap="100" blockAlign="baseline" wrap={false}>
+                  <Text as="p" variant="headingXl" fontWeight="bold">
+                    $0
+                  </Text>
+                  <Text as="p" variant="bodyMd" tone="subdued">
+                    forever
+                  </Text>
+                </InlineStack>
+              </BlockStack>
+            </InlineGrid>
+          </Box>
+
+          {/* Paid plan cards — 3 columns */}
+          <InlineGrid columns={{ xs: 1, sm: 3 }} gap="400">
+            {([PLANS_DATA.starter, PLANS_DATA.pro, PLANS_DATA.ultimate] as (typeof PLANS_DATA)[keyof typeof PLANS_DATA][]).map(
               (plan) => (
                 <PlanCard
                   key={plan.id}

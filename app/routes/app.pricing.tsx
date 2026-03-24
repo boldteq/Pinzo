@@ -292,7 +292,7 @@ function PlanCard({
   const isThisLoading = loadingPlan === (shopifyPlan ?? "cancel");
 
   return (
-    <div style={{ height: "100%" }}>
+    <div style={{ height: "100%", display: "grid" }}>
       <Card>
         <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
           {/* Top section — flex-grow pushes button to a consistent position */}

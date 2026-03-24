@@ -411,10 +411,10 @@ function FloatingPreview({
       <div
         style={{
           position: "relative",
-          minHeight: "340px",
+          minHeight: "480px",
           background: "linear-gradient(180deg, #fafafa 0%, #f1f1f1 100%)",
           borderRadius: "10px",
-          overflow: "hidden",
+          overflow: "visible",
         }}
       >
         {/* Realistic product page skeleton */}
@@ -457,7 +457,7 @@ function FloatingPreview({
                 background: cfg.backgroundColor,
                 borderRadius: 16,
                 boxShadow: "0 16px 48px rgba(0,0,0,.14), 0 4px 16px rgba(0,0,0,.06)",
-                width: 320,
+                width: 280,
                 maxWidth: "calc(100% - 16px)",
                 overflow: "hidden",
                 animation: "zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1)",

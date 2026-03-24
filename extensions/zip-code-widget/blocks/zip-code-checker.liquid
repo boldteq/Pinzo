@@ -597,7 +597,8 @@
             var html = '<div class="zcc-result fail">' +
               '<div class="zcc-result-icon">' + ICONS.xCircle + '</div>' +
               '<div class="zcc-result-content">' +
-              '<div class="zcc-result-message">' + esc(data.message) + '</div>';
+              '<div class="zcc-result-message">' + esc(data.message) + '</div>' +
+              '</div></div>';
             if (cfg.showWaitlistOnFailure) {
               html +=
                 '<div class="zcc-wl">' +
@@ -611,7 +612,6 @@
                 '</div>' +
                 '</div>';
             }
-            html += '</div></div>';
             res.innerHTML = html;
 
             if (cfg.showWaitlistOnFailure) {

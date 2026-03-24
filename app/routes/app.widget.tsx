@@ -804,27 +804,29 @@ const WidgetPreview = memo(function WidgetPreview({
 
       {/* Error / Not Found result — matches storefront rendering */}
       {(previewState === "error" || previewState === "notfound") && (
-        <div className="zcc-result fail">
-          <div className="zcc-result-icon">{xCircleIcon}</div>
-          <div className="zcc-result-content">
-            <div className="zcc-result-message">{resultMessage}</div>
-            {cfg.showWaitlistOnFailure && (
-              <div className="zcc-wl">
-                <div className="zcc-wl-title">Get notified when we deliver here</div>
-                <input className="zcc-wl-input" type="text" placeholder="Your name" readOnly />
-                <input className="zcc-wl-input" type="email" placeholder="Your email" readOnly />
-                <button className="zcc-wl-btn" type="button">
-                  <span className="zcc-wl-btn-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, display: "block" }}>
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
-                    </svg>
-                  </span>
-                  <span className="zcc-wl-btn-label">Submit Request</span>
-                </button>
-              </div>
-            )}
+        <>
+          <div className="zcc-result fail">
+            <div className="zcc-result-icon">{xCircleIcon}</div>
+            <div className="zcc-result-content">
+              <div className="zcc-result-message">{resultMessage}</div>
+            </div>
           </div>
-        </div>
+          {cfg.showWaitlistOnFailure && (
+            <div className="zcc-wl">
+              <div className="zcc-wl-title">Get notified when we deliver here</div>
+              <input className="zcc-wl-input" type="text" placeholder="Your name" readOnly />
+              <input className="zcc-wl-input" type="email" placeholder="Your email" readOnly />
+              <button className="zcc-wl-btn" type="button">
+                <span className="zcc-wl-btn-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, display: "block" }}>
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                </span>
+                <span className="zcc-wl-btn-label">Submit Request</span>
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

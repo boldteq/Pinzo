@@ -398,7 +398,7 @@ function buildWidgetCss(wid: string, cfg: WidgetConfig): string {
     "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}" +
     "@keyframes zcc-scale-in{from{transform:scale(0.92);opacity:0}to{transform:scale(1);opacity:1}}" +
     "@keyframes zcc-pulse-ring{0%{transform:scale(1);opacity:.5}50%{transform:scale(1.2);opacity:0}100%{transform:scale(1.2);opacity:0}}" +
-    W + "{background:" + cfg.backgroundColor + ";color:" + cfg.textColor + ";padding:0;border:none;box-shadow:none;max-width:480px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-sizing:border-box}" +
+    W + "{background:" + cfg.backgroundColor + ";color:" + cfg.textColor + ";padding:16px;border:none;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.08);max-width:480px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-sizing:border-box}" +
     W + " *{box-sizing:border-box}" +
     W + " .zcc-heading{font-size:15px;font-weight:700;letter-spacing:-0.01em;margin:0;color:" + cfg.textColor + ";display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid rgba(0,0,0,0.06);margin-bottom:12px}" +
     W + " .zcc-heading-icon{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg," + p + "18," + p + "08);flex-shrink:0}" +
@@ -1780,16 +1780,16 @@ export default function WidgetPage() {
 
                     {/* Preview widget — device frame + dot-grid */}
                     <div style={{
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid #d1d8e0",
                       borderRadius: 12,
                       overflow: "hidden",
-                      background: "#fff",
+                      background: "#f1f5f9",
                     }}>
                       {/* Browser chrome */}
                       <div style={{
                         height: 32,
-                        background: "#f8fafc",
-                        borderBottom: "1px solid #e2e8f0",
+                        background: "#e8edf2",
+                        borderBottom: "1px solid #d1d8e0",
                         display: "flex",
                         alignItems: "center",
                         padding: "0 12px",
@@ -1799,12 +1799,12 @@ export default function WidgetPage() {
                         <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#febc2e" }} />
                         <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#28c840" }} />
                       </div>
-                      {/* Dot-grid preview area */}
+                      {/* Preview area */}
                       <div style={{
-                        padding: 20,
-                        background: "radial-gradient(circle, #e2e8f0 1px, transparent 1px)",
+                        padding: 24,
+                        background: "radial-gradient(circle, #d1d8e0 1px, transparent 1px)",
                         backgroundSize: "20px 20px",
-                        backgroundColor: "#f8fafc",
+                        backgroundColor: "#eef2f6",
                       }}>
                         <WidgetPreview cfg={previewCfg} previewState={previewState} widgetFullCustom={limits.widgetFullCustom} showEtaCodReturn={limits.showEtaCodReturn} />
                       </div>

@@ -27,7 +27,15 @@ import {
   TextField,
   Banner,
   InlineGrid,
+  Icon,
+  ProgressBar,
 } from "@shopify/polaris";
+import {
+  LocationIcon,
+  DeliveryIcon,
+  PersonIcon,
+  DisabledIcon,
+} from "@shopify/polaris-icons";
 
 // ---------------------------------------------------------------------------
 // Loader
@@ -305,39 +313,23 @@ export default function SettingsPage() {
             <Card>
               <BlockStack gap="400">
                 <InlineStack align="space-between" blockAlign="center">
-                  <InlineStack gap="300" blockAlign="center">
-                    <div style={{
-                      width: 40, height: 40, borderRadius: 10,
-                      background: subscription.planTier === "ultimate"
-                        ? "linear-gradient(135deg, #15803d, #22c55e)"
-                        : subscription.planTier === "pro"
-                          ? "linear-gradient(135deg, #1d4ed8, #3b82f6)"
-                          : subscription.planTier === "starter"
-                            ? "linear-gradient(135deg, #b45309, #f59e0b)"
-                            : "linear-gradient(135deg, #6b7280, #9ca3af)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      color: "#fff", fontWeight: 700, fontSize: 16, fontFamily: "system-ui",
-                    }}>
-                      {planLabel.charAt(0)}
-                    </div>
-                    <BlockStack gap="050">
-                      <InlineStack gap="200" blockAlign="center">
-                        <Text as="h2" variant="headingMd">
-                          {planLabel} Plan
-                        </Text>
-                        <Badge tone={planBadgeTone}>Active</Badge>
-                      </InlineStack>
-                      <Text as="p" tone="subdued" variant="bodySm">
-                        {subscription.planTier === "free"
-                          ? "Limited features"
-                          : subscription.planTier === "starter"
-                            ? "Essential features"
-                            : subscription.billingInterval === "annual"
-                              ? "Billed annually"
-                              : "Billed monthly"}
+                  <BlockStack gap="050">
+                    <InlineStack gap="200" blockAlign="center">
+                      <Text as="h2" variant="headingMd">
+                        {planLabel} Plan
                       </Text>
-                    </BlockStack>
-                  </InlineStack>
+                      <Badge tone={planBadgeTone}>Active</Badge>
+                    </InlineStack>
+                    <Text as="p" tone="subdued" variant="bodySm">
+                      {subscription.planTier === "free"
+                        ? "Limited features"
+                        : subscription.planTier === "starter"
+                          ? "Essential features"
+                          : subscription.billingInterval === "annual"
+                            ? "Billed annually"
+                            : "Billed monthly"}
+                    </Text>
+                  </BlockStack>
                   <Button
                     variant="primary"
                     onClick={() => navigate("/app/pricing")}
@@ -350,8 +342,19 @@ export default function SettingsPage() {
                 <Divider />
                 {/* Usage grid */}
                 <InlineGrid columns={4} gap="300">
-                  <Box background="bg-surface-secondary" borderRadius="300" padding="400">
-                    <BlockStack gap="100" inlineAlign="center">
+                  <Box
+                    background="bg-surface-secondary"
+                    borderRadius="300"
+                    padding="400"
+                  >
+                    <BlockStack gap="200" inlineAlign="center">
+                      <Box
+                        background="bg-fill-info"
+                        borderRadius="full"
+                        padding="200"
+                      >
+                        <Icon source={LocationIcon} tone="base" />
+                      </Box>
                       <Text as="p" variant="headingLg" alignment="center" fontWeight="bold">
                         {zipCount}
                       </Text>
@@ -359,26 +362,37 @@ export default function SettingsPage() {
                         Zip Codes
                       </Text>
                       {limits.maxZipCodes < UNLIMITED && (
-                        <BlockStack gap="100">
-                          <div style={{ background: "#e5e5e5", borderRadius: 4, height: 4, overflow: "hidden" }}>
-                            <div style={{
-                              background: zipCount / limits.maxZipCodes > 0.8 ? "#e51c00" : "#008060",
-                              height: 4, borderRadius: 4,
-                              width: `${Math.min(100, (zipCount / limits.maxZipCodes) * 100)}%`,
-                            }} />
-                          </div>
-                          <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-                            of {limits.maxZipCodes}
-                          </Text>
-                        </BlockStack>
+                        <Box width="100%">
+                          <BlockStack gap="100">
+                            <ProgressBar
+                              progress={Math.min(100, (zipCount / limits.maxZipCodes) * 100)}
+                              size="small"
+                              tone={zipCount / limits.maxZipCodes > 0.8 ? "critical" : "success"}
+                            />
+                            <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                              {zipCount} of {limits.maxZipCodes}
+                            </Text>
+                          </BlockStack>
+                        </Box>
                       )}
                       {limits.maxZipCodes >= UNLIMITED && (
                         <Badge tone="success">Unlimited</Badge>
                       )}
                     </BlockStack>
                   </Box>
-                  <Box background="bg-surface-secondary" borderRadius="300" padding="400">
-                    <BlockStack gap="100" inlineAlign="center">
+                  <Box
+                    background="bg-surface-secondary"
+                    borderRadius="300"
+                    padding="400"
+                  >
+                    <BlockStack gap="200" inlineAlign="center">
+                      <Box
+                        background="bg-fill-success"
+                        borderRadius="full"
+                        padding="200"
+                      >
+                        <Icon source={DeliveryIcon} tone="base" />
+                      </Box>
                       <Text as="p" variant="headingLg" alignment="center" fontWeight="bold">
                         {limits.maxDeliveryRules >= UNLIMITED
                           ? "\u221E"
@@ -398,8 +412,19 @@ export default function SettingsPage() {
                       </Badge>
                     </BlockStack>
                   </Box>
-                  <Box background="bg-surface-secondary" borderRadius="300" padding="400">
-                    <BlockStack gap="100" inlineAlign="center">
+                  <Box
+                    background="bg-surface-secondary"
+                    borderRadius="300"
+                    padding="400"
+                  >
+                    <BlockStack gap="200" inlineAlign="center">
+                      <Box
+                        background="bg-fill-warning"
+                        borderRadius="full"
+                        padding="200"
+                      >
+                        <Icon source={PersonIcon} tone="base" />
+                      </Box>
                       <Text as="p" variant="headingLg" alignment="center" fontWeight="bold">
                         {limits.maxWaitlist >= UNLIMITED
                           ? "\u221E"
@@ -419,8 +444,19 @@ export default function SettingsPage() {
                       </Badge>
                     </BlockStack>
                   </Box>
-                  <Box background="bg-surface-secondary" borderRadius="300" padding="400">
-                    <BlockStack gap="100" inlineAlign="center">
+                  <Box
+                    background="bg-surface-secondary"
+                    borderRadius="300"
+                    padding="400"
+                  >
+                    <BlockStack gap="200" inlineAlign="center">
+                      <Box
+                        background={limits.allowBlocked ? "bg-fill-success" : "bg-fill-critical"}
+                        borderRadius="full"
+                        padding="200"
+                      >
+                        <Icon source={DisabledIcon} tone="base" />
+                      </Box>
                       <Text as="p" variant="headingLg" alignment="center" fontWeight="bold">
                         {limits.allowBlocked ? "\u2713" : "\u2717"}
                       </Text>

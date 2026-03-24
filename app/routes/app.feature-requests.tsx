@@ -353,9 +353,21 @@ export const action = async ({
           return { error: "You can only edit your own feature requests." };
         }
 
+        const editData: { title: string; description: string; category: string; status?: string } = {
+          title: editTitle,
+          description: editDescription,
+          category: editCategory,
+        };
+
+        // Admin can also change status via the edit form
+        const editStatus = String(formData.get("status") ?? "").trim();
+        if (isAdmin && editStatus && VALID_STATUSES.has(editStatus)) {
+          editData.status = editStatus;
+        }
+
         await db.featureRequest.update({
           where: { id: editId },
-          data: { title: editTitle, description: editDescription, category: editCategory },
+          data: editData,
         });
 
         return { success: true, intent: "edit" };
@@ -414,7 +426,7 @@ export default function FeatureRequestsPage() {
   const voteFetcher = useFetcher<typeof action>();
   const deleteFetcher = useFetcher<typeof action>();
   const submitFetcher = useFetcher<typeof action>();
-  const statusFetcher = useFetcher<typeof action>();
+
   const editFetcher = useFetcher<typeof action>();
 
   const shopify = useAppBridge();
@@ -459,6 +471,7 @@ export default function FeatureRequestsPage() {
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editCategory, setEditCategory] = useState("General");
+  const [editStatus, setEditStatus] = useState("under_review");
   const [editModalError, setEditModalError] = useState<string | null>(null);
 
   // ------------------------------------------------------------------
@@ -550,23 +563,6 @@ export default function FeatureRequestsPage() {
       setCurrentPage(1);
     }
   }, [submitFetcher.state, submitFetcher.data, shopify]);
-
-  // ------------------------------------------------------------------
-  // Handle status fetcher responses
-  // ------------------------------------------------------------------
-  useEffect(() => {
-    if (statusFetcher.state !== "idle" || !statusFetcher.data) return;
-    const data = statusFetcher.data;
-
-    if ("error" in data) {
-      shopify.toast.show(data.error, { isError: true });
-      return;
-    }
-
-    if ("success" in data && data.success && data.intent === "update-status") {
-      shopify.toast.show("Status updated.");
-    }
-  }, [statusFetcher.state, statusFetcher.data, shopify]);
 
   // ------------------------------------------------------------------
   // Handle edit fetcher responses
@@ -730,17 +726,6 @@ export default function FeatureRequestsPage() {
     submitFetcher.submit(fd, { method: "POST" });
   }, [newTitle, newDescription, newCategory, submitFetcher]);
 
-  const handleStatusChange = useCallback(
-    (id: string, newStatus: string) => {
-      const fd = new FormData();
-      fd.set("intent", "update-status");
-      fd.set("id", id);
-      fd.set("status", newStatus);
-      statusFetcher.submit(fd, { method: "POST" });
-    },
-    [statusFetcher],
-  );
-
   const handleToggleExpand = useCallback((id: string) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);
@@ -763,6 +748,7 @@ export default function FeatureRequestsPage() {
     setEditTitle(feature.title);
     setEditDescription(feature.description);
     setEditCategory(feature.category);
+    setEditStatus(feature.status);
     setEditModalError(null);
     setEditModalOpen(true);
   }, []);
@@ -784,8 +770,11 @@ export default function FeatureRequestsPage() {
     fd.set("title", editTitle.trim());
     fd.set("description", editDescription.trim());
     fd.set("category", editCategory);
+    if (isAdmin) {
+      fd.set("status", editStatus);
+    }
     editFetcher.submit(fd, { method: "POST" });
-  }, [editId, editTitle, editDescription, editCategory, editFetcher]);
+  }, [editId, editTitle, editDescription, editCategory, editStatus, isAdmin, editFetcher]);
 
   const handleCloseEditModal = useCallback(() => {
     setEditModalOpen(false);
@@ -978,27 +967,13 @@ export default function FeatureRequestsPage() {
                                 >
                                   {feature.title}
                                 </Text>
-                                {isAdmin ? (
-                                  <Box minWidth="140px">
-                                    <Select
-                                      label="Status"
-                                      labelHidden
-                                      options={STATUS_OPTIONS}
-                                      value={feature.status}
-                                      onChange={(val) =>
-                                        handleStatusChange(feature.id, val)
-                                      }
-                                    />
-                                  </Box>
-                                ) : (
-                                  <Badge
-                                    tone={STATUS_TONES[feature.status]}
-                                    progress={STATUS_PROGRESS[feature.status]}
-                                  >
-                                    {STATUS_LABELS[feature.status] ??
-                                      feature.status}
-                                  </Badge>
-                                )}
+                                <Badge
+                                  tone={STATUS_TONES[feature.status]}
+                                  progress={STATUS_PROGRESS[feature.status]}
+                                >
+                                  {STATUS_LABELS[feature.status] ??
+                                    feature.status}
+                                </Badge>
                               </InlineStack>
 
                               {/* Row 2: Description + Read more */}
@@ -1220,6 +1195,15 @@ export default function FeatureRequestsPage() {
               onChange={setEditCategory}
               helpText="Choose the category that best fits your request."
             />
+            {isAdmin && (
+              <Select
+                label="Status"
+                options={STATUS_OPTIONS}
+                value={editStatus}
+                onChange={setEditStatus}
+                helpText="Update the status of this feature request."
+              />
+            )}
           </BlockStack>
         </Modal.Section>
       </Modal>

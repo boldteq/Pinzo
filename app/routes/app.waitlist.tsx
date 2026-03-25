@@ -666,7 +666,7 @@ export default function WaitlistPage() {
             <Banner
               tone="info"
               title="Waitlist requires Starter plan or higher"
-              action={{ content: "View pricing plans", url: "/app/pricing" }}
+              action={{ content: "View pricing plans", onAction: () => navigate("/app/pricing") }}
             >
               <Text as="p">
                 The customer waitlist feature is not available on the Free plan.
@@ -843,7 +843,7 @@ export default function WaitlistPage() {
               title={`Waitlist usage: ${stats.total}/${limits.maxWaitlist} entries`}
               action={
                 stats.total >= limits.maxWaitlist
-                  ? { content: "Upgrade to Pro for unlimited entries", url: "/app/pricing" }
+                  ? { content: "Upgrade to Pro for unlimited entries", onAction: () => navigate("/app/pricing") }
                   : undefined
               }
             >

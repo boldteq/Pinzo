@@ -419,7 +419,7 @@ export default function DeliveryRulesPage() {
               title="Delivery rules require a paid plan"
               action={{
                 content: "View pricing plans",
-                url: "/app/pricing",
+                onAction: () => navigate("/app/pricing"),
               }}
             >
               <Text as="p">
@@ -454,7 +454,7 @@ export default function DeliveryRulesPage() {
                   isFreePlan
                     ? {
                         content: "Upgrade to create rules",
-                        url: "/app/pricing",
+                        onAction: () => navigate("/app/pricing"),
                       }
                     : {
                         content: "Create your first rule",

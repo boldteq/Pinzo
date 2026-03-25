@@ -23,7 +23,8 @@ import {
   InlineGrid,
   Text,
   Badge,
-  DataTable,
+  IndexTable,
+  type IndexTableProps,
   Modal,
   Select,
   Divider,
@@ -392,6 +393,32 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
+  if (intent === "bulk-delete") {
+    const idsRaw = String(formData.get("ids") || "");
+    const ids = idsRaw
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
+
+    if (ids.length === 0) return { error: "No zip codes selected." };
+
+    try {
+      // Verify all records belong to this shop before deleting
+      const count = await db.zipCode.count({
+        where: { id: { in: ids }, shop },
+      });
+      if (count !== ids.length) {
+        return { error: "Some selected zip codes could not be found." };
+      }
+      await db.zipCode.deleteMany({
+        where: { id: { in: ids }, shop },
+      });
+      return { success: true, action: "bulk-delete", deleted: ids.length };
+    } catch {
+      return { error: "Failed to delete selected zip codes." };
+    }
+  }
+
   if (intent === "range-import") {
     const startZip = String(formData.get("startZip") || "").trim().toUpperCase();
     const endZip = String(formData.get("endZip") || "").trim().toUpperCase();
@@ -544,6 +571,9 @@ export default function ZipCodesPage() {
   const [rangeMessage, setRangeMessage] = useState("");
   const [rangeEta, setRangeEta] = useState("");
 
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
   const isCheckLoading =
     fetcher.state !== "idle" && fetcher.formData?.get("intent") === "check";
   const isAddLoading =
@@ -553,6 +583,9 @@ export default function ZipCodesPage() {
   const isImportLoading =
     fetcher.state !== "idle" &&
     fetcher.formData?.get("intent") === "bulk-import";
+  const isBulkDeleteLoading =
+    fetcher.state !== "idle" &&
+    fetcher.formData?.get("intent") === "bulk-delete";
 
   const checkResult =
     fetcher.data && "checkResult" in fetcher.data
@@ -760,6 +793,31 @@ export default function ZipCodesPage() {
     fetcher.submit(fd, { method: "POST" });
   }, [rangeStart, rangeEnd, rangeZone, rangeType, rangeMessage, rangeEta, fetcher]);
 
+  const handleSelectionChange = useCallback<NonNullable<IndexTableProps["onSelectionChange"]>>(
+    (selectionType, isSelecting, selection) => {
+      if (selectionType === "all") {
+        setSelectedIds(isSelecting ? filteredZipCodes.map((z) => z.id) : []);
+      } else if (selectionType === "page") {
+        setSelectedIds(isSelecting ? paginatedZipCodes.map((z) => z.id) : []);
+      } else if (typeof selection === "string") {
+        setSelectedIds((prev) =>
+          isSelecting ? [...prev, selection] : prev.filter((id) => id !== selection),
+        );
+      }
+    },
+    [filteredZipCodes, paginatedZipCodes],
+  );
+
+  const handleBulkDelete = useCallback(() => {
+    if (selectedIds.length === 0) return;
+    const fd = new FormData();
+    fd.set("intent", "bulk-delete");
+    fd.set("ids", selectedIds.join(","));
+    fetcher.submit(fd, { method: "POST" });
+    setSelectedIds([]);
+    shopify.toast.show(`${selectedIds.length} zip code${selectedIds.length > 1 ? "s" : ""} deleted`);
+  }, [selectedIds, fetcher, shopify]);
+
   // Trigger download when export data arrives — guarded by a content ref so the
   // effect only fires once per unique CSV payload, regardless of re-renders or
   // intermediate fetcher state transitions (submitting → loading → idle).
@@ -799,71 +857,13 @@ export default function ZipCodesPage() {
     { label: "Blocked", value: "blocked" },
   ];
 
-  const tableRows = paginatedZipCodes.map((z) => [
-    <Text as="span" fontWeight="bold" key={`zip-${z.id}`}>
-      {z.zipCode}
-    </Text>,
-    z.zone || (
-      <Text as="span" tone="subdued">
-        —
-      </Text>
-    ),
-    <InlineStack gap="300" blockAlign="center" key={`status-${z.id}`}>
-      <Tooltip content={z.isActive ? "Click to deactivate" : "Click to activate"}>
-        <Button
-          variant="plain"
-          tone={z.isActive ? "success" : undefined}
-          onClick={() => handleToggle(z.id, z.isActive)}
-          accessibilityLabel={z.isActive ? "Deactivate zip code" : "Activate zip code"}
-        >
-          {z.isActive ? "Active" : "Inactive"}
-        </Button>
-      </Tooltip>
-      <Badge tone={z.type === "allowed" ? "success" : "critical"}>
-        {z.type === "allowed" ? "Allow" : "Block"}
-      </Badge>
-    </InlineStack>,
-    z.message || (
-      <Text as="span" tone="subdued">
-        —
-      </Text>
-    ),
-    z.eta || (
-      <Text as="span" tone="subdued">
-        —
-      </Text>
-    ),
-    z.codAvailable === true ? (
-      <Badge tone="success" key={`cod-${z.id}`}>COD</Badge>
-    ) : z.codAvailable === false ? (
-      <Badge tone="critical" key={`cod-${z.id}`}>No COD</Badge>
-    ) : (
-      <Text as="span" tone="subdued" key={`cod-${z.id}`}>
-        —
-      </Text>
-    ),
-    <InlineStack gap="200" blockAlign="center" key={`actions-${z.id}`}>
-      <Tooltip content="Edit zip code">
-        <Button
-          size="slim"
-          variant="tertiary"
-          onClick={() => handleOpenEdit(z)}
-          icon={EditIcon}
-          accessibilityLabel="Edit"
-        />
-      </Tooltip>
-      <Tooltip content="Delete zip code">
-        <Button
-          size="slim"
-          tone="critical"
-          variant="tertiary"
-          onClick={() => handleDelete(z.id)}
-          icon={DeleteIcon}
-          accessibilityLabel="Delete"
-        />
-      </Tooltip>
-    </InlineStack>,
-  ]);
+  const bulkActions = [
+    {
+      content: "Delete Selected",
+      onAction: handleBulkDelete,
+      destructive: true,
+    },
+  ];
 
   return (
     <Page
@@ -1281,47 +1281,120 @@ export default function ZipCodesPage() {
               </Box>
             ) : (
               <>
-                <DataTable
-                  columnContentTypes={[
-                    "text",
-                    "text",
-                    "text",
-                    "text",
-                    "text",
-                    "text",
-                    "text",
-                  ]}
+                <IndexTable
+                  itemCount={filteredZipCodes.length}
+                  selectedItemsCount={selectedIds.length}
+                  onSelectionChange={handleSelectionChange}
                   headings={[
-                    "Zip Code",
-                    "Zone",
-                    "Status",
-                    "Message",
-                    "ETA",
-                    "COD",
-                    "Actions",
+                    { title: "Zip Code" },
+                    { title: "Zone" },
+                    { title: "Status" },
+                    { title: "Message" },
+                    { title: "ETA" },
+                    { title: "COD" },
+                    { title: "Actions" },
                   ]}
-                  rows={tableRows}
-                  hoverable
-                />
-                {totalPages > 1 && (
-                  <Box padding="400">
-                    <InlineStack align="center" blockAlign="center" gap="300">
-                      <Pagination
-                        hasPrevious={currentPage > 1}
-                        onPrevious={() =>
-                          setCurrentPage((p) => Math.max(1, p - 1))
+                  bulkActions={bulkActions}
+                  loading={isBulkDeleteLoading}
+                  pagination={
+                    totalPages > 1
+                      ? {
+                          hasPrevious: currentPage > 1,
+                          onPrevious: () => setCurrentPage((p) => Math.max(1, p - 1)),
+                          hasNext: currentPage < totalPages,
+                          onNext: () => setCurrentPage((p) => Math.min(totalPages, p + 1)),
+                          label: `Page ${currentPage} of ${totalPages} (${filteredZipCodes.length} results)`,
                         }
-                        hasNext={currentPage < totalPages}
-                        onNext={() =>
-                          setCurrentPage((p) => Math.min(totalPages, p + 1))
-                        }
-                      />
-                      <Text as="span" tone="subdued" variant="bodySm">
-                        Page {currentPage} of {totalPages} ({filteredZipCodes.length} results)
-                      </Text>
-                    </InlineStack>
-                  </Box>
-                )}
+                      : undefined
+                  }
+                >
+                  {paginatedZipCodes.map((z, index) => (
+                    <IndexTable.Row
+                      key={z.id}
+                      id={z.id}
+                      position={index}
+                      selected={selectedIds.includes(z.id)}
+                    >
+                      <IndexTable.Cell>
+                        <Text as="span" fontWeight="bold">
+                          {z.zipCode}
+                        </Text>
+                      </IndexTable.Cell>
+                      <IndexTable.Cell>
+                        {z.zone || (
+                          <Text as="span" tone="subdued">
+                            —
+                          </Text>
+                        )}
+                      </IndexTable.Cell>
+                      <IndexTable.Cell>
+                        <InlineStack gap="300" blockAlign="center">
+                          <Tooltip content={z.isActive ? "Click to deactivate" : "Click to activate"}>
+                            <Button
+                              variant="plain"
+                              tone={z.isActive ? "success" : undefined}
+                              onClick={() => handleToggle(z.id, z.isActive)}
+                              accessibilityLabel={z.isActive ? "Deactivate zip code" : "Activate zip code"}
+                            >
+                              {z.isActive ? "Active" : "Inactive"}
+                            </Button>
+                          </Tooltip>
+                          <Badge tone={z.type === "allowed" ? "success" : "critical"}>
+                            {z.type === "allowed" ? "Allow" : "Block"}
+                          </Badge>
+                        </InlineStack>
+                      </IndexTable.Cell>
+                      <IndexTable.Cell>
+                        {z.message || (
+                          <Text as="span" tone="subdued">
+                            —
+                          </Text>
+                        )}
+                      </IndexTable.Cell>
+                      <IndexTable.Cell>
+                        {z.eta || (
+                          <Text as="span" tone="subdued">
+                            —
+                          </Text>
+                        )}
+                      </IndexTable.Cell>
+                      <IndexTable.Cell>
+                        {z.codAvailable === true ? (
+                          <Badge tone="success">COD</Badge>
+                        ) : z.codAvailable === false ? (
+                          <Badge tone="critical">No COD</Badge>
+                        ) : (
+                          <Text as="span" tone="subdued">
+                            —
+                          </Text>
+                        )}
+                      </IndexTable.Cell>
+                      <IndexTable.Cell>
+                        <InlineStack gap="200" blockAlign="center">
+                          <Tooltip content="Edit zip code">
+                            <Button
+                              size="slim"
+                              variant="tertiary"
+                              onClick={() => handleOpenEdit(z)}
+                              icon={EditIcon}
+                              accessibilityLabel="Edit"
+                            />
+                          </Tooltip>
+                          <Tooltip content="Delete zip code">
+                            <Button
+                              size="slim"
+                              tone="critical"
+                              variant="tertiary"
+                              onClick={() => handleDelete(z.id)}
+                              icon={DeleteIcon}
+                              accessibilityLabel="Delete"
+                            />
+                          </Tooltip>
+                        </InlineStack>
+                      </IndexTable.Cell>
+                    </IndexTable.Row>
+                  ))}
+                </IndexTable>
               </>
             )}
           </Card>

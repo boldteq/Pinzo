@@ -120,6 +120,7 @@ model WidgetConfig {
   blockCartOnInvalid    Boolean @default(false)
   blockCheckoutInCart   Boolean @default(false)
   showSocialProof       Boolean @default(true)
+  lockButtonsUntilZipCheck Boolean @default(true)
   // Border
   borderRadius          String  @default("8")
   // Custom CSS

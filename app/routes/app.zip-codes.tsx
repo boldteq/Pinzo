@@ -1018,7 +1018,7 @@ export default function ZipCodesPage() {
 
             {/* Current Plan */}
             <Card padding="400">
-              <BlockStack gap="150">
+              <BlockStack gap="150" inlineAlign="start">
                 <Text as="p" tone="subdued" variant="bodySm">
                   Current Plan
                 </Text>

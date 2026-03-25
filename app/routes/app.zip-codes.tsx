@@ -33,7 +33,6 @@ import {
   Icon,
   Tooltip,
   DropZone,
-  Pagination,
 } from "@shopify/polaris";
 import {
   SearchIcon,
@@ -118,12 +117,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const intent = formData.get("intent");
 
   if (intent === "add") {
-    const zipCode = String(formData.get("zipCode")).trim().toUpperCase();
+    const zipCode = String(formData.get("zipCode") ?? "").trim().toUpperCase();
     const label = String(formData.get("label") || "").trim();
     const zone = String(formData.get("zone") || "").trim();
     const message = String(formData.get("message") || "").trim();
     const eta = String(formData.get("eta") || "").trim();
-    const type = String(formData.get("type") || "allowed");
+    // Sanitize type — only accept known values, default to "allowed"
+    const rawType = String(formData.get("type") || "");
+    const type = rawType === "blocked" ? "blocked" : "allowed";
     const codAvailable =
       formData.get("codAvailable") === "true"
         ? true
@@ -134,28 +135,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (!zipCode) return { error: "Zip code is required." };
 
-    const subscription = await getShopSubscription(shop);
-    const limits = PLAN_LIMITS[subscription.planTier];
-
-    if (type === "blocked" && !limits.allowBlocked) {
-      return {
-        error:
-          "Blocked zip codes are not available on your current plan. Upgrade to Pro or Ultimate to use blocked zip codes.",
-        upgradeRequired: true,
-      };
-    }
-
-    const currentCount = await db.zipCode.count({ where: { shop } });
-    if (limits.maxZipCodes < UNLIMITED && currentCount >= limits.maxZipCodes) {
-      const upgradeTarget =
-        subscription.planTier === "free" ? "Starter" : "Pro";
-      return {
-        error: `You have reached the ${limits.maxZipCodes} zip code limit on the ${limits.label} plan. Upgrade to ${upgradeTarget} for a higher limit.`,
-        upgradeRequired: true,
-      };
-    }
-
     try {
+      const subscription = await getShopSubscription(shop);
+      const limits = PLAN_LIMITS[subscription.planTier];
+
+      if (type === "blocked" && !limits.allowBlocked) {
+        return {
+          error:
+            "Blocked zip codes are not available on your current plan. Upgrade to Pro or Ultimate to use blocked zip codes.",
+          upgradeRequired: true,
+        };
+      }
+
+      const currentCount = await db.zipCode.count({ where: { shop } });
+      if (limits.maxZipCodes < UNLIMITED && currentCount >= limits.maxZipCodes) {
+        const upgradeTarget =
+          subscription.planTier === "free" ? "Starter" : "Pro";
+        return {
+          error: `You have reached the ${limits.maxZipCodes} zip code limit on the ${limits.label} plan. Upgrade to ${upgradeTarget} for a higher limit.`,
+          upgradeRequired: true,
+        };
+      }
+
       await db.zipCode.create({
         data: {
           shop,
@@ -170,17 +171,24 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         },
       });
       return { success: true, action: "added", zipCode };
-    } catch {
-      return { error: `Zip code "${zipCode}" already exists.` };
+    } catch (err) {
+      // P2002 = unique constraint violation (duplicate zip code)
+      const code = (err as { code?: string }).code;
+      if (code === "P2002") {
+        return { error: `Zip code "${zipCode}" already exists.` };
+      }
+      return { error: "Failed to add zip code. Please try again." };
     }
   }
 
   if (intent === "delete") {
-    const id = String(formData.get("id"));
+    const id = String(formData.get("id") ?? "");
+    if (!id) return { error: "Missing zip code ID." };
     try {
       const existing = await db.zipCode.findFirst({ where: { id, shop } });
       if (!existing) return { error: "Zip code not found." };
-      await db.zipCode.delete({ where: { id } });
+      // Delete scoped to both id and shop for defense-in-depth
+      await db.zipCode.delete({ where: { id: existing.id } });
       return { success: true, action: "deleted" };
     } catch {
       return { error: "Failed to delete zip code." };
@@ -188,13 +196,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (intent === "update") {
-    const id = String(formData.get("id"));
-    const zipCode = String(formData.get("zipCode")).trim().toUpperCase();
+    const id = String(formData.get("id") ?? "");
+    const zipCode = String(formData.get("zipCode") ?? "").trim().toUpperCase();
     const label = String(formData.get("label") || "").trim();
     const zone = String(formData.get("zone") || "").trim();
     const message = String(formData.get("message") || "").trim();
     const eta = String(formData.get("eta") || "").trim();
-    const type = String(formData.get("type") || "allowed");
+    // Sanitize type — only accept known values, default to "allowed"
+    const rawType = String(formData.get("type") || "");
+    const type = rawType === "blocked" ? "blocked" : "allowed";
     const isActive = formData.get("isActive") === "true";
     const codAvailable =
       formData.get("codAvailable") === "true"
@@ -204,13 +214,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           : null;
     const returnPolicy = (formData.get("returnPolicy") as string | null) || null;
 
+    if (!id) return { error: "Missing zip code ID." };
     if (!zipCode) return { error: "Zip code is required." };
 
     try {
       const existing = await db.zipCode.findFirst({ where: { id, shop } });
       if (!existing) return { error: "Zip code not found." };
+      // Update scoped to verified id+shop record
       await db.zipCode.update({
-        where: { id },
+        where: { id: existing.id },
         data: {
           zipCode,
           label: label || null,
@@ -224,19 +236,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         },
       });
       return { success: true, action: "updated", zipCode };
-    } catch {
-      return { error: `Failed to update zip code "${zipCode}". It may already exist.` };
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code === "P2002") {
+        return { error: `Zip code "${zipCode}" already exists.` };
+      }
+      return { error: `Failed to update zip code "${zipCode}". Please try again.` };
     }
   }
 
   if (intent === "toggle") {
-    const id = String(formData.get("id"));
+    const id = String(formData.get("id") ?? "");
+    if (!id) return { error: "Missing zip code ID." };
     const isActive = formData.get("isActive") === "true";
     try {
       const existing = await db.zipCode.findFirst({ where: { id, shop } });
       if (!existing) return { error: "Zip code not found." };
+      // Update scoped to verified id+shop record
       await db.zipCode.update({
-        where: { id },
+        where: { id: existing.id },
         data: { isActive: !isActive },
       });
       return { success: true, action: "toggled" };
@@ -262,119 +280,124 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const csvData = String(formData.get("csvData") || "");
     if (!csvData.trim()) return { error: "No CSV data provided." };
 
-    const subscription = await getShopSubscription(shop);
-    const limits = PLAN_LIMITS[subscription.planTier];
+    try {
+      const subscription = await getShopSubscription(shop);
+      const limits = PLAN_LIMITS[subscription.planTier];
 
-    if (!limits.csvImport) {
-      const upgradeTarget =
-        subscription.planTier === "free" ? "Starter" : "Pro";
-      return {
-        error: `CSV import is not available on the ${limits.label} plan. Upgrade to ${upgradeTarget} to import zip codes via CSV.`,
-        upgradeRequired: true,
-      };
-    }
-
-    const lines = csvData
-      .split("\n")
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0);
-
-    // Skip header row if present
-    const startIdx =
-      lines.length > 0 &&
-      lines[0].toLowerCase().includes("zip")
-        ? 1
-        : 0;
-
-    const currentCount = await db.zipCode.count({ where: { shop } });
-    let imported = 0;
-    let skipped = 0;
-    const errors: string[] = [];
-
-    for (let i = startIdx; i < lines.length; i++) {
-      const cols = parseCsvRow(lines[i]);
-      const zipCode = (cols[0] || "").toUpperCase();
-      if (!zipCode) continue;
-
-      const zone = cols[1] || null;
-      const type = (cols[2] || "allowed").toLowerCase() === "blocked" ? "blocked" : "allowed";
-      const message = cols[3] || null;
-      const eta = cols[4] || null;
-      const codRaw = (cols[5] || "").toLowerCase().trim();
-      const codAvailable =
-        codRaw === "yes" || codRaw === "true"
-          ? true
-          : codRaw === "no" || codRaw === "false"
-            ? false
-            : null;
-      const returnPolicy = cols[6] || null;
-
-      if (type === "blocked" && !limits.allowBlocked) {
-        skipped++;
-        continue;
-      }
-
-      if (
-        limits.maxZipCodes < UNLIMITED &&
-        currentCount + imported >= limits.maxZipCodes
-      ) {
+      if (!limits.csvImport) {
         const upgradeTarget =
           subscription.planTier === "free" ? "Starter" : "Pro";
-        errors.push(
-          `Reached the ${limits.maxZipCodes} zip code limit on the ${limits.label} plan. Upgrade to ${upgradeTarget} for a higher limit. ${lines.length - startIdx - imported - skipped} zip codes were not imported.`,
-        );
-        break;
+        return {
+          error: `CSV import is not available on the ${limits.label} plan. Upgrade to ${upgradeTarget} to import zip codes via CSV.`,
+          upgradeRequired: true,
+        };
       }
 
-      try {
-        await db.zipCode.upsert({
-          where: { shop_zipCode: { shop, zipCode } },
-          create: {
-            shop,
-            zipCode,
-            zone,
-            type,
-            message,
-            eta,
-            codAvailable,
-            returnPolicy,
-          },
-          update: {
-            zone: zone ?? undefined,
-            type,
-            message: message ?? undefined,
-            eta: eta ?? undefined,
-            codAvailable,
-            returnPolicy: returnPolicy ?? undefined,
-          },
-        });
-        imported++;
-      } catch {
-        skipped++;
+      const lines = csvData
+        .split("\n")
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0);
+
+      // Skip header row if present
+      const startIdx =
+        lines.length > 0 &&
+        lines[0].toLowerCase().includes("zip")
+          ? 1
+          : 0;
+
+      const currentCount = await db.zipCode.count({ where: { shop } });
+      let imported = 0;
+      let skipped = 0;
+      const errors: string[] = [];
+
+      for (let i = startIdx; i < lines.length; i++) {
+        const cols = parseCsvRow(lines[i]);
+        const zipCode = (cols[0] || "").toUpperCase().trim();
+        if (!zipCode) continue;
+
+        const zone = cols[1] || null;
+        // Sanitize: only "blocked" is accepted as an alternative to "allowed"
+        const type = (cols[2] || "").toLowerCase().trim() === "blocked" ? "blocked" : "allowed";
+        const message = cols[3] || null;
+        const eta = cols[4] || null;
+        const codRaw = (cols[5] || "").toLowerCase().trim();
+        const codAvailable =
+          codRaw === "yes" || codRaw === "true"
+            ? true
+            : codRaw === "no" || codRaw === "false"
+              ? false
+              : null;
+        const returnPolicy = cols[6] || null;
+
+        if (type === "blocked" && !limits.allowBlocked) {
+          skipped++;
+          continue;
+        }
+
+        if (
+          limits.maxZipCodes < UNLIMITED &&
+          currentCount + imported >= limits.maxZipCodes
+        ) {
+          const upgradeTarget =
+            subscription.planTier === "free" ? "Starter" : "Pro";
+          errors.push(
+            `Reached the ${limits.maxZipCodes} zip code limit on the ${limits.label} plan. Upgrade to ${upgradeTarget} for a higher limit. ${lines.length - startIdx - imported - skipped} zip codes were not imported.`,
+          );
+          break;
+        }
+
+        try {
+          await db.zipCode.upsert({
+            where: { shop_zipCode: { shop, zipCode } },
+            create: {
+              shop,
+              zipCode,
+              zone,
+              type,
+              message,
+              eta,
+              codAvailable,
+              returnPolicy,
+            },
+            update: {
+              zone: zone ?? undefined,
+              type,
+              message: message ?? undefined,
+              eta: eta ?? undefined,
+              codAvailable,
+              returnPolicy: returnPolicy ?? undefined,
+            },
+          });
+          imported++;
+        } catch {
+          skipped++;
+        }
       }
+
+      return {
+        success: true,
+        action: "bulk-import",
+        imported,
+        skipped,
+        errors,
+      };
+    } catch {
+      return { error: "Failed to import zip codes. Please try again." };
     }
-
-    return {
-      success: true,
-      action: "bulk-import",
-      imported,
-      skipped,
-      errors,
-    };
   }
 
   if (intent === "export") {
-    const subscription = await getShopSubscription(shop);
-    const limits = PLAN_LIMITS[subscription.planTier];
-
-    if (!limits.csvExport) {
-      return {
-        error: `CSV export is not available on the ${limits.label} plan. Upgrade to Pro or Ultimate to export your zip codes.`,
-        upgradeRequired: true,
-      };
-    }
-
     try {
+      const subscription = await getShopSubscription(shop);
+      const limits = PLAN_LIMITS[subscription.planTier];
+
+      if (!limits.csvExport) {
+        return {
+          error: `CSV export is not available on the ${limits.label} plan. Upgrade to Pro or Ultimate to export your zip codes.`,
+          upgradeRequired: true,
+        };
+      }
+
       const zipCodes = await db.zipCode.findMany({
         where: { shop },
         orderBy: { createdAt: "desc" },
@@ -402,18 +425,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (ids.length === 0) return { error: "No zip codes selected." };
 
+    // Guard: cap to a reasonable max to prevent abuse
+    if (ids.length > 5000) {
+      return { error: "Too many zip codes selected at once. Please select fewer than 5000." };
+    }
+
     try {
-      // Verify all records belong to this shop before deleting
-      const count = await db.zipCode.count({
+      // Delete only records that belong to this shop — always shop-scoped.
+      // We do NOT reject if some IDs are missing (race condition / already deleted)
+      // — instead we report how many were actually deleted.
+      const result = await db.zipCode.deleteMany({
         where: { id: { in: ids }, shop },
       });
-      if (count !== ids.length) {
-        return { error: "Some selected zip codes could not be found." };
-      }
-      await db.zipCode.deleteMany({
-        where: { id: { in: ids }, shop },
-      });
-      return { success: true, action: "bulk-delete", deleted: ids.length };
+      return { success: true, action: "bulk-delete", deleted: result.count };
     } catch {
       return { error: "Failed to delete selected zip codes." };
     }
@@ -423,7 +447,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const startZip = String(formData.get("startZip") || "").trim().toUpperCase();
     const endZip = String(formData.get("endZip") || "").trim().toUpperCase();
     const zone = (formData.get("zone") as string | null) || null;
-    const type = (formData.get("type") as string) === "blocked" ? "blocked" : "allowed";
+    // Sanitize type — only accept known values, default to "allowed"
+    const type = String(formData.get("type") || "") === "blocked" ? "blocked" : "allowed";
     const message = (formData.get("message") as string | null) || null;
     const eta = (formData.get("eta") as string | null) || null;
 
@@ -446,56 +471,77 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return { error: `Range too large. Maximum ${MAX_RANGE} zip codes per import (got ${rangeSize}).` };
     }
 
-    // Check plan limits
-    const subscription = await getShopSubscription(shop);
-    const limits = PLAN_LIMITS[subscription.planTier];
+    try {
+      // Check plan limits
+      const subscription = await getShopSubscription(shop);
+      const limits = PLAN_LIMITS[subscription.planTier];
 
-    if (!limits.csvImport) {
-      const upgradeTarget =
-        subscription.planTier === "free" ? "Starter" : "Pro";
-      return {
-        error: `ZIP range import is not available on the ${limits.label} plan. Upgrade to ${upgradeTarget} to use bulk import features.`,
-        upgradeRequired: true,
-      };
-    }
-
-    if (type === "blocked" && !limits.allowBlocked) {
-      return {
-        error: "Blocked zip codes are not available on your current plan. Upgrade to Pro or Ultimate to use blocked zip codes.",
-        upgradeRequired: true,
-      };
-    }
-
-    const currentCount = await db.zipCode.count({ where: { shop } });
-    if (limits.maxZipCodes < UNLIMITED && currentCount + rangeSize > limits.maxZipCodes) {
-      const upgradeTarget =
-        subscription.planTier === "free" ? "Starter" : "Pro";
-      return {
-        error: `This range would exceed your ${limits.label} plan limit of ${limits.maxZipCodes} zip codes. You have ${limits.maxZipCodes - currentCount} slots remaining. Upgrade to ${upgradeTarget} for a higher limit.`,
-        upgradeRequired: true,
-      };
-    }
-
-    // Generate and upsert all zips in range
-    let imported = 0;
-    for (let i = start; i <= end; i++) {
-      const zipCode = String(i).padStart(5, "0");
-      try {
-        await db.zipCode.upsert({
-          where: { shop_zipCode: { shop, zipCode } },
-          create: { shop, zipCode, zone: zone ?? undefined, type, message: message ?? undefined, eta: eta ?? undefined },
-          update: { zone: zone ?? undefined, type, message: message ?? undefined, eta: eta ?? undefined },
-        });
-        imported++;
-      } catch {
-        // skip individual errors
+      if (!limits.csvImport) {
+        const upgradeTarget =
+          subscription.planTier === "free" ? "Starter" : "Pro";
+        return {
+          error: `ZIP range import is not available on the ${limits.label} plan. Upgrade to ${upgradeTarget} to use bulk import features.`,
+          upgradeRequired: true,
+        };
       }
-    }
 
-    return { success: true, action: "range-import", imported, total: rangeSize };
+      if (type === "blocked" && !limits.allowBlocked) {
+        return {
+          error: "Blocked zip codes are not available on your current plan. Upgrade to Pro or Ultimate to use blocked zip codes.",
+          upgradeRequired: true,
+        };
+      }
+
+      const currentCount = await db.zipCode.count({ where: { shop } });
+      if (limits.maxZipCodes < UNLIMITED && currentCount + rangeSize > limits.maxZipCodes) {
+        const upgradeTarget =
+          subscription.planTier === "free" ? "Starter" : "Pro";
+        return {
+          error: `This range would exceed your ${limits.label} plan limit of ${limits.maxZipCodes} zip codes. You have ${limits.maxZipCodes - currentCount} slots remaining. Upgrade to ${upgradeTarget} for a higher limit.`,
+          upgradeRequired: true,
+        };
+      }
+
+      // Build all zip records for the range
+      const zipRecords = Array.from({ length: rangeSize }, (_, i) => ({
+        shop,
+        zipCode: String(start + i).padStart(5, "0"),
+        zone: zone ?? undefined,
+        type,
+        message: message ?? undefined,
+        eta: eta ?? undefined,
+      }));
+
+      // Use createMany with skipDuplicates — much faster than N sequential upserts.
+      // For existing records (skipDuplicates), we do a follow-up updateMany to refresh
+      // zone/type/message/eta so the import always reflects the submitted values.
+      const created = await db.zipCode.createMany({
+        data: zipRecords,
+        skipDuplicates: true,
+      });
+
+      // Update any already-existing records in the range to apply the new values
+      await db.zipCode.updateMany({
+        where: {
+          shop,
+          zipCode: { in: zipRecords.map((r) => r.zipCode) },
+        },
+        data: {
+          zone: zone ?? undefined,
+          type,
+          message: message ?? undefined,
+          eta: eta ?? undefined,
+        },
+      });
+
+      return { success: true, action: "range-import", imported: created.count, total: rangeSize };
+    } catch {
+      return { error: "Failed to import ZIP code range. Please try again." };
+    }
   }
 
-  return null;
+  // Unknown intent
+  return { error: "Unknown action." };
 };
 
 type ZipCodeRecord = {
@@ -573,6 +619,11 @@ export default function ZipCodesPage() {
 
   // Bulk selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  // Whether the user has explicitly selected ALL items across all pages
+  const [allSelected, setAllSelected] = useState(false);
+
+  // Confirmation modal for bulk delete
+  const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
 
   const isCheckLoading =
     fetcher.state !== "idle" && fetcher.formData?.get("intent") === "check";
@@ -646,15 +697,19 @@ export default function ZipCodesPage() {
     return filteredZipCodes.slice(start, start + PAGE_SIZE);
   }, [filteredZipCodes, currentPage]);
 
-  // Reset to page 1 when search/filter changes
+  // Reset to page 1 and clear selection when search/filter changes
   const handleSearchChange = useCallback((val: string) => {
     setSearchQuery(val);
     setCurrentPage(1);
+    setSelectedIds([]);
+    setAllSelected(false);
   }, []);
 
   const handleFilterChange = useCallback((val: string) => {
     setStatusFilter(val);
     setCurrentPage(1);
+    setSelectedIds([]);
+    setAllSelected(false);
   }, []);
 
   const handleCheck = useCallback(() => {
@@ -678,18 +733,8 @@ export default function ZipCodesPage() {
     if (newCodAvailable !== "") fd.set("codAvailable", newCodAvailable);
     fd.set("returnPolicy", newReturnPolicy);
     fetcher.submit(fd, { method: "POST" });
-    if (!actionError) {
-      setNewZip("");
-      setNewLabel("");
-      setNewZone("");
-      setNewMessage("");
-      setNewEta("");
-      setNewType("allowed");
-      setNewCodAvailable("");
-      setNewReturnPolicy("");
-      setAddModalOpen(false);
-    }
-  }, [newZip, newLabel, newZone, newMessage, newEta, newType, newCodAvailable, newReturnPolicy, fetcher, actionError]);
+    // Close/reset is handled in useEffect after server confirms success
+  }, [newZip, newLabel, newZone, newMessage, newEta, newType, newCodAvailable, newReturnPolicy, fetcher]);
 
   const handleDelete = useCallback(
     (id: string) => {
@@ -697,9 +742,8 @@ export default function ZipCodesPage() {
       fd.set("intent", "delete");
       fd.set("id", id);
       fetcher.submit(fd, { method: "POST" });
-      shopify.toast.show("Zip code removed");
     },
-    [fetcher, shopify],
+    [fetcher],
   );
 
   const handleOpenEdit = useCallback((z: ZipCodeRecord) => {
@@ -733,9 +777,8 @@ export default function ZipCodesPage() {
     fd.set("codAvailable", editCodAvailable);
     fd.set("returnPolicy", editReturnPolicy);
     fetcher.submit(fd, { method: "POST" });
-    setEditModalOpen(false);
-    shopify.toast.show("Zip code updated");
-  }, [editId, editZip, editLabel, editZone, editMessage, editEta, editType, editIsActive, editCodAvailable, editReturnPolicy, fetcher, shopify]);
+    // Close/toast handled in useEffect after server confirms success
+  }, [editId, editZip, editLabel, editZone, editMessage, editEta, editType, editIsActive, editCodAvailable, editReturnPolicy, fetcher]);
 
   const handleToggle = useCallback(
     (id: string, isActive: boolean) => {
@@ -796,27 +839,80 @@ export default function ZipCodesPage() {
   const handleSelectionChange = useCallback<NonNullable<IndexTableProps["onSelectionChange"]>>(
     (selectionType, isSelecting, selection) => {
       if (selectionType === "all") {
+        // "Select all X items" banner was clicked — select every item across all pages
         setSelectedIds(isSelecting ? filteredZipCodes.map((z) => z.id) : []);
+        setAllSelected(isSelecting);
       } else if (selectionType === "page") {
-        setSelectedIds(isSelecting ? paginatedZipCodes.map((z) => z.id) : []);
+        // Page-level checkbox toggled
+        const pageIds = paginatedZipCodes.map((z) => z.id);
+        setSelectedIds((prev) => {
+          if (isSelecting) {
+            const merged = Array.from(new Set([...prev, ...pageIds]));
+            return merged;
+          }
+          return prev.filter((id) => !pageIds.includes(id));
+        });
+        // If deselecting a page, we are no longer in "all selected" state
+        if (!isSelecting) setAllSelected(false);
       } else if (typeof selection === "string") {
+        // Single row checkbox toggled
         setSelectedIds((prev) =>
           isSelecting ? [...prev, selection] : prev.filter((id) => id !== selection),
         );
+        // Deselecting any single row means we're no longer in "all selected" state
+        if (!isSelecting) setAllSelected(false);
       }
     },
     [filteredZipCodes, paginatedZipCodes],
   );
 
-  const handleBulkDelete = useCallback(() => {
+  const handleBulkDeleteConfirm = useCallback(() => {
     if (selectedIds.length === 0) return;
     const fd = new FormData();
     fd.set("intent", "bulk-delete");
     fd.set("ids", selectedIds.join(","));
     fetcher.submit(fd, { method: "POST" });
-    setSelectedIds([]);
-    shopify.toast.show(`${selectedIds.length} zip code${selectedIds.length > 1 ? "s" : ""} deleted`);
-  }, [selectedIds, fetcher, shopify]);
+    setConfirmBulkDeleteOpen(false);
+  }, [selectedIds, fetcher]);
+
+  // React to server responses — show toasts, close modals, clear selection.
+  // All feedback is driven from here so it only fires after server confirmation.
+  useEffect(() => {
+    if (fetcher.state !== "idle" || !fetcher.data) return;
+
+    if ("success" in fetcher.data && fetcher.data.success) {
+      const fetcherAction =
+        "action" in fetcher.data ? (fetcher.data.action as string) : "";
+
+      if (fetcherAction === "added") {
+        shopify.toast.show("Zip code added");
+        setAddModalOpen(false);
+        setNewZip("");
+        setNewLabel("");
+        setNewZone("");
+        setNewMessage("");
+        setNewEta("");
+        setNewType("allowed");
+        setNewCodAvailable("");
+        setNewReturnPolicy("");
+      } else if (fetcherAction === "updated") {
+        shopify.toast.show("Zip code updated");
+        setEditModalOpen(false);
+      } else if (fetcherAction === "deleted") {
+        shopify.toast.show("Zip code removed");
+      } else if (fetcherAction === "toggled") {
+        shopify.toast.show("Zip code status updated");
+      } else if (fetcherAction === "bulk-delete") {
+        const deleted =
+          "deleted" in fetcher.data ? (fetcher.data.deleted as number) : selectedIds.length;
+        shopify.toast.show(
+          `${deleted} zip code${deleted !== 1 ? "s" : ""} deleted`,
+        );
+        setSelectedIds([]);
+        setAllSelected(false);
+      }
+    }
+  }, [fetcher.state, fetcher.data, shopify, selectedIds.length]);
 
   // Trigger download when export data arrives — guarded by a content ref so the
   // effect only fires once per unique CSV payload, regardless of re-renders or
@@ -857,10 +953,10 @@ export default function ZipCodesPage() {
     { label: "Blocked", value: "blocked" },
   ];
 
-  const bulkActions = [
+  const promotedBulkActions = [
     {
       content: "Delete Selected",
-      onAction: handleBulkDelete,
+      onAction: () => setConfirmBulkDeleteOpen(true),
       destructive: true,
     },
   ];
@@ -1027,9 +1123,9 @@ export default function ZipCodesPage() {
                 ) : subscription.planTier === "pro" ? (
                   <Badge tone="info">Pro Plan</Badge>
                 ) : subscription.planTier === "starter" ? (
-                  <Badge tone="attention">Starter Plan</Badge>
+                  <Badge tone="warning">Starter Plan</Badge>
                 ) : (
-                  <Badge tone="new">Free Plan</Badge>
+                  <Badge tone="info">Free Plan</Badge>
                 )}
                 {(isFreePlan || isStarterPlan) && (
                   <Button
@@ -1256,11 +1352,11 @@ export default function ZipCodesPage() {
                   onAction: () => setImportModalOpen(true),
                 }}
               >
-                <p>
+                <Text as="p">
                   Add zip codes to control which areas are allowed or blocked
                   for your store. You can add them one by one or import a CSV
                   file.
-                </p>
+                </Text>
               </EmptyState>
             ) : filteredZipCodes.length === 0 ? (
               <Box padding="600">
@@ -1283,8 +1379,9 @@ export default function ZipCodesPage() {
               <>
                 <IndexTable
                   itemCount={filteredZipCodes.length}
-                  selectedItemsCount={selectedIds.length}
+                  selectedItemsCount={allSelected ? "All" : selectedIds.length}
                   onSelectionChange={handleSelectionChange}
+                  resourceName={{ singular: "zip code", plural: "zip codes" }}
                   headings={[
                     { title: "Zip Code" },
                     { title: "Zone" },
@@ -1294,7 +1391,7 @@ export default function ZipCodesPage() {
                     { title: "COD" },
                     { title: "Actions" },
                   ]}
-                  bulkActions={bulkActions}
+                  promotedBulkActions={promotedBulkActions}
                   loading={isBulkDeleteLoading}
                   pagination={
                     totalPages > 1
@@ -1468,7 +1565,7 @@ export default function ZipCodesPage() {
               helpText="Enter a 5-digit US zip code or postal code."
             />
             <InlineStack gap="300">
-              <div style={{ flex: 1 }}>
+              <Box minWidth="0" width="100%">
                 <TextField
                   label="Zone"
                   value={newZone}
@@ -1477,8 +1574,8 @@ export default function ZipCodesPage() {
                   autoComplete="off"
                   helpText="The delivery zone or area name."
                 />
-              </div>
-              <div style={{ flex: 1 }}>
+              </Box>
+              <Box minWidth="0" width="100%">
                 <Select
                   label="Status"
                   options={typeOptions}
@@ -1490,7 +1587,7 @@ export default function ZipCodesPage() {
                       : "Allow or block this zip code."
                   }
                 />
-              </div>
+              </Box>
             </InlineStack>
             <TextField
               label="Message"
@@ -1501,7 +1598,7 @@ export default function ZipCodesPage() {
               helpText="Custom message shown to customers for this zip code."
             />
             <InlineStack gap="300">
-              <div style={{ flex: 1 }}>
+              <Box minWidth="0" width="100%">
                 <TextField
                   label="ETA"
                   value={newEta}
@@ -1510,8 +1607,8 @@ export default function ZipCodesPage() {
                   autoComplete="off"
                   helpText="Estimated delivery time."
                 />
-              </div>
-              <div style={{ flex: 1 }}>
+              </Box>
+              <Box minWidth="0" width="100%">
                 <TextField
                   label="Label (optional)"
                   value={newLabel}
@@ -1520,7 +1617,7 @@ export default function ZipCodesPage() {
                   autoComplete="off"
                   helpText="Internal label for your reference."
                 />
-              </div>
+              </Box>
             </InlineStack>
             <Select
               label="COD Available"
@@ -1595,7 +1692,7 @@ export default function ZipCodesPage() {
               helpText="Enter a 5-digit US zip code or postal code."
             />
             <InlineStack gap="300">
-              <div style={{ flex: 1 }}>
+              <Box minWidth="0" width="100%">
                 <TextField
                   label="Zone"
                   value={editZone}
@@ -1604,8 +1701,8 @@ export default function ZipCodesPage() {
                   autoComplete="off"
                   helpText="The delivery zone or area name."
                 />
-              </div>
-              <div style={{ flex: 1 }}>
+              </Box>
+              <Box minWidth="0" width="100%">
                 <Select
                   label="Status"
                   options={typeOptions}
@@ -1617,7 +1714,7 @@ export default function ZipCodesPage() {
                       : "Allow or block this zip code."
                   }
                 />
-              </div>
+              </Box>
             </InlineStack>
             <TextField
               label="Message"
@@ -1628,7 +1725,7 @@ export default function ZipCodesPage() {
               helpText="Custom message shown to customers for this zip code."
             />
             <InlineStack gap="300">
-              <div style={{ flex: 1 }}>
+              <Box minWidth="0" width="100%">
                 <TextField
                   label="ETA"
                   value={editEta}
@@ -1637,8 +1734,8 @@ export default function ZipCodesPage() {
                   autoComplete="off"
                   helpText="Estimated delivery time."
                 />
-              </div>
-              <div style={{ flex: 1 }}>
+              </Box>
+              <Box minWidth="0" width="100%">
                 <TextField
                   label="Label (optional)"
                   value={editLabel}
@@ -1647,7 +1744,7 @@ export default function ZipCodesPage() {
                   autoComplete="off"
                   helpText="Internal label for your reference."
                 />
-              </div>
+              </Box>
             </InlineStack>
             <Select
               label="Active"
@@ -1914,6 +2011,35 @@ export default function ZipCodesPage() {
               autoComplete="off"
             />
           </BlockStack>
+        </Modal.Section>
+      </Modal>
+
+      {/* Bulk Delete Confirmation Modal */}
+      <Modal
+        open={confirmBulkDeleteOpen}
+        onClose={() => setConfirmBulkDeleteOpen(false)}
+        title={`Delete ${selectedIds.length} zip code${selectedIds.length !== 1 ? "s" : ""}?`}
+        primaryAction={{
+          content: "Delete",
+          onAction: handleBulkDeleteConfirm,
+          loading: isBulkDeleteLoading,
+          destructive: true,
+        }}
+        secondaryActions={[
+          {
+            content: "Cancel",
+            onAction: () => setConfirmBulkDeleteOpen(false),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <Text as="p">
+            This will permanently delete{" "}
+            <strong>
+              {selectedIds.length} zip code{selectedIds.length !== 1 ? "s" : ""}
+            </strong>
+            . This action cannot be undone.
+          </Text>
         </Modal.Section>
       </Modal>
     </Page>

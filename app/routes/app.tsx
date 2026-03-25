@@ -11,6 +11,7 @@ declare global {
 import { Outlet, useLoaderData, useNavigation, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
+import { NavMenu } from "@shopify/app-bridge-react";
 import {
   AppProvider as PolarisAppProvider,
   SkeletonPage,
@@ -99,14 +100,14 @@ export default function App() {
     <AppProvider embedded apiKey={apiKey}>
       <PolarisAppProvider i18n={enTranslations}>
         <ChatwootWidget />
-        <s-app-nav>
-          <s-link href="/app/zip-codes">Zip Codes</s-link>
-          <s-link href="/app/delivery-rules">Delivery Rules</s-link>
-          <s-link href="/app/waitlist">Waitlist</s-link>
-          <s-link href="/app/widget">Widget Customization</s-link>
-          <s-link href="/app/settings">Settings</s-link>
-          <s-link href="/app/help">Help &amp; Support</s-link>
-        </s-app-nav>
+        <NavMenu>
+          <a href="/app/zip-codes">Zip Codes</a>
+          <a href="/app/delivery-rules">Delivery Rules</a>
+          <a href="/app/waitlist">Waitlist</a>
+          <a href="/app/widget">Widget Customization</a>
+          <a href="/app/settings">Settings</a>
+          <a href="/app/help">Help &amp; Support</a>
+        </NavMenu>
         <AppContent />
       </PolarisAppProvider>
     </AppProvider>

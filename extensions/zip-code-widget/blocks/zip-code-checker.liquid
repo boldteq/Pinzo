@@ -181,8 +181,16 @@
   function _zccUnlock() {
     document.documentElement.removeAttribute('data-zcc-locked');
   }
-  // Lock immediately — CSS attribute is set synchronously right now
-  _zccLock();
+  // Lock immediately — but skip if the customer already validated this shop's
+  // ZIP in this session (avoids flash-of-disabled-buttons on page refresh).
+  var _priorValid = false;
+  try {
+    _priorValid = sessionStorage.getItem('zcc:valid') === 'true' &&
+                  sessionStorage.getItem('zcc:shop') === SHOP;
+  } catch(e) {}
+  if (!_priorValid) {
+    _zccLock();
+  }
 
   // Always fetch fresh config from the API so color/setting changes made in the
   // admin are reflected on the storefront immediately. The metafield-embedded
@@ -322,7 +330,8 @@
   // Pre-lock is already applied synchronously above via _zccLock().
   // This function wires up zcc:validated so buttons unlock on success.
   function lockAtcButtonsForZipCheck() {
-    var zipVerified = false;
+    // Start in the correct state — if the customer already validated, treat as verified.
+    var zipVerified = _priorValid;
 
     window.addEventListener('zcc:validated', function(e) {
       var detail = e.detail;

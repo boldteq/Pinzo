@@ -140,6 +140,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         blockCartOnInvalid: formData.get("blockCartOnInvalid") === "true",
         blockCheckoutInCart: formData.get("blockCheckoutInCart") === "true",
         showSocialProof: formData.get("showSocialProof") === "true",
+        lockButtonsUntilZipCheck: formData.get("lockButtonsUntilZipCheck") === "true",
         borderRadius: String(formData.get("borderRadius") || "8"),
         customCss: String(formData.get("customCss") || "") || null,
       };
@@ -172,6 +173,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (!limits.cartBlocking) {
         data.blockCartOnInvalid = false;
         data.blockCheckoutInCart = false;
+        data.lockButtonsUntilZipCheck = false;
       }
 
       await db.widgetConfig.upsert({
@@ -212,6 +214,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         blockCartOnInvalid: false,
         blockCheckoutInCart: false,
         showSocialProof: true,
+        lockButtonsUntilZipCheck: true,
         borderRadius: "8",
         customCss: null,
       };
@@ -262,6 +265,7 @@ type WidgetConfig = {
   blockCartOnInvalid: boolean;
   blockCheckoutInCart: boolean;
   showSocialProof: boolean;
+  lockButtonsUntilZipCheck: boolean;
   borderRadius: string;
   customCss: string | null;
 };
@@ -293,6 +297,7 @@ const DEFAULTS = {
   blockCartOnInvalid: false,
   blockCheckoutInCart: false,
   showSocialProof: true,
+  lockButtonsUntilZipCheck: true,
   borderRadius: "8",
   customCss: "",
 };
@@ -1026,6 +1031,7 @@ export default function WidgetPage() {
   const [blockCartOnInvalid, setBlockCartOnInvalid] = useState(c.blockCartOnInvalid ?? false);
   const [blockCheckoutInCart, setBlockCheckoutInCart] = useState(c.blockCheckoutInCart ?? false);
   const [showSocialProof, setShowSocialProof] = useState(c.showSocialProof ?? true);
+  const [lockButtonsUntilZipCheck, setLockButtonsUntilZipCheck] = useState((c as unknown as { lockButtonsUntilZipCheck?: boolean }).lockButtonsUntilZipCheck ?? true);
   const [borderRadius, setBorderRadius] = useState(c.borderRadius);
   const [customCss, setCustomCss] = useState(c.customCss || "");
 
@@ -1084,6 +1090,7 @@ export default function WidgetPage() {
   const handleBlockCartOnInvalidChange = useCallback((v: boolean) => { setBlockCartOnInvalid(v); mark(); }, [mark]);
   const handleBlockCheckoutInCartChange = useCallback((v: boolean) => { setBlockCheckoutInCart(v); mark(); }, [mark]);
   const handleShowSocialProofChange = useCallback((v: boolean) => { setShowSocialProof(v); mark(); }, [mark]);
+  const handleLockButtonsUntilZipCheckChange = useCallback((v: boolean) => { setLockButtonsUntilZipCheck(v); mark(); }, [mark]);
   const handleBorderRadiusChange = useCallback((v: string) => { setBorderRadius(v); mark(); }, [mark]);
   const handleCustomCssChange = useCallback((v: string) => { setCustomCss(v); mark(); }, [mark]);
 
@@ -1115,6 +1122,7 @@ export default function WidgetPage() {
     fd.set("blockCartOnInvalid", String(blockCartOnInvalid));
     fd.set("blockCheckoutInCart", String(blockCheckoutInCart));
     fd.set("showSocialProof", String(showSocialProof));
+    fd.set("lockButtonsUntilZipCheck", String(lockButtonsUntilZipCheck));
     fd.set("borderRadius", borderRadius);
     fd.set("customCss", customCss);
     fetcher.submit(fd, { method: "POST" });
@@ -1125,7 +1133,7 @@ export default function WidgetPage() {
     notFoundMessage, showEta, showZone, showWaitlistOnFailure, showCod,
     showReturnPolicy, showCutoffTime, showDeliveryDays, showDeliveryDate,
     showCountdown, showDeliveryFee, blockCartOnInvalid,
-    blockCheckoutInCart, showSocialProof, borderRadius, customCss,
+    blockCheckoutInCart, showSocialProof, lockButtonsUntilZipCheck, borderRadius, customCss,
     fetcher, shopify,
   ]);
 
@@ -1158,6 +1166,7 @@ export default function WidgetPage() {
     setBlockCartOnInvalid(DEFAULTS.blockCartOnInvalid);
     setBlockCheckoutInCart(DEFAULTS.blockCheckoutInCart);
     setShowSocialProof(DEFAULTS.showSocialProof);
+    setLockButtonsUntilZipCheck(DEFAULTS.lockButtonsUntilZipCheck);
     setBorderRadius(DEFAULTS.borderRadius);
     setCustomCss(DEFAULTS.customCss);
     setPreviewState("idle");
@@ -1173,14 +1182,14 @@ export default function WidgetPage() {
     notFoundMessage, showEta, showZone, showWaitlistOnFailure, showCod,
     showReturnPolicy, showCutoffTime, showDeliveryDays, showDeliveryDate,
     showCountdown, showDeliveryFee, blockCartOnInvalid,
-    blockCheckoutInCart, showSocialProof, borderRadius, customCss,
+    blockCheckoutInCart, showSocialProof, lockButtonsUntilZipCheck, borderRadius, customCss,
   }), [
     position, primaryColor, successColor, errorColor, backgroundColor,
     textColor, heading, placeholder, buttonText, successMessage, errorMessage,
     notFoundMessage, showEta, showZone, showWaitlistOnFailure, showCod,
     showReturnPolicy, showCutoffTime, showDeliveryDays, showDeliveryDate,
     showCountdown, showDeliveryFee, blockCartOnInvalid,
-    blockCheckoutInCart, showSocialProof, borderRadius, customCss,
+    blockCheckoutInCart, showSocialProof, lockButtonsUntilZipCheck, borderRadius, customCss,
   ]);
 
   const handleDiscard = useCallback(() => {
@@ -1209,6 +1218,7 @@ export default function WidgetPage() {
     setBlockCartOnInvalid(c.blockCartOnInvalid ?? false);
     setBlockCheckoutInCart(c.blockCheckoutInCart ?? false);
     setShowSocialProof(c.showSocialProof ?? true);
+    setLockButtonsUntilZipCheck((c as unknown as { lockButtonsUntilZipCheck?: boolean }).lockButtonsUntilZipCheck ?? true);
     setBorderRadius(c.borderRadius);
     setCustomCss(c.customCss || "");
     setIsDirty(false);
@@ -1650,6 +1660,13 @@ export default function WidgetPage() {
                       helpText="Shows a warning and hides the checkout button on the cart page if the last checked ZIP was unserviceable. Requires the Cart Validator block on your cart page."
                       checked={blockCheckoutInCart}
                       onChange={handleBlockCheckoutInCartChange}
+                      disabled={!limits.cartBlocking}
+                    />
+                    <Checkbox
+                      label="Disable Add to Cart until ZIP code is verified (Floating/Popup only)"
+                      helpText="When the widget is in Floating or Popup mode, the Add to Cart and Buy Now buttons are grayed out and disabled until the customer successfully validates their ZIP code. Has no effect in Inline mode."
+                      checked={lockButtonsUntilZipCheck}
+                      onChange={handleLockButtonsUntilZipCheckChange}
                       disabled={!limits.cartBlocking}
                     />
                     {!limits.cartBlocking && (

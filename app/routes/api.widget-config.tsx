@@ -45,6 +45,7 @@ const DEFAULTS = {
   blockCartOnInvalid: false,
   blockCheckoutInCart: false,
   showSocialProof: true,
+  lockButtonsUntilZipCheck: true,
   borderRadius: "8",
   customCss: null as string | null,
 };
@@ -137,6 +138,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         blockCartOnInvalid: config.blockCartOnInvalid ?? false,
         blockCheckoutInCart: config.blockCheckoutInCart ?? false,
         showSocialProof: config.showSocialProof ?? true,
+        lockButtonsUntilZipCheck: config.lockButtonsUntilZipCheck ?? true,
         borderRadius: config.borderRadius,
         customCss: config.customCss ? sanitizeCss(config.customCss) : null,
       }
@@ -171,7 +173,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // Cart blocking
     ...(limits.cartBlocking
       ? {}
-      : { blockCartOnInvalid: false, blockCheckoutInCart: false }),
+      : { blockCartOnInvalid: false, blockCheckoutInCart: false, lockButtonsUntilZipCheck: false }),
     // Custom CSS
     ...(limits.customCss ? {} : { customCss: null }),
   };

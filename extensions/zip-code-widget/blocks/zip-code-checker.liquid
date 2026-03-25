@@ -191,6 +191,10 @@
       blockCartOnInvalid: false,
       showSocialProof: true,
     };
+    // Also default the new field introduced for floating/popup button locking
+    if (cfg.lockButtonsUntilZipCheck === undefined || cfg.lockButtonsUntilZipCheck === null) {
+      cfg.lockButtonsUntilZipCheck = true;
+    }
     Object.keys(D).forEach(function (k) {
       if (cfg[k] === undefined || cfg[k] === null) cfg[k] = D[k];
     });
@@ -210,6 +214,15 @@
     // until the customer validates their ZIP code
     if (cfg.blockCartOnInvalid) {
       blockCartButtonsInitial();
+    }
+
+    // If lockButtonsUntilZipCheck is enabled AND the widget is in floating or popup mode,
+    // disable ATC/Buy Now buttons until the customer successfully validates their ZIP code.
+    // This is separate from blockCartOnInvalid (which also re-blocks on invalid).
+    // lockButtonsUntilZipCheck only activates in non-inline modes (floating/popup) because
+    // in those modes the widget is not directly visible on the product page by default.
+    if (cfg.lockButtonsUntilZipCheck && (cfg.position === "floating" || cfg.position === "popup")) {
+      lockAtcButtonsForZipCheck();
     }
   }
 
@@ -257,6 +270,102 @@
         setTimeout(function() { observer.disconnect(); }, 10000);
       }
     }
+  }
+
+  // ── Lock ATC buttons until ZIP check (floating/popup mode only) ────────────
+  // Disables Add to Cart and Buy Now buttons on page load. They stay disabled
+  // until the customer successfully validates their ZIP via the widget.
+  // Re-enabled by a zcc:validated event with valid=true, which is fired by wireWidget.
+  function lockAtcButtonsForZipCheck() {
+    var ATC_SELECTORS = [
+      'button[name="add"]',
+      '.product-form__submit',
+      '[data-product-add]',
+      '.btn--add-to-cart',
+      '.product-form button[type="submit"]',
+      'button.shopify-payment-button__button',
+      '.shopify-payment-button button',
+      'button.product-form__cart-submit',
+      'button[data-testid="Checkout-button"]',
+      'form[action*="/cart/add"] button[type="submit"]'
+    ].join(',');
+
+    function applyLock() {
+      try {
+        var btns = document.querySelectorAll(ATC_SELECTORS);
+        btns.forEach(function(b) {
+          if (!b.closest('[data-zcc-widget]')) {
+            if (!b.getAttribute('data-zcc-zip-locked')) {
+              b.setAttribute('data-zcc-zip-orig-title', b.title || '');
+              b.setAttribute('data-zcc-zip-orig-opacity', b.style.opacity || '');
+              b.setAttribute('data-zcc-zip-orig-cursor', b.style.cursor || '');
+            }
+            b.disabled = true;
+            b.style.opacity = '0.5';
+            b.style.cursor = 'not-allowed';
+            b.title = 'Please verify your ZIP code first';
+            b.setAttribute('data-zcc-zip-locked', 'true');
+          }
+        });
+      } catch(e) {}
+    }
+
+    function removeLock() {
+      try {
+        var btns = document.querySelectorAll('[data-zcc-zip-locked]');
+        btns.forEach(function(b) {
+          b.disabled = false;
+          b.style.opacity = b.getAttribute('data-zcc-zip-orig-opacity') || '';
+          b.style.cursor = b.getAttribute('data-zcc-zip-orig-cursor') || '';
+          b.title = b.getAttribute('data-zcc-zip-orig-title') || '';
+          b.removeAttribute('data-zcc-zip-locked');
+          b.removeAttribute('data-zcc-zip-orig-title');
+          b.removeAttribute('data-zcc-zip-orig-opacity');
+          b.removeAttribute('data-zcc-zip-orig-cursor');
+        });
+      } catch(e) {}
+    }
+
+    // Lock immediately and after delays (Shopify Buy Now and dynamic buttons render late)
+    applyLock();
+    setTimeout(applyLock, 500);
+    setTimeout(applyLock, 1500);
+    setTimeout(applyLock, 3000);
+
+    // MutationObserver: catch dynamically injected payment buttons
+    var zipLockObserver = null;
+    if (typeof MutationObserver !== 'undefined') {
+      zipLockObserver = new MutationObserver(function() { applyLock(); });
+      var watchTarget = document.querySelector('.product-form, [data-product-form], form[action*="/cart/add"]') || document.body;
+      zipLockObserver.observe(watchTarget, { childList: true, subtree: true });
+      setTimeout(function() { if (zipLockObserver) zipLockObserver.disconnect(); }, 30000);
+    }
+
+    // Track whether ZIP has been validated (used to re-lock on input change)
+    var zipVerified = false;
+
+    // Listen for ZIP validation events fired by wireWidget
+    window.addEventListener('zcc:validated', function(e) {
+      var detail = e.detail;
+      if (detail && detail.valid === true) {
+        zipVerified = true;
+        removeLock();
+        if (zipLockObserver) zipLockObserver.disconnect();
+      } else if (detail && detail.valid === false) {
+        zipVerified = false;
+        applyLock();
+      }
+    });
+
+    // When customer edits the ZIP input field after a successful check, re-lock buttons
+    // We use a delegated event on document so it works regardless of when the input renders
+    document.addEventListener('input', function(e) {
+      var target = e.target;
+      if (target && target.classList && target.classList.contains('zcc-input') && zipVerified) {
+        zipVerified = false;
+        applyLock();
+      }
+    });
   }
 
   // ── Scope custom CSS: auto-prefix selectors with widget container ID ──────

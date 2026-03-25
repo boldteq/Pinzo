@@ -144,6 +144,46 @@
   // (which Shopify will forward to our app via the App Proxy config).
   var API_BASE = (_rawApi && _rawApi.indexOf("http") === 0) ? _rawApi : _proxyPath;
 
+  // ── Pre-lock: applied synchronously BEFORE the async config fetch ────────────
+  // This eliminates the race window where ATC/Buy Now buttons are clickable
+  // while the config fetch is in flight (typically 100–500 ms).
+  // renderWidget() will call _zccUnlock() immediately if the feature is
+  // disabled (lockButtonsUntilZipCheck:false) or position is "inline".
+  var _zccLockStyleId = 'zcc-lock-style';
+  function _zccInjectLockCss() {
+    if (document.getElementById(_zccLockStyleId)) return;
+    var s = document.createElement('style');
+    s.id = _zccLockStyleId;
+    s.textContent =
+      'html[data-zcc-locked] form[action*="/cart/add"] button[type="submit"],' +
+      'html[data-zcc-locked] button[name="add"],' +
+      'html[data-zcc-locked] .product-form__submit,' +
+      'html[data-zcc-locked] [data-product-add],' +
+      'html[data-zcc-locked] .btn--add-to-cart,' +
+      'html[data-zcc-locked] .product-form button[type="submit"],' +
+      'html[data-zcc-locked] button.product-form__cart-submit,' +
+      'html[data-zcc-locked] .product__submit button[type="submit"],' +
+      'html[data-zcc-locked] .pdp-form button[type="submit"]' +
+      '{opacity:.4!important;pointer-events:none!important;cursor:not-allowed!important;}' +
+      'html[data-zcc-locked] .shopify-payment-button,' +
+      'html[data-zcc-locked] [data-shopify="payment-button"],' +
+      'html[data-zcc-locked] .shopify-payment-button__button--unbranded' +
+      '{position:relative!important;opacity:.4!important;pointer-events:none!important;cursor:not-allowed!important;}' +
+      'html[data-zcc-locked] .shopify-payment-button::after,' +
+      'html[data-zcc-locked] [data-shopify="payment-button"]::after' +
+      '{content:""!important;position:absolute!important;inset:0!important;z-index:2147483647!important;cursor:not-allowed!important;background:transparent!important;}';
+    (document.head || document.documentElement).appendChild(s);
+  }
+  function _zccLock() {
+    _zccInjectLockCss();
+    document.documentElement.setAttribute('data-zcc-locked', '1');
+  }
+  function _zccUnlock() {
+    document.documentElement.removeAttribute('data-zcc-locked');
+  }
+  // Lock immediately — CSS attribute is set synchronously right now
+  _zccLock();
+
   // Always fetch fresh config from the API so color/setting changes made in the
   // admin are reflected on the storefront immediately. The metafield-embedded
   // data-config attribute is intentionally ignored here: it is baked into
@@ -191,13 +231,19 @@
       blockCartOnInvalid: false,
       showSocialProof: true,
     };
-    // Also default the new field introduced for floating/popup button locking
+    // Default lockButtonsUntilZipCheck to true
     if (cfg.lockButtonsUntilZipCheck === undefined || cfg.lockButtonsUntilZipCheck === null) {
       cfg.lockButtonsUntilZipCheck = true;
     }
     Object.keys(D).forEach(function (k) {
       if (cfg[k] === undefined || cfg[k] === null) cfg[k] = D[k];
     });
+
+    // Release pre-lock if feature is disabled OR widget is inline
+    // (inline widget is directly visible — customer doesn't need to hunt for it)
+    if (!cfg.lockButtonsUntilZipCheck || cfg.position === 'inline') {
+      _zccUnlock();
+    }
 
     var rad = cfg.borderRadius + "px";
     var WID = "zcc-" + ROOT_ID;
@@ -272,78 +318,29 @@
     }
   }
 
-  // ── Lock ATC/Buy Now buttons until ZIP verified (floating/popup only) ───────
-  //
-  // APPROACH: CSS attribute lock on <html> element.
-  // Reliable because:
-  //  1. CSS applies to ALL matching elements including ones rendered later —
-  //     no MutationObserver needed for dynamically injected buttons
-  //  2. Shopify Buy Now renders inside a cross-origin <iframe>; JS cannot
-  //     reach the inner button. Targeting the CONTAINER div with
-  //     pointer-events:none + a ::after overlay blocks the whole area.
-  //  3. Single attribute flip to lock/unlock the entire page state instantly.
+  // ── Wire up lock/unlock listeners (floating/popup mode) ─────────────────────
+  // Pre-lock is already applied synchronously above via _zccLock().
+  // This function wires up zcc:validated so buttons unlock on success.
   function lockAtcButtonsForZipCheck() {
-    var STYLE_ID = 'zcc-lock-style';
-
-    function injectLockCss() {
-      if (document.getElementById(STYLE_ID)) return;
-      var s = document.createElement('style');
-      s.id = STYLE_ID;
-      s.textContent =
-        // ATC submit buttons — covers all major Shopify themes
-        'html[data-zcc-locked] form[action*="/cart/add"] button[type="submit"],' +
-        'html[data-zcc-locked] button[name="add"],' +
-        'html[data-zcc-locked] .product-form__submit,' +
-        'html[data-zcc-locked] [data-product-add],' +
-        'html[data-zcc-locked] .btn--add-to-cart,' +
-        'html[data-zcc-locked] .product-form button[type="submit"],' +
-        'html[data-zcc-locked] button.product-form__cart-submit,' +
-        'html[data-zcc-locked] .product__submit button[type="submit"],' +
-        'html[data-zcc-locked] .pdp-form button[type="submit"]' +
-        '{opacity:.4!important;pointer-events:none!important;cursor:not-allowed!important;}' +
-        // Buy Now container (iframe wrapper — cannot reach inner button via JS)
-        'html[data-zcc-locked] .shopify-payment-button,' +
-        'html[data-zcc-locked] [data-shopify="payment-button"],' +
-        'html[data-zcc-locked] .shopify-payment-button__button--unbranded' +
-        '{position:relative!important;opacity:.4!important;pointer-events:none!important;cursor:not-allowed!important;}' +
-        // Transparent overlay absorbs clicks over the Buy Now iframe
-        'html[data-zcc-locked] .shopify-payment-button::after,' +
-        'html[data-zcc-locked] [data-shopify="payment-button"]::after' +
-        '{content:""!important;position:absolute!important;inset:0!important;z-index:2147483647!important;cursor:not-allowed!important;background:transparent!important;}';
-      (document.head || document.documentElement).appendChild(s);
-    }
-
-    function lock() {
-      injectLockCss();
-      document.documentElement.setAttribute('data-zcc-locked', '1');
-    }
-
-    function unlock() {
-      document.documentElement.removeAttribute('data-zcc-locked');
-    }
-
-    // Lock immediately — CSS applies as soon as attribute is set
-    lock();
-
     var zipVerified = false;
 
     window.addEventListener('zcc:validated', function(e) {
       var detail = e.detail;
       if (detail && detail.valid === true) {
         zipVerified = true;
-        unlock();
+        _zccUnlock();
       } else if (detail && detail.valid === false) {
         zipVerified = false;
-        lock();
+        _zccLock();
       }
     });
 
-    // Re-lock when customer edits ZIP after a successful check
+    // Re-lock if customer edits ZIP field after a successful check
     document.addEventListener('input', function(e) {
       var t = e.target;
       if (t && t.classList && t.classList.contains('zcc-input') && zipVerified) {
         zipVerified = false;
-        lock();
+        _zccLock();
       }
     });
   }

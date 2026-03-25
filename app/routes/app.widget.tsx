@@ -173,7 +173,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (!limits.cartBlocking) {
         data.blockCartOnInvalid = false;
         data.blockCheckoutInCart = false;
-        data.lockButtonsUntilZipCheck = false;
+        // lockButtonsUntilZipCheck is allowed on all plans — do not strip it
       }
 
       await db.widgetConfig.upsert({
@@ -1664,15 +1664,14 @@ export default function WidgetPage() {
                     />
                     <Checkbox
                       label="Disable Add to Cart until ZIP code is verified (Floating/Popup only)"
-                      helpText="When the widget is in Floating or Popup mode, the Add to Cart and Buy Now buttons are grayed out and disabled until the customer successfully validates their ZIP code. Has no effect in Inline mode."
+                      helpText="When the widget is in Floating or Popup mode, the Add to Cart and Buy Now buttons are disabled until the customer successfully validates their ZIP code. Has no effect in Inline mode."
                       checked={lockButtonsUntilZipCheck}
                       onChange={handleLockButtonsUntilZipCheckChange}
-                      disabled={!limits.cartBlocking}
                     />
                     {!limits.cartBlocking && (
                       <Banner tone="info">
                         <Text as="p" variant="bodySm">
-                          Upgrade to Pro to enable cart and checkout blocking for unserviceable ZIP codes.{" "}
+                          Upgrade to Pro to block Add to Cart for unserviceable ZIP codes and block checkout in the cart.{" "}
                           <Button
                             variant="plain"
                             onClick={() => navigate("/app/pricing")}

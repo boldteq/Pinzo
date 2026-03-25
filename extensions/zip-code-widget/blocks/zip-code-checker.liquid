@@ -276,22 +276,48 @@
   // Disables Add to Cart and Buy Now buttons on page load. They stay disabled
   // until the customer successfully validates their ZIP via the widget.
   // Re-enabled by a zcc:validated event with valid=true, which is fired by wireWidget.
+  //
+  // NOTE ON SHOPIFY BUY NOW: Shopify renders the "Buy Now" button inside a
+  // cross-origin <iframe> (shopify-payment-button). We cannot reach the button
+  // element inside the iframe due to same-origin policy. We instead target the
+  // CONTAINER element (.shopify-payment-button) and apply pointer-events:none
+  // + a CSS overlay on top — this visually disables the whole area.
+  // The regular ATC button (form submit) IS directly accessible and gets
+  // disabled + opacity via the standard attribute approach.
   function lockAtcButtonsForZipCheck() {
+    // Selectors for regular ATC buttons (accessible, can set .disabled)
     var ATC_SELECTORS = [
       'button[name="add"]',
       '.product-form__submit',
       '[data-product-add]',
       '.btn--add-to-cart',
       '.product-form button[type="submit"]',
-      'button.shopify-payment-button__button',
-      '.shopify-payment-button button',
       'button.product-form__cart-submit',
-      'button[data-testid="Checkout-button"]',
       'form[action*="/cart/add"] button[type="submit"]'
     ].join(',');
 
+    // Selectors for the Buy Now CONTAINER (iframe wrapper — cannot reach inner button)
+    var BUY_NOW_CONTAINER_SELECTORS = [
+      '.shopify-payment-button',
+      '.shopify-payment-button__button',
+      '[data-shopify="payment-button"]'
+    ].join(',');
+
+    // Inject a one-time style for the overlay that blocks the Buy Now iframe
+    var OVERLAY_STYLE_ID = 'zcc-buy-now-lock-style';
+    function injectOverlayStyle() {
+      if (document.getElementById(OVERLAY_STYLE_ID)) return;
+      var s = document.createElement('style');
+      s.id = OVERLAY_STYLE_ID;
+      s.textContent =
+        '[data-zcc-buy-now-locked]{position:relative!important;pointer-events:none!important;opacity:0.5!important;cursor:not-allowed!important;}' +
+        '[data-zcc-buy-now-locked]::after{content:"";position:absolute;inset:0;z-index:9999;cursor:not-allowed;background:transparent;}';
+      document.head.appendChild(s);
+    }
+
     function applyLock() {
       try {
+        // Lock regular ATC buttons (direct DOM access)
         var btns = document.querySelectorAll(ATC_SELECTORS);
         btns.forEach(function(b) {
           if (!b.closest('[data-zcc-widget]')) {
@@ -299,6 +325,7 @@
               b.setAttribute('data-zcc-zip-orig-title', b.title || '');
               b.setAttribute('data-zcc-zip-orig-opacity', b.style.opacity || '');
               b.setAttribute('data-zcc-zip-orig-cursor', b.style.cursor || '');
+              b.setAttribute('data-zcc-zip-orig-disabled', b.disabled ? 'true' : 'false');
             }
             b.disabled = true;
             b.style.opacity = '0.5';
@@ -307,14 +334,23 @@
             b.setAttribute('data-zcc-zip-locked', 'true');
           }
         });
+        // Lock Buy Now container via CSS overlay (iframe — cannot reach inner button)
+        injectOverlayStyle();
+        var buyNow = document.querySelectorAll(BUY_NOW_CONTAINER_SELECTORS);
+        buyNow.forEach(function(el) {
+          if (!el.closest('[data-zcc-widget]')) {
+            el.setAttribute('data-zcc-buy-now-locked', 'true');
+          }
+        });
       } catch(e) {}
     }
 
     function removeLock() {
       try {
-        var btns = document.querySelectorAll('[data-zcc-zip-locked]');
-        btns.forEach(function(b) {
-          b.disabled = false;
+        // Restore regular ATC buttons
+        document.querySelectorAll('[data-zcc-zip-locked]').forEach(function(b) {
+          var wasDisabled = b.getAttribute('data-zcc-zip-orig-disabled') === 'true';
+          b.disabled = wasDisabled;
           b.style.opacity = b.getAttribute('data-zcc-zip-orig-opacity') || '';
           b.style.cursor = b.getAttribute('data-zcc-zip-orig-cursor') || '';
           b.title = b.getAttribute('data-zcc-zip-orig-title') || '';
@@ -322,15 +358,21 @@
           b.removeAttribute('data-zcc-zip-orig-title');
           b.removeAttribute('data-zcc-zip-orig-opacity');
           b.removeAttribute('data-zcc-zip-orig-cursor');
+          b.removeAttribute('data-zcc-zip-orig-disabled');
+        });
+        // Restore Buy Now container
+        document.querySelectorAll('[data-zcc-buy-now-locked]').forEach(function(el) {
+          el.removeAttribute('data-zcc-buy-now-locked');
         });
       } catch(e) {}
     }
 
-    // Lock immediately and after delays (Shopify Buy Now and dynamic buttons render late)
+    // Lock immediately and after delays (Shopify Buy Now renders late via JS)
     applyLock();
-    setTimeout(applyLock, 500);
-    setTimeout(applyLock, 1500);
-    setTimeout(applyLock, 3000);
+    setTimeout(applyLock, 300);
+    setTimeout(applyLock, 800);
+    setTimeout(applyLock, 1800);
+    setTimeout(applyLock, 3500);
 
     // MutationObserver: catch dynamically injected payment buttons
     var zipLockObserver = null;
@@ -350,15 +392,14 @@
       if (detail && detail.valid === true) {
         zipVerified = true;
         removeLock();
-        if (zipLockObserver) zipLockObserver.disconnect();
+        if (zipLockObserver) { zipLockObserver.disconnect(); zipLockObserver = null; }
       } else if (detail && detail.valid === false) {
         zipVerified = false;
         applyLock();
       }
     });
 
-    // When customer edits the ZIP input field after a successful check, re-lock buttons
-    // We use a delegated event on document so it works regardless of when the input renders
+    // Re-lock if customer edits the ZIP input after a successful check
     document.addEventListener('input', function(e) {
       var target = e.target;
       if (target && target.classList && target.classList.contains('zcc-input') && zipVerified) {

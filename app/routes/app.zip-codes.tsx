@@ -1378,8 +1378,8 @@ export default function ZipCodesPage() {
             ) : (
               <>
                 <IndexTable
-                  itemCount={filteredZipCodes.length}
-                  selectedItemsCount={allSelected ? "All" : selectedIds.length}
+                  itemCount={paginatedZipCodes.length}
+                  selectedItemsCount={allSelected ? "All" : selectedIds.filter((id) => paginatedZipCodes.some((z) => z.id === id)).length}
                   onSelectionChange={handleSelectionChange}
                   resourceName={{ singular: "zip code", plural: "zip codes" }}
                   headings={[

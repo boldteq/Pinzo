@@ -818,11 +818,8 @@
             if (cfg.showWaitlistOnFailure) {
               html +=
                 '<div class="zcc-wl">' +
-                '<button class="zcc-wl-toggle" id="' + wid + '-wl-toggle" type="button">' +
-                ICONS.mail +
-                '<span>Get notified when we deliver to your area</span></button>' +
-                '<div id="' + wid + '-wl-form" style="display:none;margin-top:12px">' +
-                '<div class="zcc-wl-title">' + ICONS.mail + ' Join the waitlist</div>' +
+                '<div id="' + wid + '-wl-form">' +
+                '<div class="zcc-wl-title">' + ICONS.mail + ' Get notified when we deliver to your area</div>' +
                 '<input class="zcc-wl-input" type="text" id="' + wid + '-wl-name" placeholder="Your name (optional)" aria-label="Your name" />' +
                 '<input class="zcc-wl-input" type="email" id="' + wid + '-wl-email" placeholder="Your email address" aria-label="Your email address" required />' +
                 '<input class="zcc-wl-input" type="text" id="' + wid + '-wl-zip" placeholder="ZIP code" aria-label="ZIP code" value="' + escAttr(zip) + '" required />' +
@@ -833,17 +830,6 @@
             res.innerHTML = html;
 
             if (cfg.showWaitlistOnFailure) {
-              // Wire "Request ZIP Code" toggle link
-              var wlToggle = document.getElementById(wid + "-wl-toggle");
-              var wlForm = document.getElementById(wid + "-wl-form");
-              if (wlToggle && wlForm) {
-                wlToggle.addEventListener("click", function(e) {
-                  e.preventDefault();
-                  wlForm.style.display = wlForm.style.display === "none" ? "block" : "none";
-                  wlToggle.style.display = "none";
-                });
-              }
-
               // Social proof count
               if (cfg.showSocialProof && data.waitlistCount && data.waitlistCount > 0) {
                 var wlSection = document.getElementById(wid + "-wl-name");

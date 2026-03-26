@@ -68,6 +68,8 @@ function buildReplyTo(options?: EmailOptions): { reply_to: string } | Record<str
 /**
  * Wrap email body content in a branded layout with Pinzo logo header and store name.
  */
+const APP_URL = process.env.SHOPIFY_APP_URL || "https://zip-code-checker-production-b1a0.up.railway.app";
+
 function emailLayout(storeName: string, body: string): string {
   return `
     <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;background:#ffffff">
@@ -75,7 +77,7 @@ function emailLayout(storeName: string, body: string): string {
         <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto">
           <tr>
             <td style="vertical-align:middle;padding-right:10px">
-              <div style="width:36px;height:36px;background:#e6f4ef;border-radius:50%;text-align:center;line-height:36px">&#x1F4CD;</div>
+              <img src="${APP_URL}/pinzo-logo.svg" alt="Pinzo" width="36" height="36" style="display:block;border-radius:8px" />
             </td>
             <td style="vertical-align:middle">
               <span style="font-size:20px;font-weight:700;color:#1a1a1a;letter-spacing:-0.3px">Pinzo</span>

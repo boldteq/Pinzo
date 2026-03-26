@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <rect width="120" height="120" rx="22" fill="#008060"/>
+  <g transform="translate(60,55)" fill="none">
+    <!-- Pin body -->
+    <path d="M0,28 L-8,-2 A28,28 0 1,1 8,-2 Z" fill="#fff"/>
+    <!-- P letter forming the pin head -->
+    <circle cx="0" cy="-12" r="20" fill="#fff"/>
+    <circle cx="0" cy="-12" r="14" fill="#008060"/>
+    <!-- Inner circle with checkmark -->
+    <circle cx="4" cy="-8" r="10" fill="#fff"/>
+    <circle cx="4" cy="-8" r="7" fill="#008060"/>
+    <polyline points="-0.5,-8 3,-5.5 8,-10.5" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- P curve -->
+    <path d="M-10,-26 A18,18 0 0,1 -2,2" stroke="#008060" stroke-width="6" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

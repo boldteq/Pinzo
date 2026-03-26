@@ -507,13 +507,16 @@
       // so the lone .zcc-spinner child is automatically centred — just remove the gap
       W + " .zcc-btn--loading{gap:0 !important}" +
       // Result card layout
-      W + " .zcc-result-icon{flex-shrink:0 !important;width:24px !important;height:24px !important;display:flex !important;align-items:center !important;justify-content:center !important}" +
-      W + " .zcc-result-icon svg{width:22px !important;height:22px !important;display:block !important}" +
-      W + " .zcc-result-content{flex:1 !important;min-width:0 !important}" +
-      W + " .zcc-result-message{font-weight:600 !important;line-height:1.4 !important}" +
-      W + " .zcc-result.ok .zcc-result-icon{background:" + cfg.successColor + "15 !important;border-radius:50% !important;padding:4px !important}" +
+      // Icon container is 32px so the 4px background-circle padding still gives a 24px
+      // content area for the SVG under box-sizing:border-box — previously 24px with 4px
+      // padding compressed the SVG to 16px which looked inconsistent between ok/fail.
+      W + " .zcc-result-icon{flex-shrink:0 !important;width:32px !important;height:32px !important;display:flex !important;align-items:center !important;justify-content:center !important;align-self:flex-start !important}" +
+      W + " .zcc-result-icon svg{width:20px !important;height:20px !important;display:block !important}" +
+      W + " .zcc-result-content{flex:1 !important;min-width:0 !important;padding-top:2px !important}" +
+      W + " .zcc-result-message{font-size:13.5px !important;font-weight:600 !important;line-height:1.4 !important}" +
+      W + " .zcc-result.ok .zcc-result-icon{background:" + cfg.successColor + "15 !important;border-radius:50% !important;padding:6px !important}" +
       W + " .zcc-result.ok .zcc-result-message{color:" + cfg.successColor + " !important}" +
-      W + " .zcc-result.fail .zcc-result-icon{background:" + cfg.errorColor + "15 !important;border-radius:50% !important;padding:4px !important}" +
+      W + " .zcc-result.fail .zcc-result-icon{background:" + cfg.errorColor + "15 !important;border-radius:50% !important;padding:6px !important}" +
       W + " .zcc-result.fail .zcc-result-message{color:" + cfg.errorColor + " !important}" +
       // Meta info rows (ETA, zone, days, cutoff)
       W + " .zcc-meta{margin-top:6px !important;font-size:13px !important;display:flex !important;align-items:center !important;gap:7px !important;color:#4b5563 !important;line-height:1.4 !important}" +
@@ -597,7 +600,7 @@
       W + " .zcc-btn:hover{filter:brightness(1.06) !important;box-shadow:0 4px 14px " + cfg.primaryColor + "40 !important;transform:translateY(-1px) !important}" +
       W + " .zcc-btn:active{filter:brightness(0.95) !important;transform:translateY(0) !important}" +
       W + " .zcc-btn:disabled{opacity:.6 !important;cursor:not-allowed !important;filter:none !important;transform:none !important;box-shadow:none !important}" +
-      W + " .zcc-result{margin-top:12px !important;padding:13px 15px !important;border-radius:12px !important;font-size:13.5px !important;line-height:1.5 !important;animation:zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1) !important;display:flex !important;gap:12px !important;align-items:flex-start !important}" +
+      W + " .zcc-result{margin-top:12px !important;padding:14px 16px !important;border-radius:12px !important;font-size:13.5px !important;line-height:1.5 !important;animation:zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1) !important;display:flex !important;gap:12px !important;align-items:flex-start !important}" +
       W + " .zcc-result.ok{background:" + cfg.successColor + "0c !important;border:1px solid " + cfg.successColor + "20 !important;color:" + cfg.textColor + " !important}" +
       W + " .zcc-result.ok .zcc-result-icon svg{color:" + cfg.successColor + " !important;stroke:" + cfg.successColor + " !important}" +
       W + " .zcc-result.fail{background:" + cfg.errorColor + "08 !important;border:1px solid " + cfg.errorColor + "18 !important;color:" + cfg.textColor + " !important}" +
@@ -815,11 +818,13 @@
                 '<div class="zcc-wl">' +
                 '<button class="zcc-wl-toggle" id="' + wid + '-wl-toggle" type="button">' +
                 ICONS.mail +
-                ' Request delivery to your area</button>' +
+                ' Get notified when we deliver to your area</button>' +
                 '<div id="' + wid + '-wl-form" style="display:none;margin-top:12px">' +
-                '<input class="zcc-wl-input" type="text" id="' + wid + '-wl-name" placeholder="Your name" />' +
-                '<input class="zcc-wl-input" type="email" id="' + wid + '-wl-email" placeholder="Your email" />' +
-                '<button class="zcc-wl-btn" id="' + wid + '-wl-btn" type="button"><span class="zcc-wl-btn-icon">' + ICONS.mail + '</span><span class="zcc-wl-btn-label">Submit Request</span></button>' +
+                '<div class="zcc-wl-title">' + ICONS.mail + ' Join the waitlist</div>' +
+                '<input class="zcc-wl-input" type="text" id="' + wid + '-wl-name" placeholder="Your name (optional)" aria-label="Your name" />' +
+                '<input class="zcc-wl-input" type="email" id="' + wid + '-wl-email" placeholder="Your email address" aria-label="Your email address" required />' +
+                '<input class="zcc-wl-input" type="text" id="' + wid + '-wl-zip" placeholder="ZIP code" aria-label="ZIP code" value="' + escAttr(zip) + '" required />' +
+                '<button class="zcc-wl-btn" id="' + wid + '-wl-btn" type="button"><span class="zcc-wl-btn-icon">' + ICONS.mail + '</span><span class="zcc-wl-btn-label">Notify Me</span></button>' +
                 '</div>' +
                 '</div>';
             }
@@ -859,10 +864,13 @@
                 wBtn.addEventListener("click", function () {
                   var nameEl = document.getElementById(wid + "-wl-name");
                   var emailEl = document.getElementById(wid + "-wl-email");
+                  var zipEl = document.getElementById(wid + "-wl-zip");
                   var name = nameEl ? nameEl.value.trim() : "";
                   var email = emailEl ? emailEl.value.trim() : "";
+                  var wlZip = zipEl ? normalizeZip(zipEl.value) : zip;
                   if (!email) { if (emailEl) emailEl.focus(); return; }
-                  joinWaitlist(zip, email, name, wBtn);
+                  if (!wlZip) { if (zipEl) zipEl.focus(); return; }
+                  joinWaitlist(wlZip, email, name, wBtn);
                 });
               }
             }

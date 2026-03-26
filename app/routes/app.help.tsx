@@ -242,7 +242,7 @@ export default function HelpPage() {
                         Send us a detailed message and we&rsquo;ll respond
                         within 2-4 hours.
                       </Text>
-                      <Button url="mailto:support@boldteq.com" external>
+                      <Button onClick={() => window.open("mailto:support@boldteq.com", "_blank")}>
                         Send Email
                       </Button>
                     </BlockStack>

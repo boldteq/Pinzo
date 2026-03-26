@@ -557,9 +557,9 @@
       W + " .zcc-delivery-fee--free{background:" + cfg.successColor + "12 !important;border:1px solid " + cfg.successColor + "25 !important;color:" + cfg.successColor + " !important}" +
       W + " .zcc-delivery-fee--paid{background:#f59e0b10 !important;border:1px solid #f59e0b22 !important;color:#92400e !important}" +
       // Waitlist toggle
-      W + " .zcc-wl-toggle{display:inline-flex !important;align-items:center !important;gap:6px !important;font-size:13px !important;font-weight:600 !important;color:" + cfg.primaryColor + " !important;text-decoration:none !important;cursor:pointer !important;border:none !important;background:none !important;padding:0 !important;margin-top:8px !important}" +
+      W + " .zcc-wl-toggle{display:flex !important;align-items:flex-start !important;gap:12px !important;font-size:13.5px !important;font-weight:600 !important;color:" + cfg.primaryColor + " !important;text-decoration:none !important;cursor:pointer !important;border:none !important;background:none !important;padding:0 !important;width:100% !important;text-align:left !important}" +
       W + " .zcc-wl-toggle:hover{text-decoration:underline !important}" +
-      W + " .zcc-wl-toggle svg{width:14px !important;height:14px !important;flex-shrink:0 !important}" +
+      W + " .zcc-wl-toggle svg{width:20px !important;height:20px !important;flex-shrink:0 !important;background:" + cfg.primaryColor + "15 !important;border-radius:50% !important;padding:6px !important;display:block !important;box-sizing:content-box !important}" +
       // Waitlist form inputs
       W + " .zcc-wl-input:focus{border-color:" + cfg.primaryColor + " !important;box-shadow:0 0 0 2px " + cfg.primaryColor + "20 !important}" +
       // Waitlist submit button icon sizing and disabled state
@@ -606,7 +606,7 @@
       W + " .zcc-result.ok .zcc-result-icon svg{color:" + cfg.successColor + " !important;stroke:" + cfg.successColor + " !important}" +
       W + " .zcc-result.fail{background:" + cfg.errorColor + "08 !important;border:1px solid " + cfg.errorColor + "18 !important;color:" + cfg.textColor + " !important}" +
       W + " .zcc-result.fail .zcc-result-icon svg{color:" + cfg.errorColor + " !important;stroke:" + cfg.errorColor + " !important}" +
-      W + " .zcc-wl{margin-top:10px !important;padding:14px 16px !important;background:linear-gradient(135deg,#f8fafc,#f0f4f8) !important;border-radius:10px !important;border:1px solid #dde3ec !important}" +
+      W + " .zcc-wl{margin-top:12px !important;padding:14px 16px !important;background:linear-gradient(135deg,#f8fafc,#f0f4f8) !important;border-radius:12px !important;border:1px solid #dde3ec !important}" +
       W + " .zcc-wl-input{border-radius:8px !important;border:1.5px solid #dde3ec !important;padding:11px 14px !important;width:100% !important;display:block !important;margin-bottom:8px !important;outline:none !important;font-size:13.5px !important;transition:border-color 0.2s,box-shadow 0.2s !important;background:#fff !important;color:" + cfg.textColor + " !important;line-height:1.4 !important}" +
       W + " .zcc-wl-input::placeholder{color:#9ca3af !important}" +
       W + " .zcc-wl-btn{border-radius:" + btnRadius + " !important;background:" + cfg.primaryColor + " !important;color:#fff !important;padding:11px 20px !important;width:100% !important;font-weight:600 !important;border:none !important;cursor:pointer !important;font-size:13.5px !important;transition:filter 0.2s,box-shadow 0.2s,transform 0.2s !important;letter-spacing:0.01em !important;box-shadow:0 2px 8px " + cfg.primaryColor + "25 !important;display:flex !important;align-items:center !important;justify-content:center !important;gap:6px !important;margin-top:4px !important}" +
@@ -820,7 +820,7 @@
                 '<div class="zcc-wl">' +
                 '<button class="zcc-wl-toggle" id="' + wid + '-wl-toggle" type="button">' +
                 ICONS.mail +
-                ' Get notified when we deliver to your area</button>' +
+                '<span style="padding-top:2px">Get notified when we deliver to your area</span></button>' +
                 '<div id="' + wid + '-wl-form" style="display:none;margin-top:12px">' +
                 '<div class="zcc-wl-title">' + ICONS.mail + ' Join the waitlist</div>' +
                 '<input class="zcc-wl-input" type="text" id="' + wid + '-wl-name" placeholder="Your name (optional)" aria-label="Your name" />' +

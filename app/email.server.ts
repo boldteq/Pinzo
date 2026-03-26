@@ -75,7 +75,7 @@ function emailLayout(storeName: string, body: string): string {
         <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto">
           <tr>
             <td style="vertical-align:middle;padding-right:10px">
-              <div style="width:36px;height:36px;background:#e6f4ef;border-radius:50%;text-align:center;line-height:36px;font-size:18px">&#x1F4CD;</div>
+              <div style="width:36px;height:36px;background:#e6f4ef;border-radius:50%;text-align:center;line-height:36px">&#x1F4CD;</div>
             </td>
             <td style="vertical-align:middle">
               <span style="font-size:20px;font-weight:700;color:#1a1a1a;letter-spacing:-0.3px">Pinzo</span>

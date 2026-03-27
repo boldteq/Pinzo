@@ -39,6 +39,7 @@ import {
   DeleteIcon,
   PlusIcon,
   EmailIcon,
+  CheckIcon,
 } from "@shopify/polaris-icons";
 
 const PAGE_SIZE = 10;
@@ -712,10 +713,6 @@ export default function WaitlistPage() {
       onAction: () => handleBulkAction("accept"),
     },
     {
-      content: "Reject Selected",
-      onAction: () => handleBulkAction("reject"),
-    },
-    {
       content: "Delete Selected",
       onAction: () => handleBulkAction("delete"),
       destructive: true,
@@ -1107,18 +1104,16 @@ export default function WaitlistPage() {
                     <IndexTable.Cell>
                       <InlineStack gap="200" wrap={false}>
                         {entry.status === "waiting" && (
-                          <>
-                            <Tooltip content="Accept — adds ZIP to allowed list">
-                              <Button size="slim" tone="success" onClick={() => handleAccept(entry.id)}>
-                                Accept
-                              </Button>
-                            </Tooltip>
-                            <Tooltip content="Reject this request">
-                              <Button size="slim" tone="critical" onClick={() => handleReject(entry.id)}>
-                                Reject
-                              </Button>
-                            </Tooltip>
-                          </>
+                          <Tooltip content="Accept — adds ZIP to allowed list">
+                            <Button
+                              size="slim"
+                              variant="tertiary"
+                              tone="success"
+                              onClick={() => handleAccept(entry.id)}
+                              icon={CheckIcon}
+                              accessibilityLabel="Accept"
+                            />
+                          </Tooltip>
                         )}
                         <Tooltip content="Remove from waitlist">
                           <Button

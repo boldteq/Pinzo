@@ -500,7 +500,7 @@ function FloatingPreview({
                 }}>
                   {pinIcon}
                 </span>
-                Delivery Check
+                {cfg.heading}
               </div>
               <button
                 type="button"

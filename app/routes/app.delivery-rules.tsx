@@ -32,7 +32,7 @@ import {
   Checkbox,
   Banner,
 } from "@shopify/polaris";
-import { PlusIcon, DeleteIcon, EditIcon } from "@shopify/polaris-icons";
+import { PlusIcon, DeleteIcon, EditIcon, ViewIcon, HideIcon } from "@shopify/polaris-icons";
 
 const DAYS_OPTIONS = [
   { label: "Monday", value: "Mon" },
@@ -365,13 +365,13 @@ export default function DeliveryRulesPage() {
     <InlineStack gap="200" key={`actions-${rule.id}`}>
       <Tooltip content={rule.isActive ? "Click to deactivate" : "Click to activate"}>
         <Button
-          variant="plain"
+          size="slim"
+          variant="tertiary"
           tone={rule.isActive ? "success" : undefined}
           onClick={() => handleToggle(rule.id, rule.isActive)}
+          icon={rule.isActive ? ViewIcon : HideIcon}
           accessibilityLabel={rule.isActive ? "Deactivate rule" : "Activate rule"}
-        >
-          {rule.isActive ? "Active" : "Inactive"}
-        </Button>
+        />
       </Tooltip>
       <Tooltip content="Edit rule">
         <Button

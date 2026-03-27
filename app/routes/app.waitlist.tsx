@@ -32,6 +32,7 @@ import {
   Banner,
   InlineGrid,
   Checkbox,
+  Badge,
   type IndexTableProps,
 } from "@shopify/polaris";
 import {
@@ -681,14 +682,6 @@ export default function WaitlistPage() {
     );
   }
 
-  const statusOptions = [
-    { label: "Waiting", value: "waiting" },
-    { label: "Accepted", value: "accepted" },
-    { label: "Rejected", value: "rejected" },
-    { label: "Notified", value: "notified" },
-    { label: "Converted", value: "converted" },
-  ];
-
   const filterOptions = [
     { label: "All", value: "all" },
     { label: "Waiting", value: "waiting" },
@@ -1088,15 +1081,18 @@ export default function WaitlistPage() {
                       </Text>
                     </IndexTable.Cell>
                     <IndexTable.Cell>
-                      <Box minWidth="120px">
-                        <Select
-                          label="Status"
-                          labelHidden
-                          options={statusOptions}
-                          value={entry.status}
-                          onChange={(val) => handleStatusChange(entry.id, val)}
-                        />
-                      </Box>
+                      <Badge
+                        tone={
+                          entry.status === "waiting" ? "warning" :
+                          entry.status === "accepted" ? "success" :
+                          entry.status === "notified" ? "info" :
+                          entry.status === "converted" ? "success" :
+                          entry.status === "rejected" ? "critical" :
+                          undefined
+                        }
+                      >
+                        {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
+                      </Badge>
                     </IndexTable.Cell>
                     <IndexTable.Cell>
                       {formatDate(entry.createdAt)}

@@ -1,16 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
   <rect width="120" height="120" rx="22" fill="#008060"/>
-  <g transform="translate(60,55)" fill="none">
-    <!-- Pin body -->
-    <path d="M0,28 L-8,-2 A28,28 0 1,1 8,-2 Z" fill="#fff"/>
-    <!-- P letter forming the pin head -->
-    <circle cx="0" cy="-12" r="20" fill="#fff"/>
-    <circle cx="0" cy="-12" r="14" fill="#008060"/>
-    <!-- Inner circle with checkmark -->
-    <circle cx="4" cy="-8" r="10" fill="#fff"/>
-    <circle cx="4" cy="-8" r="7" fill="#008060"/>
-    <polyline points="-0.5,-8 3,-5.5 8,-10.5" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <!-- P curve -->
-    <path d="M-10,-26 A18,18 0 0,1 -2,2" stroke="#008060" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <g transform="translate(58,56)">
+    <!-- White pin body forming P shape -->
+    <path d="M0,36 C-5,18 -30,-2 -30,-20 A30,30 0 0,1 30,-20 C30,-2 5,18 0,36Z" fill="#fff"/>
+    <!-- Green P-stem curve (left side cutout creating the P letter) -->
+    <path d="M-14,-46 C-26,-34 -26,-10 -20,10 C-16,22 -10,30 -4,36" stroke="#008060" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <!-- Green outer ring inside pin head -->
+    <circle cx="2" cy="-18" r="20" fill="#008060"/>
+    <!-- White middle ring -->
+    <circle cx="2" cy="-18" r="14" fill="#fff"/>
+    <!-- Green inner center -->
+    <circle cx="2" cy="-18" r="10" fill="#008060"/>
+    <!-- White checkmark -->
+    <polyline points="-3,-18 0.5,-14 8,-23" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>

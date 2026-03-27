@@ -43,6 +43,7 @@ import {
   PlusIcon,
   EmailIcon,
   CheckIcon,
+  EditIcon,
 } from "@shopify/polaris-icons";
 
 const PAGE_SIZE = 10;
@@ -376,19 +377,19 @@ const STATUS_TONE: Record<string, "warning" | "success" | "info" | "critical" | 
   rejected: "critical",
 };
 
-function StatusBadge({ status, onChangeStatus }: { status: string; onChangeStatus: (val: string) => void }) {
+function StatusAction({ id, status, onChangeStatus }: { id: string; status: string; onChangeStatus: (id: string, val: string) => void }) {
   const [popoverActive, setPopoverActive] = useState(false);
 
   const activator = (
-    <button
-      type="button"
-      onClick={() => setPopoverActive((v) => !v)}
-      style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
-    >
-      <Badge tone={STATUS_TONE[status]}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    </button>
+    <Tooltip content="Change status">
+      <Button
+        size="slim"
+        variant="tertiary"
+        icon={EditIcon}
+        onClick={() => setPopoverActive((v) => !v)}
+        accessibilityLabel="Change status"
+      />
+    </Tooltip>
   );
 
   return (
@@ -402,7 +403,7 @@ function StatusBadge({ status, onChangeStatus }: { status: string; onChangeStatu
         items={STATUS_OPTIONS.filter((o) => o.value !== status).map((o) => ({
           content: o.content,
           onAction: () => {
-            onChangeStatus(o.value);
+            onChangeStatus(id, o.value);
             setPopoverActive(false);
           },
         }))}
@@ -1134,10 +1135,11 @@ export default function WaitlistPage() {
                       </Text>
                     </IndexTable.Cell>
                     <IndexTable.Cell>
-                      <StatusBadge
-                        status={entry.status}
-                        onChangeStatus={(val) => handleStatusChange(entry.id, val)}
-                      />
+                      <Badge
+                        tone={STATUS_TONE[entry.status]}
+                      >
+                        {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
+                      </Badge>
                     </IndexTable.Cell>
                     <IndexTable.Cell>
                       {formatDate(entry.createdAt)}
@@ -1156,6 +1158,11 @@ export default function WaitlistPage() {
                             />
                           </Tooltip>
                         )}
+                        <StatusAction
+                          id={entry.id}
+                          status={entry.status}
+                          onChangeStatus={handleStatusChange}
+                        />
                         <Tooltip content="Remove from waitlist">
                           <Button
                             size="slim"

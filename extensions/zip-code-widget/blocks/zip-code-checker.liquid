@@ -510,10 +510,10 @@
       // Icon container is 32px so the 4px background-circle padding still gives a 24px
       // content area for the SVG under box-sizing:border-box — previously 24px with 4px
       // padding compressed the SVG to 16px which looked inconsistent between ok/fail.
-      W + " .zcc-result-icon{flex-shrink:0 !important;width:32px !important;height:32px !important;display:flex !important;align-items:center !important;justify-content:center !important;box-sizing:content-box !important}" +
+      W + " .zcc-result-icon{flex-shrink:0 !important;width:20px !important;height:20px !important;display:flex !important;align-items:center !important;justify-content:center !important;box-sizing:content-box !important}" +
       W + " .zcc-result-icon svg{width:20px !important;height:20px !important;display:block !important}" +
-      W + " .zcc-result-content{flex:1 !important;min-width:0 !important}" +
-      W + " .zcc-result-message{font-size:13.5px !important;font-weight:600 !important;line-height:1.4 !important}" +
+      W + " .zcc-result-content{flex:1 !important;min-width:0 !important;margin:0 !important;padding:0 !important}" +
+      W + " .zcc-result-message{font-size:13.5px !important;font-weight:600 !important;line-height:1.4 !important;margin:0 !important;padding:0 !important}" +
       W + " .zcc-result.ok .zcc-result-icon{background:" + cfg.successColor + "15 !important;border-radius:50% !important;padding:6px !important}" +
       W + " .zcc-result.ok .zcc-result-message{color:" + cfg.successColor + " !important}" +
       W + " .zcc-result.fail .zcc-result-icon{background:" + cfg.errorColor + "15 !important;border-radius:50% !important;padding:6px !important}" +

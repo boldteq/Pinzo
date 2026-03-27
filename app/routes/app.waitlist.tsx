@@ -1145,19 +1145,21 @@ export default function WaitlistPage() {
                       {formatDate(entry.createdAt)}
                     </IndexTable.Cell>
                     <IndexTable.Cell>
-                      <InlineStack gap="200" wrap={false}>
-                        {entry.status === "waiting" && (
-                          <Tooltip content="Accept — adds ZIP to allowed list">
-                            <Button
-                              size="slim"
-                              variant="tertiary"
-                              tone="success"
-                              onClick={() => handleAccept(entry.id)}
-                              icon={CheckIcon}
-                              accessibilityLabel="Accept"
-                            />
-                          </Tooltip>
-                        )}
+                      <InlineStack gap="200" wrap={false} align="end">
+                        <Box minWidth="28px">
+                          {entry.status === "waiting" && (
+                            <Tooltip content="Accept — adds ZIP to allowed list">
+                              <Button
+                                size="slim"
+                                variant="tertiary"
+                                tone="success"
+                                onClick={() => handleAccept(entry.id)}
+                                icon={CheckIcon}
+                                accessibilityLabel="Accept"
+                              />
+                            </Tooltip>
+                          )}
+                        </Box>
                         <StatusAction
                           id={entry.id}
                           status={entry.status}

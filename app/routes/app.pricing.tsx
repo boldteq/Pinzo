@@ -269,7 +269,7 @@ function ComparisonCell({ value, isCurrentPlan }: { value: FeatureValue; isCurre
       ) : (
         <Icon
           source={value ? CheckCircleIcon : XCircleIcon}
-          tone={value ? "success" : "subdued"}
+          tone={value ? "success" : "critical"}
         />
       )}
     </InlineStack>

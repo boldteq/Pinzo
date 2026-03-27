@@ -24,7 +24,8 @@ import {
   TextField,
   Select,
   Modal,
-  DataTable,
+  IndexTable,
+  useIndexResourceState,
   EmptyState,
   Divider,
   Box,
@@ -174,6 +175,32 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
+  if (intent === "bulk-delete") {
+    const ids = String(formData.get("ids") || "").split(",").filter(Boolean);
+    if (ids.length === 0) return { error: "No rules selected." };
+    try {
+      await db.deliveryRule.deleteMany({ where: { id: { in: ids }, shop } });
+      return { success: true, action: "bulk-deleted" };
+    } catch {
+      return { error: "Failed to delete rules." };
+    }
+  }
+
+  if (intent === "bulk-toggle") {
+    const ids = String(formData.get("ids") || "").split(",").filter(Boolean);
+    const active = formData.get("active") === "true";
+    if (ids.length === 0) return { error: "No rules selected." };
+    try {
+      await db.deliveryRule.updateMany({
+        where: { id: { in: ids }, shop },
+        data: { isActive: active },
+      });
+      return { success: true, action: active ? "bulk-activated" : "bulk-deactivated" };
+    } catch {
+      return { error: "Failed to update rules." };
+    }
+  }
+
   return null;
 };
 
@@ -200,6 +227,9 @@ export default function DeliveryRulesPage() {
   const fetcher = useFetcher<typeof action>();
   const shopify = useAppBridge();
   const navigate = useNavigate();
+
+  const { selectedResources, allResourcesSelected, handleSelectionChange, clearSelection } =
+    useIndexResourceState(rules as Rule[]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
@@ -318,10 +348,19 @@ export default function DeliveryRulesPage() {
           shopify.toast.show("Rule deleted");
         } else if (fetcherAction === "toggled") {
           shopify.toast.show("Rule status updated");
+        } else if (fetcherAction === "bulk-deleted") {
+          shopify.toast.show("Selected rules deleted");
+          clearSelection();
+        } else if (fetcherAction === "bulk-activated") {
+          shopify.toast.show("Selected rules activated");
+          clearSelection();
+        } else if (fetcherAction === "bulk-deactivated") {
+          shopify.toast.show("Selected rules deactivated");
+          clearSelection();
         }
       }
     }
-  }, [fetcher.state, fetcher.data, shopify, resetForm]);
+  }, [fetcher.state, fetcher.data, shopify, resetForm, clearSelection]);
 
   const handleToggle = useCallback(
     (id: string, isActive: boolean) => {
@@ -343,57 +382,28 @@ export default function DeliveryRulesPage() {
     [],
   );
 
+  const handleBulkDelete = useCallback(() => {
+    const fd = new FormData();
+    fd.set("intent", "bulk-delete");
+    fd.set("ids", selectedResources.join(","));
+    fetcher.submit(fd, { method: "POST" });
+  }, [selectedResources, fetcher]);
+
+  const handleBulkToggle = useCallback(
+    (active: boolean) => {
+      const fd = new FormData();
+      fd.set("intent", "bulk-toggle");
+      fd.set("ids", selectedResources.join(","));
+      fd.set("active", String(active));
+      fetcher.submit(fd, { method: "POST" });
+    },
+    [selectedResources, fetcher],
+  );
+
   const zoneOptions = [
     { label: "All zones", value: "" },
     ...zones.map((z) => ({ label: z, value: z })),
   ];
-
-  const tableRows = (rules as Rule[]).map((rule) => [
-    <InlineStack gap="200" blockAlign="center" key={`name-${rule.id}`}>
-      <Text as="span" fontWeight="bold">
-        {rule.name}
-      </Text>
-      <Badge tone={rule.isActive ? "success" : undefined}>
-        {rule.isActive ? "Active" : "Inactive"}
-      </Badge>
-    </InlineStack>,
-    rule.zone || "All",
-    rule.deliveryFee != null ? `$${rule.deliveryFee.toFixed(2)}` : "Free",
-    rule.minOrderAmount != null ? `$${rule.minOrderAmount.toFixed(2)}` : "—",
-    rule.estimatedDays || "—",
-    rule.daysOfWeek || "All days",
-    <InlineStack gap="200" key={`actions-${rule.id}`}>
-      <Tooltip content={rule.isActive ? "Click to deactivate" : "Click to activate"}>
-        <Button
-          size="slim"
-          variant="tertiary"
-          tone={rule.isActive ? "success" : undefined}
-          onClick={() => handleToggle(rule.id, rule.isActive)}
-          icon={rule.isActive ? ViewIcon : HideIcon}
-          accessibilityLabel={rule.isActive ? "Deactivate rule" : "Activate rule"}
-        />
-      </Tooltip>
-      <Tooltip content="Edit rule">
-        <Button
-          size="slim"
-          variant="tertiary"
-          onClick={() => openEdit(rule)}
-          icon={EditIcon}
-          accessibilityLabel="Edit"
-        />
-      </Tooltip>
-      <Tooltip content="Delete rule">
-        <Button
-          size="slim"
-          variant="tertiary"
-          tone="critical"
-          onClick={() => handleDelete(rule.id)}
-          icon={DeleteIcon}
-          accessibilityLabel="Delete"
-        />
-      </Tooltip>
-    </InlineStack>,
-  ]);
 
   return (
     <Page
@@ -469,28 +479,88 @@ export default function DeliveryRulesPage() {
                 </Text>
               </EmptyState>
             ) : (
-              <DataTable
-                columnContentTypes={[
-                  "text",
-                  "text",
-                  "text",
-                  "text",
-                  "text",
-                  "text",
-                  "text",
-                ]}
+              <IndexTable
+                resourceName={{ singular: "rule", plural: "rules" }}
+                itemCount={(rules as Rule[]).length}
+                selectedItemsCount={allResourcesSelected ? "All" : selectedResources.length}
+                onSelectionChange={handleSelectionChange}
                 headings={[
-                  "Rule Name",
-                  "Zone",
-                  "Delivery Fee",
-                  "Min. Order",
-                  "ETA",
-                  "Days",
-                  "Actions",
+                  { title: "Rule Name" },
+                  { title: "Zone" },
+                  { title: "Delivery Fee" },
+                  { title: "Min. Order" },
+                  { title: "ETA" },
+                  { title: "Days" },
+                  { title: "Actions" },
                 ]}
-                rows={tableRows}
-                hoverable
-              />
+                promotedBulkActions={[
+                  { content: "Activate", onAction: () => handleBulkToggle(true) },
+                  { content: "Deactivate", onAction: () => handleBulkToggle(false) },
+                ]}
+                bulkActions={[
+                  { content: "Delete selected", onAction: handleBulkDelete },
+                ]}
+              >
+                {(rules as Rule[]).map((rule, index) => (
+                  <IndexTable.Row
+                    id={rule.id}
+                    key={rule.id}
+                    selected={selectedResources.includes(rule.id)}
+                    position={index}
+                  >
+                    <IndexTable.Cell>
+                      <InlineStack gap="200" blockAlign="center">
+                        <Text as="span" fontWeight="bold">{rule.name}</Text>
+                        <Badge tone={rule.isActive ? "success" : undefined}>
+                          {rule.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </InlineStack>
+                    </IndexTable.Cell>
+                    <IndexTable.Cell>{rule.zone || "All"}</IndexTable.Cell>
+                    <IndexTable.Cell>
+                      {rule.deliveryFee != null ? `$${rule.deliveryFee.toFixed(2)}` : "Free"}
+                    </IndexTable.Cell>
+                    <IndexTable.Cell>
+                      {rule.minOrderAmount != null ? `$${rule.minOrderAmount.toFixed(2)}` : "—"}
+                    </IndexTable.Cell>
+                    <IndexTable.Cell>{rule.estimatedDays || "—"}</IndexTable.Cell>
+                    <IndexTable.Cell>{rule.daysOfWeek || "All days"}</IndexTable.Cell>
+                    <IndexTable.Cell>
+                      <InlineStack gap="200">
+                        <Tooltip content={rule.isActive ? "Click to deactivate" : "Click to activate"}>
+                          <Button
+                            size="slim"
+                            variant="tertiary"
+                            tone={rule.isActive ? "success" : undefined}
+                            onClick={() => handleToggle(rule.id, rule.isActive)}
+                            icon={rule.isActive ? ViewIcon : HideIcon}
+                            accessibilityLabel={rule.isActive ? "Deactivate rule" : "Activate rule"}
+                          />
+                        </Tooltip>
+                        <Tooltip content="Edit rule">
+                          <Button
+                            size="slim"
+                            variant="tertiary"
+                            onClick={() => openEdit(rule)}
+                            icon={EditIcon}
+                            accessibilityLabel="Edit"
+                          />
+                        </Tooltip>
+                        <Tooltip content="Delete rule">
+                          <Button
+                            size="slim"
+                            variant="tertiary"
+                            tone="critical"
+                            onClick={() => handleDelete(rule.id)}
+                            icon={DeleteIcon}
+                            accessibilityLabel="Delete"
+                          />
+                        </Tooltip>
+                      </InlineStack>
+                    </IndexTable.Cell>
+                  </IndexTable.Row>
+                ))}
+              </IndexTable>
             )}
           </Card>
         </Layout.Section>

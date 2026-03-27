@@ -33,6 +33,8 @@ import {
   InlineGrid,
   Checkbox,
   Badge,
+  Popover,
+  ActionList,
   type IndexTableProps,
 } from "@shopify/polaris";
 import {
@@ -357,6 +359,57 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   return null;
 };
+
+const STATUS_OPTIONS = [
+  { content: "Waiting", value: "waiting" },
+  { content: "Accepted", value: "accepted" },
+  { content: "Rejected", value: "rejected" },
+  { content: "Notified", value: "notified" },
+  { content: "Converted", value: "converted" },
+];
+
+const STATUS_TONE: Record<string, "warning" | "success" | "info" | "critical" | undefined> = {
+  waiting: "warning",
+  accepted: "success",
+  notified: "info",
+  converted: "success",
+  rejected: "critical",
+};
+
+function StatusBadge({ status, onChangeStatus }: { status: string; onChangeStatus: (val: string) => void }) {
+  const [popoverActive, setPopoverActive] = useState(false);
+
+  const activator = (
+    <button
+      type="button"
+      onClick={() => setPopoverActive((v) => !v)}
+      style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+    >
+      <Badge tone={STATUS_TONE[status]}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Badge>
+    </button>
+  );
+
+  return (
+    <Popover
+      active={popoverActive}
+      activator={activator}
+      onClose={() => setPopoverActive(false)}
+      preferredAlignment="left"
+    >
+      <ActionList
+        items={STATUS_OPTIONS.filter((o) => o.value !== status).map((o) => ({
+          content: o.content,
+          onAction: () => {
+            onChangeStatus(o.value);
+            setPopoverActive(false);
+          },
+        }))}
+      />
+    </Popover>
+  );
+}
 
 type WaitlistEntry = {
   id: string;
@@ -1081,18 +1134,10 @@ export default function WaitlistPage() {
                       </Text>
                     </IndexTable.Cell>
                     <IndexTable.Cell>
-                      <Badge
-                        tone={
-                          entry.status === "waiting" ? "warning" :
-                          entry.status === "accepted" ? "success" :
-                          entry.status === "notified" ? "info" :
-                          entry.status === "converted" ? "success" :
-                          entry.status === "rejected" ? "critical" :
-                          undefined
-                        }
-                      >
-                        {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
-                      </Badge>
+                      <StatusBadge
+                        status={entry.status}
+                        onChangeStatus={(val) => handleStatusChange(entry.id, val)}
+                      />
                     </IndexTable.Cell>
                     <IndexTable.Cell>
                       {formatDate(entry.createdAt)}

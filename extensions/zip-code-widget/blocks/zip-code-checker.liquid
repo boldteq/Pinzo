@@ -569,9 +569,9 @@
       W + " .zcc-wl-btn-icon svg{width:14px !important;height:14px !important;display:block !important}" +
       W + " .zcc-wl-btn:disabled{opacity:.6 !important;cursor:not-allowed !important;filter:none !important;transform:none !important;box-shadow:none !important}" +
       // Waitlist success state
-      W + " .zcc-wl-success{display:flex !important;align-items:flex-start !important;gap:8px !important;font-size:13px !important;line-height:1.5 !important;color:" + cfg.successColor + " !important;font-weight:500 !important;padding:4px 0 !important}" +
-      W + " .zcc-wl-success-icon{display:inline-flex !important;align-items:center !important;flex-shrink:0 !important;height:20px !important;margin-top:0 !important}" +
-      W + " .zcc-wl-success-icon svg{width:14px !important;height:14px !important;display:block !important}" +
+      W + " .zcc-wl-success{display:flex !important;align-items:center !important;gap:12px !important;font-size:13.5px !important;line-height:1.5 !important;color:" + cfg.successColor + " !important;font-weight:600 !important;padding:0 !important}" +
+      W + " .zcc-wl-success-icon{display:flex !important;align-items:center !important;justify-content:center !important;flex-shrink:0 !important;width:32px !important;height:32px !important;background:" + cfg.successColor + "15 !important;border-radius:50% !important;padding:6px !important}" +
+      W + " .zcc-wl-success-icon svg{width:20px !important;height:20px !important;display:block !important;color:" + cfg.successColor + " !important;stroke:" + cfg.successColor + " !important}" +
       // Social proof pill
       W + " .zcc-social-proof{display:inline-flex !important;align-items:center !important;gap:6px !important;font-size:12px !important;color:#6d7175 !important;margin-bottom:10px !important;background:#f6f6f7 !important;padding:5px 10px !important;border-radius:20px !important;line-height:1.3 !important}" +
       W + " .zcc-social-proof-icon{display:inline-flex !important;align-items:center !important;flex-shrink:0 !important}" +
@@ -996,7 +996,7 @@
         if (data.success) {
           if (wlEl) wlEl.innerHTML =
             '<div class="zcc-wl-success">' +
-            '<span class="zcc-wl-success-icon">' + ICONS.checkmark + '</span>' +
+            '<span class="zcc-wl-success-icon">' + ICONS.check + '</span>' +
             '<span>Your request has been submitted! We\u2019ll notify you when delivery is available.</span>' +
             '</div>';
         } else {

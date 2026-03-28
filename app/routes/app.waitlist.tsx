@@ -288,14 +288,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return { success: true, action: "bulk-accepted", count: entriesToAccept.length };
     }
 
-    if (bulkType === "reject") {
-      const result = await db.waitlistEntry.updateMany({
-        where: { id: { in: ids }, shop },
-        data: { status: "rejected" },
-      });
-      return { success: true, action: "bulk-rejected", count: result.count };
-    }
-
     if (bulkType === "delete") {
       const result = await db.waitlistEntry.deleteMany({
         where: { id: { in: ids }, shop },
@@ -343,28 +335,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return { success: true, action: "accepted", zipCode: entry.zipCode };
   }
 
-  if (intent === "reject") {
-    const id = String(formData.get("id"));
-    try {
-      const existing = await db.waitlistEntry.findFirst({ where: { id, shop } });
-      if (!existing) return { error: "Entry not found." };
-      await db.waitlistEntry.update({
-        where: { id },
-        data: { status: "rejected" },
-      });
-      return { success: true, action: "rejected" };
-    } catch {
-      return { error: "Failed to reject entry." };
-    }
-  }
-
   return null;
 };
 
 const STATUS_OPTIONS = [
   { content: "Waiting", value: "waiting" },
   { content: "Accepted", value: "accepted" },
-  { content: "Rejected", value: "rejected" },
   { content: "Notified", value: "notified" },
   { content: "Converted", value: "converted" },
 ];
@@ -584,16 +560,11 @@ export default function WaitlistPage() {
           shopify.toast.show("Status updated");
         } else if (fetcherAction === "accepted") {
           shopify.toast.show("ZIP code accepted and added to allowed list");
-        } else if (fetcherAction === "rejected") {
-          shopify.toast.show("Request rejected");
         } else if (fetcherAction === "deleted-notified") {
           shopify.toast.show("Notified entries cleared");
         } else if (fetcherAction === "bulk-accepted") {
           const count = "count" in fetcher.data ? fetcher.data.count : 0;
           shopify.toast.show(`${count} entries accepted`);
-        } else if (fetcherAction === "bulk-rejected") {
-          const count = "count" in fetcher.data ? fetcher.data.count : 0;
-          shopify.toast.show(`${count} entries rejected`);
         } else if (fetcherAction === "bulk-deleted") {
           const count = "count" in fetcher.data ? fetcher.data.count : 0;
           shopify.toast.show(`${count} entries deleted`);
@@ -620,16 +591,6 @@ export default function WaitlistPage() {
     (id: string) => {
       const fd = new FormData();
       fd.set("intent", "accept");
-      fd.set("id", id);
-      fetcher.submit(fd, { method: "POST" });
-    },
-    [fetcher],
-  );
-
-  const handleReject = useCallback(
-    (id: string) => {
-      const fd = new FormData();
-      fd.set("intent", "reject");
       fd.set("id", id);
       fetcher.submit(fd, { method: "POST" });
     },
@@ -740,7 +701,6 @@ export default function WaitlistPage() {
     { label: "All", value: "all" },
     { label: "Waiting", value: "waiting" },
     { label: "Accepted", value: "accepted" },
-    { label: "Rejected", value: "rejected" },
     { label: "Notified", value: "notified" },
     { label: "Converted", value: "converted" },
   ];

@@ -406,7 +406,7 @@ function buildWidgetCss(wid: string, cfg: WidgetConfig): string {
     "@keyframes zcc-slide-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}" +
     "@keyframes zcc-scale-in{from{transform:scale(0.92);opacity:0}to{transform:scale(1);opacity:1}}" +
     "@keyframes zcc-pulse-ring{0%{transform:scale(1);opacity:.5}50%{transform:scale(1.2);opacity:0}100%{transform:scale(1.2);opacity:0}}" +
-    W + "{background:" + cfg.backgroundColor + ";color:" + cfg.textColor + ";padding:16px;border:none;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.08);max-width:480px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-sizing:border-box}" +
+    W + "{background:" + cfg.backgroundColor + ";color:" + cfg.textColor + ";padding:16px;border:none;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.08);width:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-sizing:border-box}" +
     W + " *{box-sizing:border-box}" +
     W + " .zcc-heading{font-size:15px;font-weight:700;letter-spacing:-0.01em;margin:0;color:" + cfg.textColor + ";display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid rgba(0,0,0,0.06);margin-bottom:12px}" +
     W + " .zcc-heading-icon{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg," + p + "18," + p + "08);flex-shrink:0}" +

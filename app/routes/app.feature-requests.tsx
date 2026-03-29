@@ -149,6 +149,15 @@ const CATEGORY_OPTIONS = [
   { label: "Billing", value: "Billing" },
 ];
 
+const CATEGORY_TONES: Record<string, BadgeTone> = {
+  "General": "enabled",
+  "UI & Design": "attention",
+  "API & Integration": "info",
+  "Data & Export": "warning",
+  "Performance": "success",
+  "Billing": "critical",
+};
+
 const STATUS_OPTIONS = [
   { label: "Under Review", value: "under_review" },
   { label: "Planned", value: "planned" },
@@ -920,10 +929,10 @@ export default function FeatureRequestsPage() {
                             <Tooltip content={isVoted ? "Remove vote" : "Vote for this feature"}>
                               <Box
                                 padding="300"
-                                background={isVoted ? "bg-fill-brand" : "bg-surface-secondary"}
+                                background={isVoted ? "bg-fill-success" : "bg-surface-secondary"}
                                 borderRadius="300"
                                 borderWidth="025"
-                                borderColor={isVoted ? "border-brand" : "border"}
+                                borderColor={isVoted ? "border-success" : "border"}
                               >
                                 <BlockStack gap="0" inlineAlign="center">
                                   <Button
@@ -1012,7 +1021,7 @@ export default function FeatureRequestsPage() {
                                 gap="200"
                               >
                                 <InlineStack gap="200" blockAlign="center" wrap={false}>
-                                  <Badge>{feature.category}</Badge>
+                                  <Badge tone={CATEGORY_TONES[feature.category]}>{feature.category}</Badge>
                                   {isOwner && (
                                     <Badge tone="success">Yours</Badge>
                                   )}

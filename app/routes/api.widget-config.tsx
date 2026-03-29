@@ -136,7 +136,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         showCountdown: config.showCountdown ?? true,
         showDeliveryFee: config.showDeliveryFee ?? true,
         blockCartOnInvalid: config.blockCartOnInvalid ?? false,
-        blockCheckoutInCart: config.blockCheckoutInCart ?? false,
         showSocialProof: config.showSocialProof ?? true,
         lockButtonsUntilZipCheck: config.lockButtonsUntilZipCheck ?? true,
         borderRadius: config.borderRadius,
@@ -170,12 +169,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       showCountdown: false,
       showDeliveryFee: false,
     }),
-    // Cart blocking (blockCartOnInvalid + blockCheckoutInCart are Pro+ only)
+    // Cart blocking (blockCartOnInvalid is Pro+ only)
     // lockButtonsUntilZipCheck is available on ALL plans — it simply gates the
     // ATC button until the customer validates their ZIP in floating/popup mode.
     ...(limits.cartBlocking
       ? {}
-      : { blockCartOnInvalid: false, blockCheckoutInCart: false }),
+      : { blockCartOnInvalid: false }),
     // Custom CSS
     ...(limits.customCss ? {} : { customCss: null }),
   };

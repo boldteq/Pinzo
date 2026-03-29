@@ -502,6 +502,15 @@ export default function SettingsPage() {
               Section 3 & 4: Email Settings + Live Preview (side-by-side)
           ---------------------------------------------------------------- */}
           <Layout.Section variant="oneHalf">
+            {limits.maxWaitlist === 0 ? (
+              <Banner
+                tone="info"
+                title="Email notifications require Starter plan or higher"
+                action={{ content: "Upgrade plan", onAction: () => navigate("/app/pricing") }}
+              >
+                Upgrade to Starter or above to receive waitlist notifications and configure customer-facing emails.
+              </Banner>
+            ) : (
             <Card>
               <BlockStack gap="400">
                 <BlockStack gap="100">
@@ -601,6 +610,7 @@ export default function SettingsPage() {
                 </InlineStack>
               </BlockStack>
             </Card>
+            )}
           </Layout.Section>
 
           <Layout.Section variant="oneHalf">

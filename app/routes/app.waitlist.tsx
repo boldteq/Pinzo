@@ -427,6 +427,10 @@ export default function WaitlistPage() {
 
   // IndexTable row selection
   const [selectedEntryIds, setSelectedEntryIds] = useState<string[]>([]);
+  // Confirmation modals for destructive actions
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmClearNotifiedOpen, setConfirmClearNotifiedOpen] = useState(false);
+  const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
 
   // Form state
   const [newEmail, setNewEmail] = useState("");
@@ -435,6 +439,16 @@ export default function WaitlistPage() {
 
   const actionError =
     fetcher.data && "error" in fetcher.data ? fetcher.data.error : null;
+
+  const isDeleteLoading =
+    fetcher.state !== "idle" && fetcher.formData?.get("intent") === "delete";
+  const isBulkDeleteLoading =
+    fetcher.state !== "idle" &&
+    fetcher.formData?.get("intent") === "bulk-action" &&
+    fetcher.formData?.get("bulkType") === "delete";
+  const isClearNotifiedLoading =
+    fetcher.state !== "idle" &&
+    fetcher.formData?.get("intent") === "delete-all-notified";
 
   // Compute per-ZIP waiting counts for the "Notify Waitlist" section
   const zipWaitingCounts = useMemo(() => {
@@ -522,14 +536,22 @@ export default function WaitlistPage() {
     fetcher.submit(fd, { method: "POST" });
   }, [newEmail, newZipCode, newNote, fetcher]);
 
-  const handleDelete = useCallback(
+  const doDelete = useCallback(
     (id: string) => {
       const fd = new FormData();
       fd.set("intent", "delete");
       fd.set("id", id);
       fetcher.submit(fd, { method: "POST" });
+      setConfirmDeleteId(null);
     },
     [fetcher],
+  );
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      setConfirmDeleteId(id);
+    },
+    [],
   );
 
   const handleStatusChange = useCallback(
@@ -581,11 +603,16 @@ export default function WaitlistPage() {
     });
   }, [notifyResult]);
 
-  const handleDeleteNotified = useCallback(() => {
+  const doClearNotified = useCallback(() => {
     const fd = new FormData();
     fd.set("intent", "delete-all-notified");
     fetcher.submit(fd, { method: "POST" });
+    setConfirmClearNotifiedOpen(false);
   }, [fetcher]);
+
+  const handleDeleteNotified = useCallback(() => {
+    setConfirmClearNotifiedOpen(true);
+  }, []);
 
   const handleAccept = useCallback(
     (id: string) => {
@@ -658,9 +685,24 @@ export default function WaitlistPage() {
     [filteredEntries, paginatedEntries],
   );
 
+  const doBulkDelete = useCallback(() => {
+    if (selectedEntryIds.length === 0) return;
+    const fd = new FormData();
+    fd.set("intent", "bulk-action");
+    fd.set("ids", selectedEntryIds.join(","));
+    fd.set("bulkType", "delete");
+    fetcher.submit(fd, { method: "POST" });
+    setSelectedEntryIds([]);
+    setConfirmBulkDeleteOpen(false);
+  }, [selectedEntryIds, fetcher]);
+
   const handleBulkAction = useCallback(
     (bulkType: string) => {
       if (selectedEntryIds.length === 0) return;
+      if (bulkType === "delete") {
+        setConfirmBulkDeleteOpen(true);
+        return;
+      }
       const fd = new FormData();
       fd.set("intent", "bulk-action");
       fd.set("ids", selectedEntryIds.join(","));
@@ -1231,6 +1273,85 @@ export default function WaitlistPage() {
                 ))}
             </BlockStack>
           </BlockStack>
+        </Modal.Section>
+      </Modal>
+
+      {/* Single Delete Confirmation Modal */}
+      <Modal
+        open={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        title="Remove waitlist entry?"
+        primaryAction={{
+          content: "Delete",
+          onAction: () => confirmDeleteId && doDelete(confirmDeleteId),
+          loading: isDeleteLoading,
+          destructive: true,
+        }}
+        secondaryActions={[
+          {
+            content: "Cancel",
+            onAction: () => setConfirmDeleteId(null),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <Text as="p">
+            This will permanently remove this customer from the waitlist. This action cannot be undone.
+          </Text>
+        </Modal.Section>
+      </Modal>
+
+      {/* Clear Notified Confirmation Modal */}
+      <Modal
+        open={confirmClearNotifiedOpen}
+        onClose={() => setConfirmClearNotifiedOpen(false)}
+        title={`Clear ${stats.notified} notified entr${stats.notified === 1 ? "y" : "ies"}?`}
+        primaryAction={{
+          content: "Clear All",
+          onAction: doClearNotified,
+          loading: isClearNotifiedLoading,
+          destructive: true,
+        }}
+        secondaryActions={[
+          {
+            content: "Cancel",
+            onAction: () => setConfirmClearNotifiedOpen(false),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <Text as="p">
+            This will permanently delete all <strong>{stats.notified}</strong> notified waitlist entr{stats.notified === 1 ? "y" : "ies"}. This action cannot be undone.
+          </Text>
+        </Modal.Section>
+      </Modal>
+
+      {/* Bulk Delete Confirmation Modal */}
+      <Modal
+        open={confirmBulkDeleteOpen}
+        onClose={() => setConfirmBulkDeleteOpen(false)}
+        title={`Delete ${selectedEntryIds.length} entr${selectedEntryIds.length === 1 ? "y" : "ies"}?`}
+        primaryAction={{
+          content: "Delete",
+          onAction: doBulkDelete,
+          loading: isBulkDeleteLoading,
+          destructive: true,
+        }}
+        secondaryActions={[
+          {
+            content: "Cancel",
+            onAction: () => setConfirmBulkDeleteOpen(false),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <Text as="p">
+            This will permanently delete{" "}
+            <strong>
+              {selectedEntryIds.length} waitlist entr{selectedEntryIds.length === 1 ? "y" : "ies"}
+            </strong>
+            . This action cannot be undone.
+          </Text>
         </Modal.Section>
       </Modal>
 

@@ -233,6 +233,8 @@ export default function DeliveryRulesPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
 
   // Form state
   const [name, setName] = useState("");
@@ -254,6 +256,11 @@ export default function DeliveryRulesPage() {
 
   const actionError =
     fetcher.data && "error" in fetcher.data ? fetcher.data.error : null;
+
+  const isDeleteLoading =
+    fetcher.state !== "idle" && fetcher.formData?.get("intent") === "delete";
+  const isBulkDeleteLoading =
+    fetcher.state !== "idle" && fetcher.formData?.get("intent") === "bulk-delete";
 
   const resetForm = useCallback(() => {
     setName("");
@@ -321,14 +328,22 @@ export default function DeliveryRulesPage() {
     fetcher,
   ]);
 
-  const handleDelete = useCallback(
+  const doDelete = useCallback(
     (id: string) => {
       const fd = new FormData();
       fd.set("intent", "delete");
       fd.set("id", id);
       fetcher.submit(fd, { method: "POST" });
+      setConfirmDeleteId(null);
     },
     [fetcher],
+  );
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      setConfirmDeleteId(id);
+    },
+    [],
   );
 
   useEffect(() => {
@@ -382,12 +397,17 @@ export default function DeliveryRulesPage() {
     [],
   );
 
-  const handleBulkDelete = useCallback(() => {
+  const doBulkDelete = useCallback(() => {
     const fd = new FormData();
     fd.set("intent", "bulk-delete");
     fd.set("ids", selectedResources.join(","));
     fetcher.submit(fd, { method: "POST" });
+    setConfirmBulkDeleteOpen(false);
   }, [selectedResources, fetcher]);
+
+  const handleBulkDelete = useCallback(() => {
+    setConfirmBulkDeleteOpen(true);
+  }, []);
 
   const handleBulkToggle = useCallback(
     (active: boolean) => {
@@ -704,6 +724,60 @@ export default function DeliveryRulesPage() {
               </InlineStack>
             </BlockStack>
           </BlockStack>
+        </Modal.Section>
+      </Modal>
+
+      {/* Single Delete Confirmation Modal */}
+      <Modal
+        open={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        title="Delete delivery rule?"
+        primaryAction={{
+          content: "Delete",
+          onAction: () => confirmDeleteId && doDelete(confirmDeleteId),
+          loading: isDeleteLoading,
+          destructive: true,
+        }}
+        secondaryActions={[
+          {
+            content: "Cancel",
+            onAction: () => setConfirmDeleteId(null),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <Text as="p">
+            This will permanently delete this delivery rule. This action cannot be undone.
+          </Text>
+        </Modal.Section>
+      </Modal>
+
+      {/* Bulk Delete Confirmation Modal */}
+      <Modal
+        open={confirmBulkDeleteOpen}
+        onClose={() => setConfirmBulkDeleteOpen(false)}
+        title={`Delete ${selectedResources.length} rule${selectedResources.length !== 1 ? "s" : ""}?`}
+        primaryAction={{
+          content: "Delete",
+          onAction: doBulkDelete,
+          loading: isBulkDeleteLoading,
+          destructive: true,
+        }}
+        secondaryActions={[
+          {
+            content: "Cancel",
+            onAction: () => setConfirmBulkDeleteOpen(false),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <Text as="p">
+            This will permanently delete{" "}
+            <strong>
+              {selectedResources.length} rule{selectedResources.length !== 1 ? "s" : ""}
+            </strong>
+            . This action cannot be undone.
+          </Text>
         </Modal.Section>
       </Modal>
     </Page>

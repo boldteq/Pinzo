@@ -263,14 +263,10 @@ async function handleZipCheck(shop: string | null, zip: string | null) {
       ? calculateDeliveryDate(etaValue, matchedRule?.daysOfWeek ?? null)
       : null;
 
-  const deliveryFeeValue =
-    widgetConfig?.showDeliveryFee !== false
-      ? (matchedRule?.deliveryFee ?? null)
-      : null;
-  const freeShippingAboveValue =
-    widgetConfig?.showDeliveryFee !== false
-      ? (matchedRule?.freeShippingAbove ?? null)
-      : null;
+  const rawDeliveryFee = widgetConfig?.showDeliveryFee !== false ? (matchedRule?.deliveryFee ?? null) : null;
+  const deliveryFeeValue = rawDeliveryFee != null && rawDeliveryFee >= 0 ? rawDeliveryFee : null;
+  const rawFreeShippingAbove = widgetConfig?.showDeliveryFee !== false ? (matchedRule?.freeShippingAbove ?? null) : null;
+  const freeShippingAboveValue = rawFreeShippingAbove != null && rawFreeShippingAbove >= 0 ? rawFreeShippingAbove : null;
 
   return new Response(
     JSON.stringify({

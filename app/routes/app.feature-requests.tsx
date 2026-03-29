@@ -33,6 +33,8 @@ import { PlusIcon, DeleteIcon, ChevronUpIcon, EditIcon, SearchIcon } from "@shop
 
 const PAGE_SIZE = 10;
 const ADMIN_SHOP = "zip-code-checker.myshopify.com";
+// Feature requests are intentionally available on ALL plans as a community
+// engagement feature. The limit below prevents spam, not plan gating.
 const MAX_REQUESTS_PER_SHOP = 20;
 const MAX_DESCRIPTION_LENGTH = 2000;
 

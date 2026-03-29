@@ -728,7 +728,7 @@
           // transient server error and show it in the result area rather than
           // falling through with undefined message text.
           if (data.error && data.allowed === undefined) {
-            console.error('[Pinzo] API returned error:', data.error, '| API_BASE="' + API_BASE + '" SHOP="' + SHOP + '"');
+            console.error('[Pinzo] API returned error:', data.error);
             res.innerHTML = '<div class="zcc-result fail"><div class="zcc-result-icon">' + ICONS.xCircle + '</div><div class="zcc-result-content"><div class="zcc-result-message">Something went wrong. Please try again.</div></div></div>';
             try {
               sessionStorage.removeItem('zcc:valid');
@@ -903,7 +903,7 @@
           setBtnLoading(false);
           // Log to console so merchants/developers can diagnose API connectivity issues.
           // The URL is logged so we can immediately see if the proxy/API base is wrong.
-          console.error('[Pinzo] ZIP check failed. API_BASE="' + API_BASE + '" SHOP="' + SHOP + '"', err);
+          console.error('[Pinzo] ZIP check failed.', err);
           res.innerHTML = '<div class="zcc-result fail"><div class="zcc-result-icon">' + ICONS.xCircle + '</div><div class="zcc-result-content"><div class="zcc-result-message">Something went wrong. Please try again.</div></div></div>';
           try {
             sessionStorage.removeItem('zcc:valid');

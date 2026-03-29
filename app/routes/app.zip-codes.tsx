@@ -622,6 +622,8 @@ export default function ZipCodesPage() {
   // Whether the user has explicitly selected ALL items across all pages
   const [allSelected, setAllSelected] = useState(false);
 
+  // Confirmation modal for single delete
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   // Confirmation modal for bulk delete
   const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
 
@@ -634,6 +636,9 @@ export default function ZipCodesPage() {
   const isImportLoading =
     fetcher.state !== "idle" &&
     fetcher.formData?.get("intent") === "bulk-import";
+  const isDeleteLoading =
+    fetcher.state !== "idle" &&
+    fetcher.formData?.get("intent") === "delete";
   const isBulkDeleteLoading =
     fetcher.state !== "idle" &&
     fetcher.formData?.get("intent") === "bulk-delete";
@@ -736,14 +741,22 @@ export default function ZipCodesPage() {
     // Close/reset is handled in useEffect after server confirms success
   }, [newZip, newLabel, newZone, newMessage, newEta, newType, newCodAvailable, newReturnPolicy, fetcher]);
 
-  const handleDelete = useCallback(
+  const doDelete = useCallback(
     (id: string) => {
       const fd = new FormData();
       fd.set("intent", "delete");
       fd.set("id", id);
       fetcher.submit(fd, { method: "POST" });
+      setConfirmDeleteId(null);
     },
     [fetcher],
+  );
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      setConfirmDeleteId(id);
+    },
+    [],
   );
 
   const handleOpenEdit = useCallback((z: ZipCodeRecord) => {
@@ -2011,6 +2024,31 @@ export default function ZipCodesPage() {
               autoComplete="off"
             />
           </BlockStack>
+        </Modal.Section>
+      </Modal>
+
+      {/* Single Delete Confirmation Modal */}
+      <Modal
+        open={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        title="Delete zip code?"
+        primaryAction={{
+          content: "Delete",
+          onAction: () => confirmDeleteId && doDelete(confirmDeleteId),
+          loading: isDeleteLoading,
+          destructive: true,
+        }}
+        secondaryActions={[
+          {
+            content: "Cancel",
+            onAction: () => setConfirmDeleteId(null),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <Text as="p">
+            This will permanently remove this zip code. This action cannot be undone.
+          </Text>
         </Modal.Section>
       </Modal>
 

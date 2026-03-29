@@ -455,7 +455,7 @@ function FloatingPreview({
       {/* eslint-disable-next-line react/no-danger */}
       <style dangerouslySetInnerHTML={{ __html: css }} />
       {/* Floating layout — panel + trigger, no storefront mockup */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-end" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-end", minHeight: 500, justifyContent: "center" }}>
         {/* Panel */}
         {panelOpen && (
           <div
@@ -1049,6 +1049,13 @@ export default function WidgetPage() {
   const isSaving =
     fetcher.state !== "idle" && fetcher.formData?.get("intent") === "save";
 
+  const saveError =
+    fetcher.state === "idle" &&
+    fetcher.data &&
+    "error" in fetcher.data
+      ? (fetcher.data as { error: string }).error
+      : null;
+
   // Clear dirty flag after successful save
   useEffect(() => {
     if (
@@ -1248,6 +1255,14 @@ export default function WidgetPage() {
     >
       <Box paddingBlockEnd="1600">
         <Layout>
+
+          {saveError && (
+            <Layout.Section>
+              <Banner tone="critical" title="Failed to save widget settings">
+                {saveError}
+              </Banner>
+            </Layout.Section>
+          )}
 
           {/* Settings + Preview */}
           <Layout.Section>
@@ -1831,6 +1846,10 @@ export default function WidgetPage() {
                         background: "radial-gradient(circle, #d1d8e0 1px, transparent 1px)",
                         backgroundSize: "20px 20px",
                         backgroundColor: "#eef2f6",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minHeight: 520,
                       }}>
                         <WidgetPreview cfg={previewCfg} previewState={previewState} widgetFullCustom={limits.widgetFullCustom} showEtaCodReturn={limits.showEtaCodReturn} />
                       </div>

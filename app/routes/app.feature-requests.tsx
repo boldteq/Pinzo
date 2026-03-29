@@ -28,6 +28,7 @@ import {
   Banner,
   Pagination,
   Icon,
+  Tooltip,
 } from "@shopify/polaris";
 import { PlusIcon, DeleteIcon, ChevronUpIcon, EditIcon, SearchIcon } from "@shopify/polaris-icons";
 
@@ -830,7 +831,7 @@ export default function FeatureRequestsPage() {
               <Divider />
 
               {/* Sort + Search bar */}
-              <Box padding="400">
+              <Box padding="400" background="bg-surface-secondary">
                 <InlineStack align="space-between" blockAlign="center" wrap gap="300">
                   <Box minWidth="260px">
                     <TextField
@@ -845,13 +846,13 @@ export default function FeatureRequestsPage() {
                       onClearButtonClick={() => handleSearchChange("")}
                     />
                   </Box>
-                  <InlineStack align="end" gap="300" blockAlign="center">
+                  <InlineStack align="end" gap="200" blockAlign="center">
                     <Text as="span" variant="bodySm" tone="subdued">Sort by</Text>
-                    <InlineStack gap="200">
+                    <InlineStack gap="150">
                       {SORT_OPTIONS.map((opt) => (
                         <Button
                           key={opt.value}
-                          variant={sortValue === opt.value ? "primary" : "tertiary"}
+                          variant={sortValue === opt.value ? "primary" : "secondary"}
                           size="slim"
                           onClick={() => handleSortChange(opt.value)}
                         >
@@ -885,7 +886,7 @@ export default function FeatureRequestsPage() {
                   </Text>
                 </EmptyState>
               ) : (
-                <BlockStack gap="400">
+                <BlockStack gap="300">
                   {paginatedFeatures.map((feature) => {
                     const isVoted = votedIds.has(feature.id);
                     const isOwner = feature.shop === shop;
@@ -905,7 +906,8 @@ export default function FeatureRequestsPage() {
                         background="bg-surface"
                         borderWidth="025"
                         borderColor="border"
-                        borderRadius="200"
+                        borderRadius="300"
+                        shadow="100"
                       >
                         <InlineStack
                           gap="400"
@@ -914,50 +916,50 @@ export default function FeatureRequestsPage() {
                           wrap={false}
                         >
                           {/* Vote column */}
-                          <Box minWidth="64px" width="64px">
-                            <Box
-                              padding="200"
-                              background={isVoted ? "bg-fill-success" : "bg-surface-secondary"}
-                              borderRadius="200"
-                              borderWidth="025"
-                              borderColor={isVoted ? "border-success" : "border"}
-                            >
-                              <BlockStack gap="0" inlineAlign="center">
-                                <Button
-                                  variant="tertiary"
-                                  size="micro"
-                                  icon={ChevronUpIcon}
-                                  onClick={() => handleVote(feature.id)}
-                                  loading={
-                                    pendingVoteId === feature.id &&
-                                    voteFetcher.state !== "idle"
-                                  }
-                                  accessibilityLabel={
-                                    isVoted
-                                      ? "Remove vote"
-                                      : "Vote for this feature"
-                                  }
-                                />
-                                <Text
-                                  as="p"
-                                  variant="headingSm"
-                                  fontWeight="bold"
-                                  alignment="center"
-                                  tone={isVoted ? "text-inverse" : "subdued"}
-                                >
-                                  {feature.votesCount}
-                                </Text>
-                                <Text
-                                  as="p"
-                                  variant="bodySm"
-                                  fontWeight="medium"
-                                  alignment="center"
-                                  tone={isVoted ? "text-inverse" : "subdued"}
-                                >
-                                  {isVoted ? "Voted" : "Vote"}
-                                </Text>
-                              </BlockStack>
-                            </Box>
+                          <Box minWidth="60px" width="60px">
+                            <Tooltip content={isVoted ? "Remove vote" : "Vote for this feature"}>
+                              <Box
+                                padding="300"
+                                background={isVoted ? "bg-fill-brand" : "bg-surface-secondary"}
+                                borderRadius="300"
+                                borderWidth="025"
+                                borderColor={isVoted ? "border-brand" : "border"}
+                              >
+                                <BlockStack gap="0" inlineAlign="center">
+                                  <Button
+                                    variant="tertiary"
+                                    size="micro"
+                                    icon={ChevronUpIcon}
+                                    onClick={() => handleVote(feature.id)}
+                                    loading={
+                                      pendingVoteId === feature.id &&
+                                      voteFetcher.state !== "idle"
+                                    }
+                                    accessibilityLabel={
+                                      isVoted ? "Remove vote" : "Vote for this feature"
+                                    }
+                                  />
+                                  <Text
+                                    as="p"
+                                    variant="headingMd"
+                                    fontWeight="bold"
+                                    alignment="center"
+                                    tone={isVoted ? "text-inverse" : undefined}
+                                  >
+                                    {feature.votesCount}
+                                  </Text>
+                                  <Text
+                                    as="p"
+                                    variant="bodySm"
+                                    fontWeight="medium"
+                                    alignment="center"
+                                    tone={isVoted ? "text-inverse" : "subdued"}
+                                  >
+                                    {isVoted ? "Voted" : "Vote"}
+                                  </Text>
+                                </BlockStack>
+                              </Box>
+                            </Tooltip>
                           </Box>
 
                           {/* Content */}
@@ -968,7 +970,7 @@ export default function FeatureRequestsPage() {
                                 align="space-between"
                                 blockAlign="center"
                                 wrap={false}
-                                gap="400"
+                                gap="300"
                               >
                                 <Text
                                   as="h3"
@@ -982,8 +984,7 @@ export default function FeatureRequestsPage() {
                                   tone={STATUS_TONES[feature.status]}
                                   progress={STATUS_PROGRESS[feature.status]}
                                 >
-                                  {STATUS_LABELS[feature.status] ??
-                                    feature.status}
+                                  {STATUS_LABELS[feature.status] ?? feature.status}
                                 </Badge>
                               </InlineStack>
 
@@ -996,9 +997,7 @@ export default function FeatureRequestsPage() {
                                   <Button
                                     variant="plain"
                                     size="slim"
-                                    onClick={() =>
-                                      handleToggleExpand(feature.id)
-                                    }
+                                    onClick={() => handleToggleExpand(feature.id)}
                                   >
                                     {isExpanded ? "Show less" : "Read more"}
                                   </Button>
@@ -1014,7 +1013,9 @@ export default function FeatureRequestsPage() {
                               >
                                 <InlineStack gap="200" blockAlign="center" wrap={false}>
                                   <Badge>{feature.category}</Badge>
-                                  {isOwner && <Badge tone="info">Yours</Badge>}
+                                  {isOwner && (
+                                    <Badge tone="success">Yours</Badge>
+                                  )}
                                   <Text as="p" tone="subdued" variant="bodySm">
                                     {formatDate(feature.createdAt)}
                                   </Text>
@@ -1023,49 +1024,53 @@ export default function FeatureRequestsPage() {
                                 {/* Actions */}
                                 {isConfirmingDelete ? (
                                   <InlineStack gap="200" blockAlign="center">
-                                    <Text as="p" variant="bodySm" tone="critical">
-                                      Delete?
+                                    <Text as="p" variant="bodySm" tone="critical" fontWeight="medium">
+                                      Delete this request?
                                     </Text>
                                     <Button
                                       variant="primary"
                                       tone="critical"
-                                      size="slim"
+                                      size="micro"
                                       onClick={() => handleDeleteConfirm(feature.id)}
                                       loading={
                                         pendingDeleteId === feature.id &&
                                         deleteFetcher.state !== "idle"
                                       }
                                     >
-                                      Yes
+                                      Delete
                                     </Button>
                                     <Button
                                       variant="tertiary"
-                                      size="slim"
+                                      size="micro"
                                       onClick={() => setConfirmDeleteId(null)}
                                     >
-                                      No
+                                      Cancel
                                     </Button>
                                   </InlineStack>
                                 ) : (
                                   <InlineStack gap="100" blockAlign="center">
                                     {canEdit && (
-                                      <Button
-                                        variant="plain"
-                                        size="slim"
-                                        icon={EditIcon}
-                                        onClick={() => handleOpenEdit(feature)}
-                                        accessibilityLabel="Edit"
-                                      />
+                                      <Tooltip content="Edit request">
+                                        <Button
+                                          variant="tertiary"
+                                          size="slim"
+                                          icon={EditIcon}
+                                          onClick={() => handleOpenEdit(feature)}
+                                          accessibilityLabel="Edit"
+                                        />
+                                      </Tooltip>
                                     )}
                                     {canDelete && (
-                                      <Button
-                                        variant="plain"
-                                        tone="critical"
-                                        size="slim"
-                                        icon={DeleteIcon}
-                                        onClick={() => setConfirmDeleteId(feature.id)}
-                                        accessibilityLabel="Delete"
-                                      />
+                                      <Tooltip content="Delete request">
+                                        <Button
+                                          variant="tertiary"
+                                          tone="critical"
+                                          size="slim"
+                                          icon={DeleteIcon}
+                                          onClick={() => setConfirmDeleteId(feature.id)}
+                                          accessibilityLabel="Delete"
+                                        />
+                                      </Tooltip>
                                     )}
                                   </InlineStack>
                                 )}

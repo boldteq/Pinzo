@@ -840,7 +840,7 @@ export default function FeatureRequestsPage() {
               <Divider />
 
               {/* Sort + Search bar */}
-              <Box padding="400" background="bg-surface-secondary">
+              <Box padding="300" paddingInlineStart="400" paddingInlineEnd="400">
                 <InlineStack align="space-between" blockAlign="center" wrap gap="300">
                   <Box minWidth="260px">
                     <TextField
@@ -857,11 +857,11 @@ export default function FeatureRequestsPage() {
                   </Box>
                   <InlineStack align="end" gap="200" blockAlign="center">
                     <Text as="span" variant="bodySm" tone="subdued">Sort by</Text>
-                    <InlineStack gap="150">
+                    <InlineStack gap="100">
                       {SORT_OPTIONS.map((opt) => (
                         <Button
                           key={opt.value}
-                          variant={sortValue === opt.value ? "primary" : "secondary"}
+                          variant={sortValue === opt.value ? "primary" : "tertiary"}
                           size="slim"
                           onClick={() => handleSortChange(opt.value)}
                         >
@@ -911,82 +911,60 @@ export default function FeatureRequestsPage() {
                     return (
                       <Box
                         key={feature.id}
-                        padding="400"
                         background="bg-surface"
                         borderWidth="025"
                         borderColor="border"
-                        borderRadius="300"
+                        borderRadius="200"
+                        padding="0"
                         shadow="100"
                       >
-                        <InlineStack
-                          gap="400"
-                          align="start"
-                          blockAlign="start"
-                          wrap={false}
-                        >
-                          {/* Vote column */}
-                          <Box minWidth="60px" width="60px">
-                            <Tooltip content={isVoted ? "Remove vote" : "Vote for this feature"}>
-                              <Box
-                                padding="300"
-                                background={isVoted ? "bg-fill-success" : "bg-surface-secondary"}
-                                borderRadius="300"
-                                borderWidth="025"
-                                borderColor={isVoted ? "border-success" : "border"}
+                        <InlineStack align="start" blockAlign="stretch" wrap={false}>
+
+                          {/* Vote column — compact left strip */}
+                          <Box
+                            minWidth="72px"
+                            width="72px"
+                            padding="400"
+                            borderInlineEndWidth="025"
+                            borderColor="border"
+                          >
+                            <BlockStack gap="100" inlineAlign="center">
+                              <Button
+                                variant="tertiary"
+                                size="micro"
+                                icon={ChevronUpIcon}
+                                onClick={() => handleVote(feature.id)}
+                                loading={pendingVoteId === feature.id && voteFetcher.state !== "idle"}
+                                accessibilityLabel={isVoted ? "Remove vote" : "Vote for this feature"}
+                                pressed={isVoted}
+                              />
+                              <Text
+                                as="p"
+                                variant="headingMd"
+                                fontWeight="bold"
+                                alignment="center"
+                                tone={isVoted ? "success" : undefined}
                               >
-                                <BlockStack gap="0" inlineAlign="center">
-                                  <Button
-                                    variant="tertiary"
-                                    size="micro"
-                                    icon={ChevronUpIcon}
-                                    onClick={() => handleVote(feature.id)}
-                                    loading={
-                                      pendingVoteId === feature.id &&
-                                      voteFetcher.state !== "idle"
-                                    }
-                                    accessibilityLabel={
-                                      isVoted ? "Remove vote" : "Vote for this feature"
-                                    }
-                                  />
-                                  <Text
-                                    as="p"
-                                    variant="headingMd"
-                                    fontWeight="bold"
-                                    alignment="center"
-                                    tone={isVoted ? "text-inverse" : undefined}
-                                  >
-                                    {feature.votesCount}
-                                  </Text>
-                                  <Text
-                                    as="p"
-                                    variant="bodySm"
-                                    fontWeight="medium"
-                                    alignment="center"
-                                    tone={isVoted ? "text-inverse" : "subdued"}
-                                  >
-                                    {isVoted ? "Voted" : "Vote"}
-                                  </Text>
-                                </BlockStack>
-                              </Box>
-                            </Tooltip>
+                                {feature.votesCount}
+                              </Text>
+                              <Text
+                                as="p"
+                                variant="bodySm"
+                                alignment="center"
+                                tone={isVoted ? "success" : "subdued"}
+                              >
+                                {isVoted ? "Voted" : "Vote"}
+                              </Text>
+                            </BlockStack>
                           </Box>
 
-                          {/* Content */}
-                          <Box minWidth="0" width="100%">
+                          {/* Content area */}
+                          <Box padding="400" minWidth="0" width="100%">
                             <BlockStack gap="200">
-                              {/* Row 1: Title + Status */}
-                              <InlineStack
-                                align="space-between"
-                                blockAlign="center"
-                                wrap={false}
-                                gap="300"
-                              >
-                                <Text
-                                  as="h3"
-                                  variant="headingSm"
-                                  fontWeight="semibold"
-                                  truncate
-                                >
+
+                              {/* Title + Status badge */}
+                              <InlineStack align="space-between" blockAlign="start" wrap={false} gap="400">
+                                <Text as="h3" variant="headingSm" fontWeight="semibold">
                                   {feature.title}
                                 </Text>
                                 <Badge
@@ -997,8 +975,8 @@ export default function FeatureRequestsPage() {
                                 </Badge>
                               </InlineStack>
 
-                              {/* Row 2: Description + Read more */}
-                              <BlockStack gap="100">
+                              {/* Description */}
+                              <BlockStack gap="050">
                                 <Text as="p" tone="subdued" variant="bodyMd">
                                   {displayDescription}
                                 </Text>
@@ -1013,38 +991,29 @@ export default function FeatureRequestsPage() {
                                 )}
                               </BlockStack>
 
-                              {/* Row 3: Metadata + Actions */}
-                              <InlineStack
-                                align="space-between"
-                                blockAlign="center"
-                                wrap
-                                gap="200"
-                              >
-                                <InlineStack gap="200" blockAlign="center" wrap={false}>
-                                  <Badge tone={CATEGORY_TONES[feature.category]}>{feature.category}</Badge>
-                                  {isOwner && (
-                                    <Badge tone="success">Yours</Badge>
-                                  )}
+                              {/* Footer: badges + date + actions */}
+                              <InlineStack align="space-between" blockAlign="center" wrap gap="200">
+                                <InlineStack gap="150" blockAlign="center" wrap>
+                                  <Badge tone={CATEGORY_TONES[feature.category]}>
+                                    {feature.category}
+                                  </Badge>
+                                  {isOwner && <Badge tone="info">Yours</Badge>}
                                   <Text as="p" tone="subdued" variant="bodySm">
                                     {formatDate(feature.createdAt)}
                                   </Text>
                                 </InlineStack>
 
-                                {/* Actions */}
                                 {isConfirmingDelete ? (
-                                  <InlineStack gap="200" blockAlign="center">
-                                    <Text as="p" variant="bodySm" tone="critical" fontWeight="medium">
-                                      Delete this request?
+                                  <InlineStack gap="150" blockAlign="center">
+                                    <Text as="p" variant="bodySm" tone="critical">
+                                      Confirm delete?
                                     </Text>
                                     <Button
                                       variant="primary"
                                       tone="critical"
                                       size="micro"
                                       onClick={() => handleDeleteConfirm(feature.id)}
-                                      loading={
-                                        pendingDeleteId === feature.id &&
-                                        deleteFetcher.state !== "idle"
-                                      }
+                                      loading={pendingDeleteId === feature.id && deleteFetcher.state !== "idle"}
                                     >
                                       Delete
                                     </Button>
@@ -1057,11 +1026,11 @@ export default function FeatureRequestsPage() {
                                     </Button>
                                   </InlineStack>
                                 ) : (
-                                  <InlineStack gap="100" blockAlign="center">
+                                  <InlineStack gap="050" blockAlign="center">
                                     {canEdit && (
-                                      <Tooltip content="Edit request">
+                                      <Tooltip content="Edit">
                                         <Button
-                                          variant="tertiary"
+                                          variant="plain"
                                           size="slim"
                                           icon={EditIcon}
                                           onClick={() => handleOpenEdit(feature)}
@@ -1070,9 +1039,9 @@ export default function FeatureRequestsPage() {
                                       </Tooltip>
                                     )}
                                     {canDelete && (
-                                      <Tooltip content="Delete request">
+                                      <Tooltip content="Delete">
                                         <Button
-                                          variant="tertiary"
+                                          variant="plain"
                                           tone="critical"
                                           size="slim"
                                           icon={DeleteIcon}

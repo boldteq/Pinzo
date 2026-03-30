@@ -42,7 +42,7 @@ import {
   DeleteIcon,
   PlusIcon,
   EmailIcon,
-  CheckIcon,
+  CheckSmallIcon,
   EditIcon,
 } from "@shopify/polaris-icons";
 
@@ -1156,7 +1156,7 @@ export default function WaitlistPage() {
                                 variant="tertiary"
                                 tone="success"
                                 onClick={() => handleAccept(entry.id)}
-                                icon={CheckIcon}
+                                icon={CheckSmallIcon}
                                 accessibilityLabel="Accept"
                               />
                             </Tooltip>

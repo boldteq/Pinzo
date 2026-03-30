@@ -52,7 +52,7 @@ const PLANS_DATA = {
     features: [
       "Up to 20 zip codes",
       "Allowed zip codes only",
-      "Basic storefront widget",
+      "Basic widget text customization",
       "Unlimited searches",
       "Standard email support",
     ],
@@ -68,13 +68,13 @@ const PLANS_DATA = {
     description: "Essential features for small stores",
     features: [
       "Up to 500 zip codes",
-      "Delivery ETA & COD info",
+      "Allowed + Blocked zip codes",
       "Full widget customization",
+      "Delivery ETA & COD info",
       "Zone-based organization",
       "3 delivery rules",
-      "Waitlist (25 entries)",
+      "Waitlist (50 entries)",
       "CSV import",
-      "Unlimited searches",
     ],
     shopifyPlanMonthly: PLAN_STARTER_MONTHLY,
     shopifyPlanAnnual: PLAN_STARTER_ANNUAL,
@@ -88,7 +88,6 @@ const PLANS_DATA = {
     description: "Full control for growing stores",
     features: [
       "Unlimited zip codes",
-      "Allowed + Blocked zip codes",
       "Unlimited delivery rules",
       "Full customer waitlist",
       "Bulk CSV import & export",
@@ -124,10 +123,11 @@ type FeatureValue = boolean | string;
 
 const FEATURE_ROWS: { label: string; free: FeatureValue; starter: FeatureValue; pro: FeatureValue; ultimate: FeatureValue }[] = [
   { label: "Zip codes", free: "20", starter: "500", pro: "Unlimited", ultimate: "Unlimited" },
-  { label: "Blocked zip codes", free: false, starter: false, pro: true, ultimate: true },
+  { label: "Blocked zip codes", free: false, starter: true, pro: true, ultimate: true },
   { label: "Delivery rules", free: false, starter: "3", pro: "Unlimited", ultimate: "Unlimited" },
-  { label: "Waitlist entries", free: false, starter: "25", pro: "Unlimited", ultimate: "Unlimited" },
-  { label: "Widget customization", free: false, starter: true, pro: true, ultimate: true },
+  { label: "Waitlist entries", free: false, starter: "50", pro: "Unlimited", ultimate: "Unlimited" },
+  { label: "Widget text customization", free: true, starter: true, pro: true, ultimate: true },
+  { label: "Full widget customization", free: false, starter: true, pro: true, ultimate: true },
   { label: "Delivery ETA & COD", free: false, starter: true, pro: true, ultimate: true },
   { label: "Zone organization", free: false, starter: true, pro: true, ultimate: true },
   { label: "CSV import", free: false, starter: true, pro: true, ultimate: true },
@@ -724,7 +724,7 @@ export default function PricingPage() {
                 "Delivery rules, zones & ETAs",
                 "Bulk CSV import & export",
                 "Customer waitlist",
-                "Widget customization (colors, position)",
+                "Full widget customization (colors, position)",
                 "Cart & checkout blocking",
               ].map((item) => (
                 <InlineStack key={item} gap="200" blockAlign="start" wrap={false}>

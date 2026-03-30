@@ -34,6 +34,7 @@ export interface PlanLimits {
   maxWaitlist: number;
   csvImport: boolean;
   csvExport: boolean;
+  widgetBasicCustom: boolean;
   widgetFullCustom: boolean;
   showEtaCodReturn: boolean;
   cartBlocking: boolean;
@@ -50,6 +51,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxWaitlist: 0,
     csvImport: false,
     csvExport: false,
+    widgetBasicCustom: true,
     widgetFullCustom: false,
     showEtaCodReturn: false,
     cartBlocking: false,
@@ -59,11 +61,12 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
   },
   starter: {
     maxZipCodes: 500,
-    allowBlocked: false,
+    allowBlocked: true,
     maxDeliveryRules: 3,
-    maxWaitlist: 25,
+    maxWaitlist: 50,
     csvImport: true,
     csvExport: false,
+    widgetBasicCustom: true,
     widgetFullCustom: true,
     showEtaCodReturn: true,
     cartBlocking: false,
@@ -78,6 +81,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxWaitlist: UNLIMITED,
     csvImport: true,
     csvExport: true,
+    widgetBasicCustom: true,
     widgetFullCustom: true,
     showEtaCodReturn: true,
     cartBlocking: true,
@@ -92,6 +96,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxWaitlist: UNLIMITED,
     csvImport: true,
     csvExport: true,
+    widgetBasicCustom: true,
     widgetFullCustom: true,
     showEtaCodReturn: true,
     cartBlocking: true,

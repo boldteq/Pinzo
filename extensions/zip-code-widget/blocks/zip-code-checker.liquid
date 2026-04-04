@@ -564,6 +564,17 @@
       W + " .zcc-delivery-fee svg{width:13px !important;height:13px !important;flex-shrink:0 !important}" +
       W + " .zcc-delivery-fee--free{background:" + cfg.successColor + "12 !important;border:1px solid " + cfg.successColor + "25 !important;color:" + cfg.successColor + " !important}" +
       W + " .zcc-delivery-fee--paid{background:#f59e0b10 !important;border:1px solid #f59e0b22 !important;color:#92400e !important}" +
+      // Order timeline (ORDER > SHIPS > DELIVER)
+      W + " .zcc-timeline{margin-top:10px !important;display:flex !important;align-items:center !important;justify-content:space-between !important;gap:0 !important;position:relative !important;padding:8px 0 !important}" +
+      W + " .zcc-timeline::before{content:'' !important;position:absolute !important;top:50% !important;left:18% !important;right:18% !important;height:2px !important;background:#e0e0e0 !important;transform:translateY(-50%) !important;z-index:0 !important}" +
+      W + " .zcc-timeline-step{display:flex !important;flex-direction:column !important;align-items:center !important;gap:4px !important;z-index:1 !important;position:relative !important}" +
+      W + " .zcc-timeline-dot{width:24px !important;height:24px !important;border-radius:50% !important;display:flex !important;align-items:center !important;justify-content:center !important;border:2px solid " + cfg.successColor + " !important;background:" + cfg.backgroundColor + " !important}" +
+      W + " .zcc-timeline-dot--active{background:" + cfg.successColor + " !important;border-color:" + cfg.successColor + " !important}" +
+      W + " .zcc-timeline-dot svg{width:12px !important;height:12px !important}" +
+      W + " .zcc-timeline-label{font-size:10px !important;font-weight:600 !important;color:#6d7175 !important;text-transform:uppercase !important;letter-spacing:0.03em !important}" +
+      W + " .zcc-timeline-sublabel{font-size:10px !important;color:#9ca3af !important;font-weight:500 !important}" +
+      W + " .zcc-timeline-connector{flex:1 !important;height:2px !important;background:" + cfg.successColor + " !important;z-index:0 !important}" +
+      W + " .zcc-timeline-connector--pending{background:#e0e0e0 !important}" +
       // Waitlist toggle
       W + " .zcc-wl-toggle{display:flex !important;align-items:center !important;gap:12px !important;font-size:13.5px !important;font-weight:600 !important;color:" + cfg.primaryColor + " !important;text-decoration:none !important;cursor:pointer !important;border:none !important;background:none !important;padding:0 !important;width:100% !important;text-align:left !important}" +
       W + " .zcc-wl-toggle:hover{text-decoration:underline !important}" +
@@ -791,6 +802,33 @@
             if (cfg.showCountdown && data.cutoffTime) {
               html += buildCountdownHtml(data.cutoffTime, wid);
             }
+            // Order Timeline (ORDER > SHIPS > DELIVER)
+            if (cfg.showDeliveryDate && data.estimatedDeliveryDate) {
+              var delivDateStr = formatDeliveryDate(data.estimatedDeliveryDate);
+              var todayD = new Date();
+              var tomorrowD = new Date(); tomorrowD.setDate(tomorrowD.getDate() + 1);
+              var todayLabel = (todayD.toLocaleDateString('en-US', { weekday: 'short' })) + ', ' + (todayD.toLocaleDateString('en-US', { month: 'short' })) + ' ' + todayD.getDate();
+              var tomorrowLabel = (tomorrowD.toLocaleDateString('en-US', { weekday: 'short' })) + ', ' + (tomorrowD.toLocaleDateString('en-US', { month: 'short' })) + ' ' + tomorrowD.getDate();
+              html += '<div class="zcc-timeline">' +
+                '<div class="zcc-timeline-step">' +
+                  '<div class="zcc-timeline-dot zcc-timeline-dot--active"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>' +
+                  '<span class="zcc-timeline-label">Order</span>' +
+                  '<span class="zcc-timeline-sublabel">' + esc(todayLabel) + '</span>' +
+                '</div>' +
+                '<div class="zcc-timeline-connector"></div>' +
+                '<div class="zcc-timeline-step">' +
+                  '<div class="zcc-timeline-dot zcc-timeline-dot--active"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>' +
+                  '<span class="zcc-timeline-label">Ships</span>' +
+                  '<span class="zcc-timeline-sublabel">' + esc(tomorrowLabel) + '</span>' +
+                '</div>' +
+                '<div class="zcc-timeline-connector zcc-timeline-connector--pending"></div>' +
+                '<div class="zcc-timeline-step">' +
+                  '<div class="zcc-timeline-dot"><svg viewBox="0 0 24 24" fill="none" stroke="' + escAttr(cfg.successColor) + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>' +
+                  '<span class="zcc-timeline-label">Deliver</span>' +
+                  '<span class="zcc-timeline-sublabel">' + esc(delivDateStr || '') + '</span>' +
+                '</div>' +
+              '</div>';
+            }
             if (cfg.showCod !== false) {
               if (data.codAvailable === true) {
                 html += '<div class="zcc-cod zcc-cod--available">' + ICONS.card + ' Cash on Delivery Available</div>';
@@ -803,7 +841,7 @@
             }
             // Delivery Fee
             if (cfg.showDeliveryFee !== false) {
-              if (data.deliveryFee === 0 || data.deliveryFee === null) {
+              if (data.deliveryFee === 0) {
                 html += '<div class="zcc-delivery-fee zcc-delivery-fee--free">' + ICONS.truck + ' Free Delivery</div>';
               } else if (data.deliveryFee != null && data.deliveryFee > 0) {
                 html += '<div class="zcc-delivery-fee zcc-delivery-fee--paid">' + ICONS.truck + ' Delivery: $' + data.deliveryFee.toFixed(2) + '</div>';

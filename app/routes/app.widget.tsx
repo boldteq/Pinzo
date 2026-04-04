@@ -440,6 +440,21 @@ function buildSharedMetaCss(W: string, cfg: WidgetConfig): string {
     W + " .zcc-delivery-fee svg{width:13px;height:13px;flex-shrink:0}" +
     W + " .zcc-delivery-fee--free{background:" + s + "12;border:1px solid " + s + "25;color:" + s + "}" +
     W + " .zcc-delivery-fee--paid{background:#f59e0b10;border:1px solid #f59e0b22;color:#92400e}" +
+    // Order timeline (ORDER → SHIPS → DELIVER)
+    W + " .zcc-timeline{margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:0;position:relative;padding:8px 0}" +
+    W + " .zcc-timeline::before{content:'';position:absolute;top:50%;left:18%;right:18%;height:2px;background:#e0e0e0;transform:translateY(-50%);z-index:0}" +
+    W + " .zcc-timeline-step{display:flex;flex-direction:column;align-items:center;gap:4px;z-index:1;position:relative}" +
+    W + " .zcc-timeline-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid " + s + ";background:" + cfg.backgroundColor + "}" +
+    W + " .zcc-timeline-dot--active{background:" + s + ";border-color:" + s + "}" +
+    W + " .zcc-timeline-dot svg{width:12px;height:12px}" +
+    W + " .zcc-timeline-label{font-size:10px;font-weight:600;color:#6d7175;text-transform:uppercase;letter-spacing:0.03em}" +
+    W + " .zcc-timeline-sublabel{font-size:10px;color:#9ca3af;font-weight:500}" +
+    W + " .zcc-timeline-connector{flex:1;height:2px;background:" + s + ";z-index:0}" +
+    W + " .zcc-timeline-connector--pending{background:#e0e0e0}" +
+    // Social proof
+    W + " .zcc-social-proof{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#6d7175;margin-bottom:10px;background:#f6f6f7;padding:5px 10px;border-radius:20px;line-height:1.3}" +
+    W + " .zcc-social-proof-icon{display:inline-flex;align-items:center;flex-shrink:0}" +
+    W + " .zcc-social-proof-icon svg{width:14px;height:14px;display:block}" +
     // Waitlist
     W + " .zcc-wl-title{font-size:13px;font-weight:700;color:" + cfg.textColor + ";margin-bottom:8px;display:flex;align-items:center;gap:6px;padding-bottom:10px;border-bottom:1px solid #dde3ec}" +
     W + " .zcc-wl-toggle{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:" + cfg.primaryColor + ";text-decoration:none;cursor:pointer;border:none;background:none;padding:0;margin-top:8px}" +
@@ -908,6 +923,33 @@ const WidgetPreview = memo(function WidgetPreview({
             {effectiveCfg.showCountdown && effectiveCfg.showCutoffTime && (
               <div className="zcc-countdown zcc-countdown--amber">{clockIcon}<span>Order within <strong>2h 14m</strong> for same-day dispatch</span></div>
             )}
+            {effectiveCfg.showDeliveryDate && effectiveCfg.showEta && (
+              <div className="zcc-timeline">
+                <div className="zcc-timeline-step">
+                  <div className="zcc-timeline-dot zcc-timeline-dot--active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <span className="zcc-timeline-label">Order</span>
+                  <span className="zcc-timeline-sublabel">Today</span>
+                </div>
+                <div className="zcc-timeline-connector" />
+                <div className="zcc-timeline-step">
+                  <div className="zcc-timeline-dot zcc-timeline-dot--active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                  </div>
+                  <span className="zcc-timeline-label">Ships</span>
+                  <span className="zcc-timeline-sublabel">Tomorrow</span>
+                </div>
+                <div className="zcc-timeline-connector zcc-timeline-connector--pending" />
+                <div className="zcc-timeline-step">
+                  <div className="zcc-timeline-dot">
+                    <svg viewBox="0 0 24 24" fill="none" stroke={effectiveCfg.successColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  </div>
+                  <span className="zcc-timeline-label">Deliver</span>
+                  <span className="zcc-timeline-sublabel">Fri, Mar 28</span>
+                </div>
+              </div>
+            )}
             {effectiveCfg.showCod && (
               <div className="zcc-cod zcc-cod--available">{cardIcon} COD Available</div>
             )}
@@ -932,6 +974,14 @@ const WidgetPreview = memo(function WidgetPreview({
           </div>
           {cfg.showWaitlistOnFailure && (
             <div className="zcc-wl">
+              {cfg.showSocialProof && (
+                <div className="zcc-social-proof">
+                  <span className="zcc-social-proof-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  </span>
+                  Join 23 others waiting for delivery to your area
+                </div>
+              )}
               <button className="zcc-wl-toggle" type="button">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, display: "block" }}>
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>

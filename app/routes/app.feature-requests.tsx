@@ -33,7 +33,7 @@ import {
 import { PlusIcon, DeleteIcon, ChevronUpIcon, EditIcon, SearchIcon } from "@shopify/polaris-icons";
 
 const PAGE_SIZE = 10;
-const ADMIN_SHOP = "zip-code-checker.myshopify.com";
+const ADMIN_SHOP = process.env.ADMIN_SHOP || "zip-code-checker.myshopify.com";
 // Feature requests are intentionally available on ALL plans as a community
 // engagement feature. The limit below prevents spam, not plan gating.
 const MAX_REQUESTS_PER_SHOP = 20;

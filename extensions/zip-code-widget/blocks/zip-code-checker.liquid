@@ -357,8 +357,16 @@
   // ── Scope custom CSS: auto-prefix selectors with widget container ID ──────
   function scopeCustomCss(rawCss, wid) {
     if (!rawCss) return "";
-    // Strip </style> tags to prevent injection
-    var css = rawCss.replace(/<\/style>/gi, "");
+    // Defense-in-depth: sanitize the same vectors as the API-side sanitizeCss().
+    // The API already strips these before serving, but if a future code path
+    // (e.g. metafield fallback) bypasses the API, this layer still protects.
+    var css = rawCss
+      .replace(/<style\b[^>]*>/gi, "")
+      .replace(/<\/style>/gi, "")
+      .replace(/@import\b[^;]*(;|$)/gi, "")
+      .replace(/\bexpression\s*\(/gi, "")
+      .replace(/url\s*\(\s*['"]?\s*javascript\s*:/gi, "url(")
+      .replace(/url\s*\(\s*['"]?\s*data\s*:/gi, "url(");
     var result = "";
     var i = 0;
     while (i < css.length) {

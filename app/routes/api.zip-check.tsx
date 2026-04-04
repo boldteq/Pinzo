@@ -15,6 +15,7 @@
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import db from "../db.server";
 import { normalizeZipCode } from "../utils/zip";
+import { rateLimit, getClientIp, rateLimitResponse } from "../utils/rate-limit.server";
 
 function calculateDeliveryDate(
   estimatedDays: string,
@@ -295,6 +296,14 @@ async function handleZipCheck(shop: string | null, zip: string | null) {
   }
 }
 
+// Rate limit: 60 requests per IP per minute (generous for storefront widget)
+function checkRateLimit(request: Request): Response | null {
+  const ip = getClientIp(request);
+  const { limited, resetAt } = rateLimit(`zip-check:${ip}`, 60, 60_000);
+  if (limited) return rateLimitResponse(resetAt, CORS_HEADERS);
+  return null;
+}
+
 // Handle GET requests: ?shop=...&zip=...
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
@@ -304,6 +313,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
 
+  const blocked = checkRateLimit(request);
+  if (blocked) return blocked;
+
   const shop = url.searchParams.get("shop");
   const zip = url.searchParams.get("zip");
   return handleZipCheck(shop, zip);
@@ -311,6 +323,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 // Handle POST requests with JSON body: { shop, zip }
 export const action = async ({ request }: ActionFunctionArgs) => {
+  const blocked = checkRateLimit(request);
+  if (blocked) return blocked;
+
   let shop: string | null = null;
   let zip: string | null = null;
 

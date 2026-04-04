@@ -22,6 +22,7 @@ import {
   sendMerchantWaitlistAlert,
   type EmailOptions,
 } from "../email.server";
+import { rateLimit, getClientIp, rateLimitResponse } from "../utils/rate-limit.server";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -52,6 +53,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       headers: CORS_HEADERS,
     });
   }
+
+  // Rate limit: 10 signups per IP per minute (write operation — tighter limit)
+  const ip = getClientIp(request);
+  const { limited, resetAt } = rateLimit(`waitlist:${ip}`, 10, 60_000);
+  if (limited) return rateLimitResponse(resetAt, CORS_HEADERS);
 
   let shop: string | null = null;
   let zip: string | null = null;

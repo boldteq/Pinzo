@@ -33,6 +33,8 @@ model Session {
   emailVerified        Boolean?
   refreshToken         String?
   refreshTokenExpires  DateTime?
+
+  @@index([shop])
 }
 
 model ZipCode {
@@ -51,6 +53,7 @@ model ZipCode {
   updatedAt DateTime @updatedAt
 
   @@unique([shop, zipCode])
+  @@index([shop])
 }
 
 model DeliveryRule {
@@ -166,6 +169,7 @@ model FeatureRequest {
   updatedAt   DateTime      @updatedAt
   votes       FeatureVote[]
 
+  @@index([shop])
   @@index([status])
   @@index([votesCount])
 }

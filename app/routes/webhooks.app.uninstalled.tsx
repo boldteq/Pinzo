@@ -10,6 +10,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // The shop/redact GDPR webhook fires 48 hours later and also runs this cleanup.
   if (shop) {
     try {
+      // Delete FeatureVotes first (FK constraint to FeatureRequest)
+      await db.featureVote.deleteMany({ where: { shop } });
       await Promise.all([
         db.session.deleteMany({ where: { shop } }),
         db.zipCode.deleteMany({ where: { shop } }),
@@ -18,6 +20,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         db.widgetConfig.deleteMany({ where: { shop } }),
         db.subscription.deleteMany({ where: { shop } }),
         db.shopSettings.deleteMany({ where: { shop } }),
+        db.featureRequest.deleteMany({ where: { shop } }),
       ]);
     } catch {
       // Log failures silently — Shopify requires a 200 response regardless

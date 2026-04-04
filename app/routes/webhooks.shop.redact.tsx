@@ -16,6 +16,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Delete all shop data in parallel
   try {
+    // Delete FeatureVotes first (FK constraint to FeatureRequest)
+    await db.featureVote.deleteMany({ where: { shop } });
     await Promise.all([
       db.zipCode.deleteMany({ where: { shop } }),
       db.deliveryRule.deleteMany({ where: { shop } }),
@@ -24,6 +26,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       db.subscription.deleteMany({ where: { shop } }),
       db.session.deleteMany({ where: { shop } }),
       db.shopSettings.deleteMany({ where: { shop } }), // contains notificationEmail (PII)
+      db.featureRequest.deleteMany({ where: { shop } }),
     ]);
   } catch {
     // Shopify requires a 200 response regardless of errors

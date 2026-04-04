@@ -11,6 +11,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import db from "../db.server";
 import { getShopSubscription } from "../billing.server";
+import { rateLimit, getClientIp, rateLimitResponse } from "../utils/rate-limit.server";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -77,6 +78,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
+
+  // Rate limit: 30 requests per IP per minute (config is cached on client side)
+  const ip = getClientIp(request);
+  const { limited, resetAt } = rateLimit(`widget-config:${ip}`, 30, 60_000);
+  if (limited) return rateLimitResponse(resetAt, CORS_HEADERS);
 
   const url = new URL(request.url);
   const shop = url.searchParams.get("shop");

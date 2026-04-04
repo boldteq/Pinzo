@@ -28,8 +28,10 @@ import { authenticate } from "../shopify.server";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticate.admin(request);
 
-  // eslint-disable-next-line no-undef
-  return { apiKey: process.env.SHOPIFY_API_KEY || "" };
+  return {
+    apiKey: process.env.SHOPIFY_API_KEY || "",
+    chatwootToken: process.env.CHATWOOT_WEBSITE_TOKEN || "",
+  };
 };
 
 // Skeleton shown during page-to-page navigation transitions inside the app shell.
@@ -66,10 +68,9 @@ function AppContent() {
   return <Outlet />;
 }
 
-function ChatwootWidget() {
+function ChatwootWidget({ token }: { token: string }) {
   useEffect(() => {
-    // Skip if already loaded
-    if (window.$chatwoot) return;
+    if (!token || window.$chatwoot) return;
 
     window.chatwootSettings = {
       position: "right",
@@ -83,23 +84,23 @@ function ChatwootWidget() {
     script.async = true;
     script.onload = () => {
       window.chatwootSDK?.run({
-        websiteToken: "F2gCECkLD25SAkJ92AcVui4x",
+        websiteToken: token,
         baseUrl: BASE_URL,
       });
     };
     document.body.appendChild(script);
-  }, []);
+  }, [token]);
 
   return null;
 }
 
 export default function App() {
-  const { apiKey } = useLoaderData<typeof loader>();
+  const { apiKey, chatwootToken } = useLoaderData<typeof loader>();
 
   return (
     <AppProvider embedded apiKey={apiKey}>
       <PolarisAppProvider i18n={enTranslations}>
-        <ChatwootWidget />
+        <ChatwootWidget token={chatwootToken} />
         <NavMenu>
           <a href="/app/zip-codes">Zip Codes</a>
           <a href="/app/delivery-rules">Delivery Rules</a>

@@ -28,6 +28,10 @@ api_version = "2026-01"
   topics = [ "app_subscriptions/update" ]
   uri = "/webhooks/app_subscriptions/update"
 
+# GDPR compliance webhooks (customers/data_request, customers/redact, shop/redact)
+# are NOT registered here — they are configured in Shopify Partner Dashboard > App setup > Privacy.
+# Route handlers exist at: webhooks.customers.data_request.tsx, webhooks.customers.redact.tsx, webhooks.shop.redact.tsx
+
 [access_scopes]
 # read_themes is required to detect whether the app embed is enabled in the
 # merchant's active theme (reads config/settings_data.json via GraphQL themes API).

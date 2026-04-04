@@ -30,6 +30,9 @@ import {
   Modal,
 } from "@shopify/polaris";
 
+/** Maximum length for custom CSS (characters). Prevents DB bloat and slow responses. */
+const MAX_CUSTOM_CSS_LENGTH = 10_000;
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const shop = session.shop;
@@ -142,7 +145,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         showSocialProof: formData.get("showSocialProof") === "true",
         lockButtonsUntilZipCheck: formData.get("lockButtonsUntilZipCheck") === "true",
         borderRadius: String(formData.get("borderRadius") || "8"),
-        customCss: String(formData.get("customCss") || "") || null,
+        customCss: String(formData.get("customCss") || "").slice(0, MAX_CUSTOM_CSS_LENGTH) || null,
       };
 
       // Server-side plan gating: strip premium fields the shop's plan doesn't allow
@@ -303,23 +306,75 @@ const DEFAULTS = {
 };
 
 // ── Scope custom CSS for admin preview — prefix selectors with #wid ─────────
+// Handles @keyframes/@font-face (pass-through), @media (recursive scoping),
+// and regular selectors (prefixed with container ID).
 function scopeAdminCss(rawCss: string | null | undefined, wid: string): string {
   if (!rawCss) return "";
-  const css = rawCss.replace(/<\/style>/gi, "");
+  // Sanitize the same way the public API does (mirrors api.widget-config.tsx)
+  const css = rawCss
+    .replace(/<style\b[^>]*>/gi, "")
+    .replace(/<\/style>/gi, "")
+    .replace(/@import\b[^;]*(;|$)/gi, "")
+    .replace(/\bexpression\s*\(/gi, "")
+    .replace(/url\s*\(\s*['"]?\s*javascript\s*:/gi, "url(")
+    .replace(/url\s*\(\s*['"]?\s*data\s*:/gi, "url(");
   let result = "";
-  let remaining = css;
-  while (remaining.length > 0) {
-    const openBrace = remaining.indexOf("{");
-    if (openBrace === -1) break;
-    const closeBrace = remaining.indexOf("}", openBrace);
-    if (closeBrace === -1) break;
-    const selector = remaining.substring(0, openBrace).trim();
-    const body = remaining.substring(openBrace + 1, closeBrace);
-    remaining = remaining.substring(closeBrace + 1);
-    if (selector.startsWith("@")) {
-      result += selector + "{" + body + "}";
-    } else if (selector) {
-      const prefixed = selector.split(",").map(s => {
+  let i = 0;
+  while (i < css.length) {
+    // Skip whitespace
+    while (i < css.length && /\s/.test(css[i])) { result += css[i]; i++; }
+    if (i >= css.length) break;
+    // Handle at-rules
+    if (css[i] === "@") {
+      let atRule = "";
+      let j = i;
+      while (j < css.length && css[j] !== "{" && css[j] !== ";") { atRule += css[j]; j++; }
+      const atName = atRule.trim().toLowerCase();
+      // @keyframes and @font-face: pass through without scoping
+      if (atName.startsWith("@keyframes") || atName.startsWith("@font-face")) {
+        result += atRule;
+        if (j < css.length && css[j] === "{") {
+          let depth = 1; result += css[j]; j++;
+          while (j < css.length && depth > 0) {
+            if (css[j] === "{") depth++;
+            if (css[j] === "}") depth--;
+            result += css[j]; j++;
+          }
+        }
+        i = j; continue;
+      }
+      // @media: recursively scope inner rules
+      if (atName.startsWith("@media")) {
+        result += atRule;
+        if (j < css.length && css[j] === "{") {
+          result += "{"; j++;
+          let depth = 1; let inner = "";
+          while (j < css.length && depth > 0) {
+            if (css[j] === "{") depth++;
+            if (css[j] === "}") depth--;
+            if (depth > 0) inner += css[j];
+            j++;
+          }
+          result += scopeAdminCss(inner, wid);
+          result += "}";
+        }
+        i = j; continue;
+      }
+    }
+    // Regular rule: grab selector, prefix with #wid
+    let sel = "";
+    let body = "";
+    while (i < css.length && css[i] !== "{") { sel += css[i]; i++; }
+    if (i < css.length) i++; // skip {
+    let depth = 1;
+    while (i < css.length && depth > 0) {
+      if (css[i] === "{") depth++;
+      if (css[i] === "}") depth--;
+      if (depth > 0) body += css[i];
+      i++;
+    }
+    if (sel.trim()) {
+      const prefixed = sel.split(",").map(s => {
         s = s.trim();
         return s ? "#" + wid + " " + s : "";
       }).filter(Boolean).join(", ");
@@ -1727,7 +1782,8 @@ export default function WidgetPage() {
                       placeholder=".zcc-heading { font-size: 18px; } .zcc-btn { border-radius: 4px; }"
                       autoComplete="off"
                       disabled={!limits.customCss}
-                      helpText="Write plain CSS using widget classes (.zcc-heading, .zcc-btn, .zcc-input, .zcc-result, .zcc-search-bar, .zcc-meta). All selectors are automatically scoped to the widget only — your CSS won't affect the rest of your store."
+                      maxLength={MAX_CUSTOM_CSS_LENGTH}
+                      helpText="Target widget elements with these classes: .zcc-heading, .zcc-heading-icon, .zcc-search-bar, .zcc-input, .zcc-btn, .zcc-btn-icon, .zcc-btn-label, .zcc-result, .zcc-result-icon, .zcc-result-message, .zcc-meta, .zcc-cutoff, .zcc-days, .zcc-cod, .zcc-return-policy, .zcc-delivery-date, .zcc-countdown, .zcc-delivery-fee, .zcc-wl (waitlist), .zcc-wl-input, .zcc-wl-btn, .zcc-social-proof. All selectors are automatically scoped to the widget — your CSS won't affect the rest of your store."
                     />
                     {!limits.customCss && (
                       <Banner tone="info">

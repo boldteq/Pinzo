@@ -153,7 +153,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const shop = session.shop;
   const subscription = await getShopSubscription(shop);
-  const isAdmin = shop === "zip-code-checker.myshopify.com";
+  const isAdmin = shop === (process.env.ADMIN_SHOP || "zip-code-checker.myshopify.com");
   return { subscription, isAdmin };
 };
 
@@ -199,7 +199,7 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<
   }
 
   if (intent === "test-set-plan") {
-    if (shop !== "zip-code-checker.myshopify.com") {
+    if (shop !== (process.env.ADMIN_SHOP || "zip-code-checker.myshopify.com")) {
       return { error: "This action is only available for the admin store." };
     }
     const tier = String(formData.get("tier")) as import("../plans").PlanTier;

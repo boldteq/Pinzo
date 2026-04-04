@@ -390,7 +390,7 @@ function buildSharedMetaCss(W: string, cfg: WidgetConfig): string {
   const s = cfg.successColor;
   return (
     // Result card layout — matches storefront
-    W + " .zcc-result-icon{flex-shrink:0;width:20px;height:20px;display:flex;align-items:center;justify-content:center;box-sizing:content-box}" +
+    W + " .zcc-result-icon{flex-shrink:0;width:20px;height:20px;display:flex;align-items:center;justify-content:center;box-sizing:content-box;margin-top:2px}" +
     W + " .zcc-result-icon svg{width:20px;height:20px;display:block}" +
     W + " .zcc-result-content{flex:1;min-width:0;margin:0;padding:0}" +
     W + " .zcc-result-message{font-weight:600;line-height:1.4;margin:0;padding:0}" +
@@ -497,7 +497,7 @@ function buildWidgetCss(wid: string, cfg: WidgetConfig): string {
     W + " .zcc-btn:active{filter:brightness(0.95);transform:translateY(0)}" +
     W + " .zcc-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none;filter:none}" +
     W + " .zcc-btn--error{background:" + e + "10;color:" + e + ";font-weight:700;box-shadow:none}" +
-    W + " .zcc-result{margin-top:12px;padding:12px 14px;border-radius:12px;font-size:13.5px;line-height:1.5;animation:zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1);display:flex;gap:12px;align-items:center}" +
+    W + " .zcc-result{margin-top:12px;padding:12px 14px;border-radius:12px;font-size:13.5px;line-height:1.5;animation:zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1);display:flex;gap:12px;align-items:flex-start}" +
     W + " .zcc-result.ok{background:" + s + "0c;border:1px solid " + s + "20;color:" + cfg.textColor + "}" +
     W + " .zcc-result.ok .zcc-result-icon svg{color:" + s + ";stroke:" + s + "}" +
     W + " .zcc-result.fail{background:" + e + "08;border:1px solid " + e + "18;color:" + cfg.textColor + "}" +

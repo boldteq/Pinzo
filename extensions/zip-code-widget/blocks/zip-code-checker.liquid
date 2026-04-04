@@ -522,7 +522,7 @@
       // Icon container is 32px so the 4px background-circle padding still gives a 24px
       // content area for the SVG under box-sizing:border-box — previously 24px with 4px
       // padding compressed the SVG to 16px which looked inconsistent between ok/fail.
-      W + " .zcc-result-icon{flex-shrink:0 !important;width:20px !important;height:20px !important;display:flex !important;align-items:center !important;justify-content:center !important;box-sizing:content-box !important}" +
+      W + " .zcc-result-icon{flex-shrink:0 !important;width:20px !important;height:20px !important;display:flex !important;align-items:center !important;justify-content:center !important;box-sizing:content-box !important;margin-top:2px !important}" +
       W + " .zcc-result-icon svg{width:20px !important;height:20px !important;display:block !important}" +
       W + " .zcc-result-content{flex:1 !important;min-width:0 !important;margin:0 !important;padding:0 !important}" +
       W + " .zcc-result-message{font-size:13.5px !important;font-weight:600 !important;line-height:1.4 !important;margin:0 !important;padding:0 !important}" +
@@ -585,7 +585,7 @@
       // Waitlist toggle
       W + " .zcc-wl-toggle{display:flex !important;align-items:center !important;gap:12px !important;font-size:13.5px !important;font-weight:600 !important;color:" + cfg.primaryColor + " !important;text-decoration:none !important;cursor:pointer !important;border:none !important;background:none !important;padding:0 !important;width:100% !important;text-align:left !important}" +
       W + " .zcc-wl-toggle:hover{text-decoration:underline !important}" +
-      W + " .zcc-wl-toggle svg{width:20px !important;height:20px !important;flex-shrink:0 !important;background:" + cfg.primaryColor + "15 !important;border-radius:50% !important;padding:6px !important;display:block !important;box-sizing:content-box !important}" +
+      W + " .zcc-wl-toggle svg{width:20px !important;height:20px !important;flex-shrink:0 !important;background:" + cfg.primaryColor + "15 !important;border-radius:50% !important;padding:6px !important;display:block !important;box-sizing:content-box !important;margin-top:2px !important}" +
       // Waitlist form inputs
       W + " .zcc-wl-input:focus{border-color:" + cfg.primaryColor + " !important;box-shadow:0 0 0 2px " + cfg.primaryColor + "20 !important}" +
       // Waitlist submit button icon sizing and disabled state
@@ -627,7 +627,7 @@
       W + " .zcc-btn:hover{filter:brightness(1.06) !important;box-shadow:0 4px 14px " + cfg.primaryColor + "40 !important;transform:translateY(-1px) !important}" +
       W + " .zcc-btn:active{filter:brightness(0.95) !important;transform:translateY(0) !important}" +
       W + " .zcc-btn:disabled{opacity:.6 !important;cursor:not-allowed !important;filter:none !important;transform:none !important;box-shadow:none !important}" +
-      W + " .zcc-result{margin-top:12px !important;padding:12px 14px !important;border-radius:12px !important;font-size:13.5px !important;line-height:1.5 !important;animation:zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1) !important;display:flex !important;gap:12px !important;align-items:center !important}" +
+      W + " .zcc-result{margin-top:12px !important;padding:12px 14px !important;border-radius:12px !important;font-size:13.5px !important;line-height:1.5 !important;animation:zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1) !important;display:flex !important;gap:12px !important;align-items:flex-start !important}" +
       W + " .zcc-result.ok{background:" + cfg.successColor + "0c !important;border:1px solid " + cfg.successColor + "20 !important;color:" + cfg.textColor + " !important}" +
       W + " .zcc-result.ok .zcc-result-icon svg{color:" + cfg.successColor + " !important;stroke:" + cfg.successColor + " !important}" +
       W + " .zcc-result.fail{background:" + cfg.errorColor + "08 !important;border:1px solid " + cfg.errorColor + "18 !important;color:" + cfg.textColor + " !important}" +

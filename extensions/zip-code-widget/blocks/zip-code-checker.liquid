@@ -514,74 +514,71 @@
       // Loading state: button already has display:flex + justify-content:center from .zcc-btn,
       // so the lone .zcc-spinner child is automatically centred — just remove the gap
       W + " .zcc-btn--loading{gap:0 !important}" +
-      // Section grouping — visual hierarchy with dividers and breathing room
-      W + " .zcc-section-divider{height:1px !important;background:rgba(0,0,0,0.06) !important;margin:12px 0 !important;border:none !important}" +
-      W + " .zcc-info-group{display:flex !important;flex-direction:column !important;gap:6px !important}" +
-      W + " .zcc-badges-row{display:flex !important;flex-wrap:wrap !important;align-items:center !important;gap:8px !important}" +
-      // Result card layout
-      // Icon container is 32px so the 4px background-circle padding still gives a 24px
-      // content area for the SVG under box-sizing:border-box — previously 24px with 4px
-      // padding compressed the SVG to 16px which looked inconsistent between ok/fail.
-      W + " .zcc-result-icon{flex-shrink:0 !important;width:20px !important;height:20px !important;display:flex !important;align-items:center !important;justify-content:center !important;box-sizing:content-box !important;margin-top:2px !important}" +
-      W + " .zcc-result-icon svg{width:20px !important;height:20px !important;display:block !important}" +
+      // Section grouping — info group card with subtle background
+      W + " .zcc-section-divider{height:1px !important;background:rgba(0,0,0,0.06) !important;margin:10px 0 !important;border:none !important}" +
+      W + " .zcc-info-group{display:flex !important;flex-direction:column !important;gap:7px !important;background:#f7faf7 !important;border:1px solid #e8f0e8 !important;border-radius:10px !important;padding:10px 12px !important}" +
+      W + " .zcc-badges-row{display:flex !important;flex-wrap:wrap !important;align-items:center !important;gap:6px !important}" +
+      // Result card layout — small inline icon, no circle background
+      W + " .zcc-result-icon{flex-shrink:0 !important;width:18px !important;height:18px !important;display:flex !important;align-items:center !important;justify-content:center !important;box-sizing:content-box !important;margin-top:1px !important}" +
+      W + " .zcc-result-icon svg{width:18px !important;height:18px !important;display:block !important}" +
       W + " .zcc-result-content{flex:1 !important;min-width:0 !important;margin:0 !important;padding:0 !important}" +
-      W + " .zcc-result-message{font-size:13.5px !important;font-weight:600 !important;line-height:1.4 !important;margin:0 !important;padding:0 !important}" +
-      W + " .zcc-result.ok .zcc-result-icon{background:" + cfg.successColor + "15 !important;border-radius:50% !important;padding:6px !important}" +
+      W + " .zcc-result-message{font-size:14px !important;font-weight:700 !important;line-height:1.4 !important;margin:0 !important;padding:0 !important}" +
+      W + " .zcc-result.ok .zcc-result-icon{background:none !important;border-radius:0 !important;padding:0 !important}" +
       W + " .zcc-result.ok .zcc-result-message{color:" + cfg.successColor + " !important}" +
-      W + " .zcc-result.fail .zcc-result-icon{background:" + cfg.errorColor + "15 !important;border-radius:50% !important;padding:6px !important}" +
+      W + " .zcc-result.fail .zcc-result-icon{background:none !important;border-radius:0 !important;padding:0 !important}" +
       W + " .zcc-result.fail .zcc-result-message{color:" + cfg.errorColor + " !important}" +
       // Meta info rows (ETA, zone, days, cutoff)
       W + " .zcc-meta{margin-top:0 !important;font-size:13px !important;display:flex !important;align-items:center !important;gap:7px !important;color:#4b5563 !important;line-height:1.4 !important}" +
-      W + " .zcc-meta svg{width:14px !important;height:14px !important;flex-shrink:0 !important;opacity:0.7 !important}" +
+      W + " .zcc-meta svg{width:14px !important;height:14px !important;flex-shrink:0 !important;opacity:0.65 !important}" +
       W + " .zcc-meta strong{font-weight:600 !important;color:" + cfg.textColor + " !important}" +
       W + " .zcc-meta span{flex:1 !important}" +
       W + " .zcc-cutoff{margin-top:0 !important;font-size:12px !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:7px !important}" +
-      W + " .zcc-cutoff svg{width:13px !important;height:13px !important;flex-shrink:0 !important;opacity:0.6 !important}" +
+      W + " .zcc-cutoff svg{width:13px !important;height:13px !important;flex-shrink:0 !important;opacity:0.55 !important}" +
       W + " .zcc-days{margin-top:0 !important;font-size:12px !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:7px !important}" +
-      W + " .zcc-days svg{width:13px !important;height:13px !important;flex-shrink:0 !important;opacity:0.6 !important}" +
-      // COD badge
-      W + " .zcc-cod{margin-top:0 !important;display:inline-flex !important;align-items:center !important;gap:5px !important;border-radius:20px !important;padding:4px 10px !important;font-size:12px !important;font-weight:600 !important}" +
-      W + " .zcc-cod svg{width:13px !important;height:13px !important;flex-shrink:0 !important}" +
-      W + " .zcc-cod--available{background:" + cfg.successColor + "12 !important;border:1px solid " + cfg.successColor + "25 !important;color:" + cfg.successColor + " !important}" +
-      W + " .zcc-cod--unavailable{background:#d72c0d10 !important;border:1px solid #d72c0d22 !important;color:#d72c0d !important}" +
-      // Return policy row
-      W + " .zcc-return-policy{margin-top:0 !important;font-size:11px !important;color:#9ca3af !important;display:flex !important;align-items:center !important;gap:7px !important}" +
-      W + " .zcc-return-policy svg{width:12px !important;height:12px !important;flex-shrink:0 !important;opacity:0.45 !important}" +
+      W + " .zcc-days svg{width:13px !important;height:13px !important;flex-shrink:0 !important;opacity:0.55 !important}" +
+      // COD badge — tight inline pills
+      W + " .zcc-cod{margin-top:0 !important;display:inline-flex !important;align-items:center !important;gap:4px !important;border-radius:20px !important;padding:3px 9px !important;font-size:11px !important;font-weight:600 !important}" +
+      W + " .zcc-cod svg{width:11px !important;height:11px !important;flex-shrink:0 !important}" +
+      W + " .zcc-cod--available{background:" + cfg.successColor + "10 !important;border:1px solid " + cfg.successColor + "22 !important;color:" + cfg.successColor + " !important}" +
+      W + " .zcc-cod--unavailable{background:#d72c0d0e !important;border:1px solid #d72c0d1a !important;color:#d72c0d !important}" +
+      // Return policy — footnote line
+      W + " .zcc-return-policy{margin-top:0 !important;font-size:11px !important;color:#aab0b6 !important;display:flex !important;align-items:center !important;gap:6px !important}" +
+      W + " .zcc-return-policy svg{width:11px !important;height:11px !important;flex-shrink:0 !important;opacity:0.4 !important}" +
       W + " .zcc-return-policy span{flex:1 !important}" +
       // Delivery date
-      W + " .zcc-delivery-date{margin-top:0 !important;font-size:12px !important;color:#4b5563 !important;display:flex !important;align-items:center !important;gap:7px !important;line-height:1.4 !important}" +
-      W + " .zcc-delivery-date svg{width:14px !important;height:14px !important;flex-shrink:0 !important;opacity:0.7 !important}" +
+      W + " .zcc-delivery-date{margin-top:0 !important;font-size:13px !important;color:#4b5563 !important;display:flex !important;align-items:center !important;gap:7px !important;line-height:1.4 !important}" +
+      W + " .zcc-delivery-date svg{width:14px !important;height:14px !important;flex-shrink:0 !important;opacity:0.65 !important}" +
       W + " .zcc-delivery-date strong{font-weight:600 !important;color:" + cfg.textColor + " !important}" +
-      // Countdown
-      W + " .zcc-countdown{margin-top:0 !important;font-size:12.5px !important;display:flex !important;align-items:center !important;gap:7px !important;line-height:1.4 !important;padding:6px 10px !important;border-radius:8px !important;background:#fef3c7 !important;border:1px solid #fde68a !important}" +
-      W + " .zcc-countdown svg{width:13px !important;height:13px !important;flex-shrink:0 !important}" +
+      // Countdown — inline text row, no card background
+      W + " .zcc-countdown{margin-top:0 !important;font-size:12px !important;display:flex !important;align-items:center !important;gap:6px !important;line-height:1.4 !important;padding:0 !important;background:none !important;border:none !important;border-radius:0 !important}" +
+      W + " .zcc-countdown svg{width:12px !important;height:12px !important;flex-shrink:0 !important}" +
       W + " .zcc-countdown strong{font-weight:700 !important}" +
-      W + " .zcc-countdown--green{color:#16a34a !important;background:#f0fdf4 !important;border-color:#bbf7d0 !important}" +
+      W + " .zcc-countdown--green{color:#16a34a !important}" +
       W + " .zcc-countdown--green strong{color:#16a34a !important}" +
-      W + " .zcc-countdown--green svg{opacity:0.8 !important}" +
-      W + " .zcc-countdown--amber{color:#92400e !important;background:#fef3c7 !important;border-color:#fde68a !important}" +
-      W + " .zcc-countdown--amber strong{color:#92400e !important}" +
-      W + " .zcc-countdown--amber svg{opacity:0.8 !important}" +
-      W + " .zcc-countdown--red{color:#dc2626 !important;background:#fef2f2 !important;border-color:#fecaca !important}" +
+      W + " .zcc-countdown--green svg{color:#16a34a !important;stroke:#16a34a !important}" +
+      W + " .zcc-countdown--amber{color:#b45309 !important}" +
+      W + " .zcc-countdown--amber strong{color:#b45309 !important}" +
+      W + " .zcc-countdown--amber svg{color:#b45309 !important;stroke:#b45309 !important}" +
+      W + " .zcc-countdown--red{color:#dc2626 !important}" +
       W + " .zcc-countdown--red strong{color:#dc2626 !important}" +
-      W + " .zcc-countdown--red svg{opacity:0.8 !important}" +
-      W + " .zcc-countdown--passed{color:#6d7175 !important;background:#f6f6f7 !important;border-color:#e5e7eb !important}" +
-      // Delivery fee
-      W + " .zcc-delivery-fee{margin-top:0 !important;display:inline-flex !important;align-items:center !important;gap:5px !important;border-radius:20px !important;padding:4px 10px !important;font-size:12px !important;font-weight:600 !important}" +
-      W + " .zcc-delivery-fee svg{width:13px !important;height:13px !important;flex-shrink:0 !important}" +
-      W + " .zcc-delivery-fee--free{background:" + cfg.successColor + "12 !important;border:1px solid " + cfg.successColor + "25 !important;color:" + cfg.successColor + " !important}" +
-      W + " .zcc-delivery-fee--paid{background:#f59e0b10 !important;border:1px solid #f59e0b22 !important;color:#92400e !important}" +
-      // Order timeline (ORDER > SHIPS > DELIVER)
-      W + " .zcc-timeline{margin-top:0 !important;display:flex !important;align-items:center !important;justify-content:space-between !important;gap:0 !important;position:relative !important;padding:10px 4px !important}" +
-      W + " .zcc-timeline::before{content:'' !important;position:absolute !important;top:50% !important;left:16% !important;right:16% !important;height:2px !important;background:#e0e0e0 !important;transform:translateY(-50%) !important;z-index:0 !important}" +
-      W + " .zcc-timeline-step{display:flex !important;flex-direction:column !important;align-items:center !important;gap:4px !important;z-index:1 !important;position:relative !important}" +
-      W + " .zcc-timeline-dot{width:26px !important;height:26px !important;border-radius:50% !important;display:flex !important;align-items:center !important;justify-content:center !important;border:2px solid " + cfg.successColor + " !important;background:" + cfg.backgroundColor + " !important}" +
+      W + " .zcc-countdown--red svg{color:#dc2626 !important;stroke:#dc2626 !important}" +
+      W + " .zcc-countdown--passed{color:#6d7175 !important}" +
+      // Delivery fee — tight inline pills
+      W + " .zcc-delivery-fee{margin-top:0 !important;display:inline-flex !important;align-items:center !important;gap:4px !important;border-radius:20px !important;padding:3px 9px !important;font-size:11px !important;font-weight:600 !important}" +
+      W + " .zcc-delivery-fee svg{width:11px !important;height:11px !important;flex-shrink:0 !important}" +
+      W + " .zcc-delivery-fee--free{background:" + cfg.successColor + "10 !important;border:1px solid " + cfg.successColor + "22 !important;color:" + cfg.successColor + " !important}" +
+      W + " .zcc-delivery-fee--paid{background:#f59e0b0e !important;border:1px solid #f59e0b1a !important;color:#92400e !important}" +
+      // Order timeline — clean thin design with card background
+      W + " .zcc-timeline{margin-top:0 !important;display:flex !important;align-items:flex-start !important;justify-content:space-between !important;gap:0 !important;position:relative !important;padding:12px 4px 8px !important;background:#f7faf7 !important;border:1px solid #e8f0e8 !important;border-radius:10px !important}" +
+      W + " .zcc-timeline::before{content:'' !important;position:absolute !important;top:22px !important;left:calc(16.66% + 6px) !important;right:calc(16.66% + 6px) !important;height:1.5px !important;background:#d1e8d1 !important;z-index:0 !important}" +
+      W + " .zcc-timeline-step{display:flex !important;flex-direction:column !important;align-items:center !important;gap:5px !important;z-index:1 !important;position:relative !important;flex:1 !important}" +
+      W + " .zcc-timeline-dot{width:20px !important;height:20px !important;border-radius:50% !important;display:flex !important;align-items:center !important;justify-content:center !important;border:1.5px solid " + cfg.successColor + " !important;background:" + cfg.backgroundColor + " !important}" +
       W + " .zcc-timeline-dot--active{background:" + cfg.successColor + " !important;border-color:" + cfg.successColor + " !important}" +
-      W + " .zcc-timeline-dot svg{width:12px !important;height:12px !important}" +
-      W + " .zcc-timeline-label{font-size:10px !important;font-weight:600 !important;color:#6d7175 !important;text-transform:uppercase !important;letter-spacing:0.03em !important}" +
-      W + " .zcc-timeline-sublabel{font-size:10px !important;color:#9ca3af !important;font-weight:500 !important}" +
-      W + " .zcc-timeline-connector{flex:1 !important;height:2px !important;background:" + cfg.successColor + " !important;z-index:0 !important}" +
-      W + " .zcc-timeline-connector--pending{background:#e0e0e0 !important}" +
+      W + " .zcc-timeline-dot svg{width:10px !important;height:10px !important}" +
+      W + " .zcc-timeline-label{font-size:10px !important;font-weight:600 !important;color:#4b5563 !important;text-transform:uppercase !important;letter-spacing:0.04em !important}" +
+      W + " .zcc-timeline-sublabel{font-size:10px !important;color:#9ca3af !important;font-weight:400 !important;text-align:center !important;line-height:1.3 !important}" +
+      W + " .zcc-timeline-connector{flex:1 !important;height:1.5px !important;background:" + cfg.successColor + " !important;z-index:0 !important}" +
+      W + " .zcc-timeline-connector--pending{background:#d1e8d1 !important}" +
       // Waitlist toggle
       W + " .zcc-wl-toggle{display:flex !important;align-items:center !important;gap:12px !important;font-size:13.5px !important;font-weight:600 !important;color:" + cfg.primaryColor + " !important;text-decoration:none !important;cursor:pointer !important;border:none !important;background:none !important;padding:0 !important;width:100% !important;text-align:left !important}" +
       W + " .zcc-wl-toggle:hover{text-decoration:underline !important}" +
@@ -627,10 +624,10 @@
       W + " .zcc-btn:hover{filter:brightness(1.06) !important;box-shadow:0 4px 14px " + cfg.primaryColor + "40 !important;transform:translateY(-1px) !important}" +
       W + " .zcc-btn:active{filter:brightness(0.95) !important;transform:translateY(0) !important}" +
       W + " .zcc-btn:disabled{opacity:.6 !important;cursor:not-allowed !important;filter:none !important;transform:none !important;box-shadow:none !important}" +
-      W + " .zcc-result{margin-top:12px !important;padding:12px 14px !important;border-radius:12px !important;font-size:13.5px !important;line-height:1.5 !important;animation:zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1) !important;display:flex !important;gap:12px !important;align-items:flex-start !important}" +
-      W + " .zcc-result.ok{background:" + cfg.successColor + "0c !important;border:1px solid " + cfg.successColor + "20 !important;color:" + cfg.textColor + " !important}" +
+      W + " .zcc-result{margin-top:12px !important;padding:0 !important;border-radius:0 !important;font-size:13.5px !important;line-height:1.5 !important;animation:zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1) !important;display:flex !important;gap:8px !important;align-items:flex-start !important;background:none !important;border:none !important}" +
+      W + " .zcc-result.ok{background:none !important;border:none !important;color:" + cfg.textColor + " !important}" +
       W + " .zcc-result.ok .zcc-result-icon svg{color:" + cfg.successColor + " !important;stroke:" + cfg.successColor + " !important}" +
-      W + " .zcc-result.fail{background:" + cfg.errorColor + "08 !important;border:1px solid " + cfg.errorColor + "18 !important;color:" + cfg.textColor + " !important}" +
+      W + " .zcc-result.fail{background:" + cfg.errorColor + "08 !important;border:1px solid " + cfg.errorColor + "18 !important;color:" + cfg.textColor + " !important;padding:10px 12px !important;border-radius:10px !important}" +
       W + " .zcc-result.fail .zcc-result-icon svg{color:" + cfg.errorColor + " !important;stroke:" + cfg.errorColor + " !important}" +
       W + " .zcc-wl{margin-top:12px !important;padding:14px !important;background:linear-gradient(135deg,#f8fafc,#f0f4f8) !important;border-radius:12px !important;border:1px solid #dde3ec !important}" +
       W + " .zcc-wl-input{border-radius:8px !important;border:1.5px solid #dde3ec !important;padding:11px 14px !important;width:100% !important;display:block !important;margin-bottom:8px !important;outline:none !important;font-size:13.5px !important;transition:border-color 0.2s,box-shadow 0.2s !important;background:#fff !important;color:" + cfg.textColor + " !important;line-height:1.4 !important}" +
@@ -655,7 +652,7 @@
   var ICONS = {
     location: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>',
     search:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>',
-    check:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>',
+    check:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
     xCircle:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>',
     truck:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
     calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
@@ -779,33 +776,39 @@
             var html = '<div class="zcc-result ok">' +
               '<div class="zcc-result-icon">' + ICONS.check + '</div>' +
               '<div class="zcc-result-content">' +
-              '<div class="zcc-info-group">' +
-              '<div class="zcc-result-message">' + esc(data.message) + '</div>';
-            if (cfg.showEta && data.eta) {
-              html += '<div class="zcc-meta">' + ICONS.truck + '<span>Estimated delivery: <strong>' + esc(data.eta) + '</strong></span></div>';
-            }
-            // Delivery Date
-            if (cfg.showDeliveryDate && data.estimatedDeliveryDate) {
-              var dateStr = formatDeliveryDate(data.estimatedDeliveryDate);
-              if (dateStr) {
-                html += '<div class="zcc-meta zcc-delivery-date">' + ICONS.calendar + '<span>Expected by <strong>' + esc(dateStr) + '</strong></span></div>';
+              '<div class="zcc-result-message" style="margin-bottom:8px">' + esc(data.message) + '</div>';
+            // Group 1: Info card — ETA + delivery date + delivery days + zone
+            var hasInfoGroup = (cfg.showEta && data.eta) || (cfg.showDeliveryDate && data.estimatedDeliveryDate) || (cfg.showDeliveryDays && data.daysOfWeek) || (cfg.showZone && data.zone);
+            if (hasInfoGroup) {
+              html += '<div class="zcc-info-group" style="margin-bottom:8px">';
+              if (cfg.showEta && data.eta) {
+                html += '<div class="zcc-meta">' + ICONS.truck + '<span>Est. delivery: <strong>' + esc(data.eta) + '</strong></span></div>';
               }
+              if (cfg.showDeliveryDate && data.estimatedDeliveryDate) {
+                var dateStr = formatDeliveryDate(data.estimatedDeliveryDate);
+                if (dateStr) {
+                  html += '<div class="zcc-meta zcc-delivery-date">' + ICONS.calendar + '<span>Expected by <strong>' + esc(dateStr) + '</strong></span></div>';
+                }
+              }
+              if (cfg.showDeliveryDays && data.daysOfWeek) {
+                var days = data.daysOfWeek.split(',').map(function(d) { return d.trim(); }).join(' \u00b7 ');
+                html += '<div class="zcc-meta zcc-days">' + ICONS.calendar + '<span>' + esc(days) + '</span></div>';
+              }
+              if (cfg.showZone && data.zone) {
+                html += '<div class="zcc-meta">' + ICONS.location + '<span>Zone: <strong>' + esc(data.zone) + '</strong></span></div>';
+              }
+              html += '</div>'; // close .zcc-info-group (primary info card)
             }
-            if (cfg.showZone && data.zone) {
-              html += '<div class="zcc-meta">' + ICONS.location + '<span>Zone: <strong>' + esc(data.zone) + '</strong></span></div>';
-            }
-            html += '</div>'; // close .zcc-info-group (primary info)
-            // Group 2: Order Timeline (ORDER > SHIPS > DELIVER)
+            // Group 2: Order Timeline card (ORDER > SHIPS > DELIVER)
             if (cfg.showDeliveryDate && data.estimatedDeliveryDate) {
-              html += '<div class="zcc-section-divider"></div>';
               var delivDateStr = formatDeliveryDate(data.estimatedDeliveryDate);
               var todayD = new Date();
               var tomorrowD = new Date(); tomorrowD.setDate(tomorrowD.getDate() + 1);
               var todayLabel = (todayD.toLocaleDateString('en-US', { weekday: 'short' })) + ', ' + (todayD.toLocaleDateString('en-US', { month: 'short' })) + ' ' + todayD.getDate();
               var tomorrowLabel = (tomorrowD.toLocaleDateString('en-US', { weekday: 'short' })) + ', ' + (tomorrowD.toLocaleDateString('en-US', { month: 'short' })) + ' ' + tomorrowD.getDate();
-              html += '<div class="zcc-timeline">' +
+              html += '<div class="zcc-timeline" style="margin-bottom:8px">' +
                 '<div class="zcc-timeline-step">' +
-                  '<div class="zcc-timeline-dot zcc-timeline-dot--active"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>' +
+                  '<div class="zcc-timeline-dot zcc-timeline-dot--active"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>' +
                   '<span class="zcc-timeline-label">Order</span>' +
                   '<span class="zcc-timeline-sublabel">' + esc(todayLabel) + '</span>' +
                 '</div>' +
@@ -823,38 +826,28 @@
                 '</div>' +
               '</div>';
             }
-            // Group 3: Scheduling details (days + cutoff + countdown)
-            var hasScheduling = (cfg.showDeliveryDays && data.daysOfWeek) || (cfg.showCutoffTime && data.cutoffTime) || (cfg.showCountdown && data.cutoffTime);
-            if (hasScheduling) {
-              html += '<div class="zcc-section-divider"></div><div class="zcc-info-group">';
-            }
-            if (cfg.showDeliveryDays && data.daysOfWeek) {
-              var days = data.daysOfWeek.split(',').map(function(d) { return d.trim(); }).join(' \u00b7 ');
-              html += '<div class="zcc-meta zcc-days">' + ICONS.calendar + '<span>' + esc(days) + '</span></div>';
-            }
-            if (cfg.showCutoffTime && data.cutoffTime) {
-              var parts = data.cutoffTime.split(':');
-              var hr = parseInt(parts[0], 10);
-              var min = parts[1] || '00';
-              var ampm = hr >= 12 ? 'PM' : 'AM';
-              var hr12 = hr % 12 || 12;
-              html += '<div class="zcc-meta zcc-cutoff">' + ICONS.clock + '<span>Order by <strong>' + hr12 + ':' + min + ' ' + ampm + '</strong> for same-day</span></div>';
-            }
-            // Countdown Timer
-            if (cfg.showCountdown && data.cutoffTime) {
-              html += buildCountdownHtml(data.cutoffTime, wid);
-            }
-            if (hasScheduling) {
-              html += '</div>'; // close scheduling .zcc-info-group
+            // Group 3: Cutoff + countdown — inline text rows (no card background)
+            var hasCutoffOrCountdown = (cfg.showCutoffTime && data.cutoffTime) || (cfg.showCountdown && data.cutoffTime);
+            if (hasCutoffOrCountdown) {
+              html += '<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px">';
+              if (cfg.showCutoffTime && data.cutoffTime) {
+                var cutoffParts = data.cutoffTime.split(':');
+                var hr = parseInt(cutoffParts[0], 10);
+                var min = cutoffParts[1] || '00';
+                var ampm = hr >= 12 ? 'PM' : 'AM';
+                var hr12 = hr % 12 || 12;
+                html += '<div class="zcc-cutoff">' + ICONS.clock + '<span>Order by <strong>' + hr12 + ':' + min + ' ' + ampm + '</strong> for same-day</span></div>';
+              }
+              if (cfg.showCountdown && data.cutoffTime) {
+                html += buildCountdownHtml(data.cutoffTime, wid);
+              }
+              html += '</div>';
             }
             // Badges section — COD + Delivery Fee in horizontal row
             var hasBadges = (cfg.showCod !== false && (data.codAvailable === true || data.codAvailable === false)) || (cfg.showDeliveryFee !== false && data.deliveryFee != null);
             var hasReturnPolicy = cfg.showReturnPolicy !== false && data.returnPolicy;
-            if (hasBadges || hasReturnPolicy) {
-              html += '<div class="zcc-section-divider"></div>';
-            }
             if (hasBadges) {
-              html += '<div class="zcc-badges-row">';
+              html += '<div class="zcc-badges-row" style="margin-bottom:' + (hasReturnPolicy ? '6px' : '0') + '">';
             }
             if (cfg.showCod !== false) {
               if (data.codAvailable === true) {

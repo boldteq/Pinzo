@@ -50,35 +50,113 @@ export default function HelpPage() {
   }, []);
 
   const faqs: Array<{ question: string; answer: string }> = [
+    // ── Setup & Installation ──
     {
       question: "How do I add the widget to my store?",
       answer:
-        "Go to Online Store → Themes → Customize. Enable 'Pinzo' under App Embeds, then add the block to any page from the Apps section.",
+        "Go to Online Store → Themes → Customize. First, enable 'Pinzo' under App Embeds (this loads the widget script). Then go to your Product page template, click 'Add block' under the Apps section, and select the Pinzo block. Save your theme — the widget will appear on your storefront immediately.",
     },
+    {
+      question: "The widget isn't showing on my store. What should I check?",
+      answer:
+        "Check three things: (1) Make sure the Pinzo App Embed is enabled in Theme Editor → App Embeds. (2) Make sure you've added the Pinzo block to your product page template. (3) Make sure you have at least one ZIP code added in the Zip Codes page. If the Dashboard still shows 'Widget not active', click 'Refresh status' — the detection can take a moment after saving your theme.",
+    },
+    // ── ZIP Codes ──
     {
       question: "How many ZIP codes can I add?",
       answer:
-        "Depends on your plan. Free: 20 allowed ZIP codes. Starter: 500. Pro+: Unlimited.",
+        "Free plan: 20 allowed ZIP codes. Starter: 500 (allowed + blocked). Pro and Ultimate: Unlimited. You can check your current usage on the Dashboard or Settings page.",
     },
     {
-      question: "How does cart validation work?",
+      question: "What's the difference between allowed and blocked ZIP codes?",
       answer:
-        "Enable 'Block checkout for unserviceable ZIP codes' in Widget Settings (Pro plan required), then add the Cart Validator block to your cart page template in the Theme Editor.",
+        "Allowed ZIP codes show a success message ('We deliver to your area!'). Blocked ZIP codes show an explicit denial message. Blocking is useful when you want to explicitly tell customers in certain areas that you don't deliver there, rather than showing a generic 'not found' message. Blocked ZIP codes require the Starter plan or higher.",
     },
+    {
+      question: "Can I import ZIP codes in bulk?",
+      answer:
+        "Yes — go to Zip Codes and click 'Import CSV'. Your CSV file should have columns for zip code, and optionally: label, zone, message, ETA, type (allowed/blocked), COD availability, and return policy. You can also use 'Add Range' to add a sequential range of ZIP codes at once. CSV import requires the Starter plan or higher.",
+    },
+    {
+      question: "Can I export my ZIP codes?",
+      answer:
+        "Yes — go to Zip Codes and click 'Export CSV'. This downloads all your ZIP codes with their settings (zone, message, ETA, COD, return policy, type, active status). CSV export requires the Pro plan or higher.",
+    },
+    {
+      question: "What happens when a customer enters a ZIP code that isn't in my list?",
+      answer:
+        "This depends on your Default Behavior setting (found in Settings). 'Block' mode (default) shows an error message for unlisted ZIP codes. 'Allow' mode shows a success message for unlisted ZIP codes — useful if you deliver almost everywhere and only want to block specific areas.",
+    },
+    // ── Delivery Rules ──
+    {
+      question: "What are delivery rules?",
+      answer:
+        "Delivery rules let you set conditions per zone or ZIP code — including delivery fees, minimum order amounts, free shipping thresholds, estimated delivery times, order cutoff times, and delivery days of the week. Rules are matched by priority (lower number = higher priority). Delivery rules require the Starter plan or higher.",
+    },
+    {
+      question: "How are delivery rules matched to a ZIP code?",
+      answer:
+        "When a customer checks a ZIP code, Pinzo first looks for a rule with that specific ZIP code listed. If none is found, it looks for a rule matching the ZIP code's zone. If multiple rules match, the one with the highest priority (lowest number) wins. If no rule matches, the ZIP code's own ETA and message are used.",
+    },
+    // ── Waitlist ──
     {
       question: "How does the waitlist work?",
       answer:
-        "When delivery isn't available for a ZIP code, customers can join a waitlist. You can notify them from the Waitlist page when you expand to their area.",
+        "When delivery isn't available for a ZIP code and you have the waitlist enabled in Widget Settings, customers can enter their email to be notified when you expand to their area. You manage the waitlist from the Waitlist page — you can accept requests (which adds the ZIP to your allowed list), notify customers by email, and track conversion status.",
     },
+    {
+      question: "Do customers receive an email when they join the waitlist?",
+      answer:
+        "Yes — both the customer and you (the merchant) receive emails automatically. The customer gets a confirmation that they've been added. You get an alert with their email, ZIP code, and name. Make sure your notification email is set in Settings. Emails are sent via your configured sender name and reply-to address.",
+    },
+    // ── Widget Customization ──
     {
       question: "Can I customize the widget appearance?",
       answer:
-        "Yes — go to Widget Customization to change colors, text, position, and styling to match your brand.",
+        "Yes — go to Widget Customization to change colors (primary, success, error, background, text), text (heading, placeholder, button, messages), position (inline, floating, popup), border radius, and feature toggles (ETA, COD, return policy, delivery date, countdown, delivery fee, waitlist, social proof). Full customization requires the Starter plan or higher.",
     },
     {
-      question: "Can I restrict delivery to specific products?",
+      question: "What are the widget position options?",
       answer:
-        "Product-level ZIP rules are coming soon. This will let you restrict delivery for specific products to certain ZIP codes.",
+        "Inline: The widget appears directly within the page content where you placed the block. Floating: A small trigger button appears in the corner that opens a panel. Popup: A button that opens the widget in a modal overlay. Inline is the most common choice for product pages.",
+    },
+    {
+      question: "Can I add custom CSS to the widget?",
+      answer:
+        "Yes — the Ultimate plan includes a Custom CSS editor in Widget Customization. You can target classes like .zcc-heading, .zcc-btn, .zcc-input, .zcc-result, .zcc-search-bar, .zcc-meta, and many more. The class reference is shown below the CSS editor.",
+    },
+    // ── Cart Blocking ──
+    {
+      question: "How does cart/checkout blocking work?",
+      answer:
+        "With the Pro plan or higher, you can enable 'Block checkout for unserviceable ZIP codes' in Widget Settings. Then add the 'Pinzo — Cart Validator' block to your cart page template in the Theme Editor. Customers must enter a valid, serviceable ZIP code before they can proceed to checkout. The Add to Cart and Checkout buttons are disabled until a valid ZIP is checked.",
+    },
+    // ── Billing & Plans ──
+    {
+      question: "How does billing work?",
+      answer:
+        "Pinzo uses Shopify's built-in billing system — charges appear on your regular Shopify invoice. All paid plans include a 7-day free trial. You can switch plans or cancel anytime from the Pricing page. When you cancel, you're moved to the Free plan immediately. Your data is kept but features above the Free plan limits become inactive.",
+    },
+    {
+      question: "What happens to my data if I downgrade?",
+      answer:
+        "Your ZIP codes, delivery rules, waitlist entries, and widget settings are all preserved. However, features above your new plan's limits become inactive — for example, if you downgrade from Pro to Free, ZIP codes beyond 20 remain saved but won't be checked by the widget. Upgrade again and everything is restored instantly.",
+    },
+    // ── Technical ──
+    {
+      question: "Does Pinzo slow down my store?",
+      answer:
+        "No. The widget loads asynchronously and does not block your page from rendering. ZIP code checks are fast API calls with response caching (60 seconds for successful checks). The widget script is lightweight and served from your Shopify CDN.",
+    },
+    {
+      question: "Does Pinzo work with all Shopify themes?",
+      answer:
+        "Yes — Pinzo works with all Online Store 2.0 themes (which includes all modern Shopify themes). It uses Shopify's Theme App Extension system, so there's no code editing required. If you're on a vintage (non-2.0) theme, contact us for manual installation support.",
+    },
+    {
+      question: "What data does Pinzo store about my customers?",
+      answer:
+        "Pinzo only stores data that customers voluntarily provide through the waitlist form: their email address, name (optional), and the ZIP code they checked. No browsing data, IP addresses, or other personal information is collected. All customer data is deleted when you uninstall the app, as required by Shopify's privacy policies.",
     },
   ];
 

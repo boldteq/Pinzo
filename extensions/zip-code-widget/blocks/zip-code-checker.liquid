@@ -514,6 +514,10 @@
       // Loading state: button already has display:flex + justify-content:center from .zcc-btn,
       // so the lone .zcc-spinner child is automatically centred — just remove the gap
       W + " .zcc-btn--loading{gap:0 !important}" +
+      // Section grouping — visual hierarchy with dividers and breathing room
+      W + " .zcc-section-divider{height:1px !important;background:rgba(0,0,0,0.06) !important;margin:12px 0 !important;border:none !important}" +
+      W + " .zcc-info-group{display:flex !important;flex-direction:column !important;gap:6px !important}" +
+      W + " .zcc-badges-row{display:flex !important;flex-wrap:wrap !important;align-items:center !important;gap:8px !important}" +
       // Result card layout
       // Icon container is 32px so the 4px background-circle padding still gives a 24px
       // content area for the SVG under box-sizing:border-box — previously 24px with 4px
@@ -527,48 +531,51 @@
       W + " .zcc-result.fail .zcc-result-icon{background:" + cfg.errorColor + "15 !important;border-radius:50% !important;padding:6px !important}" +
       W + " .zcc-result.fail .zcc-result-message{color:" + cfg.errorColor + " !important}" +
       // Meta info rows (ETA, zone, days, cutoff)
-      W + " .zcc-meta{margin-top:6px !important;font-size:13px !important;display:flex !important;align-items:center !important;gap:7px !important;color:#4b5563 !important;line-height:1.4 !important}" +
+      W + " .zcc-meta{margin-top:0 !important;font-size:13px !important;display:flex !important;align-items:center !important;gap:7px !important;color:#4b5563 !important;line-height:1.4 !important}" +
       W + " .zcc-meta svg{width:14px !important;height:14px !important;flex-shrink:0 !important;opacity:0.7 !important}" +
       W + " .zcc-meta strong{font-weight:600 !important;color:" + cfg.textColor + " !important}" +
       W + " .zcc-meta span{flex:1 !important}" +
-      W + " .zcc-cutoff{margin-top:5px !important;font-size:12px !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:7px !important}" +
+      W + " .zcc-cutoff{margin-top:0 !important;font-size:12px !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:7px !important}" +
       W + " .zcc-cutoff svg{width:13px !important;height:13px !important;flex-shrink:0 !important;opacity:0.6 !important}" +
-      W + " .zcc-days{margin-top:5px !important;font-size:12px !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:7px !important}" +
+      W + " .zcc-days{margin-top:0 !important;font-size:12px !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:7px !important}" +
       W + " .zcc-days svg{width:13px !important;height:13px !important;flex-shrink:0 !important;opacity:0.6 !important}" +
       // COD badge
-      W + " .zcc-cod{margin-top:8px !important;display:inline-flex !important;align-items:center !important;gap:5px !important;border-radius:20px !important;padding:4px 10px !important;font-size:12px !important;font-weight:600 !important}" +
+      W + " .zcc-cod{margin-top:0 !important;display:inline-flex !important;align-items:center !important;gap:5px !important;border-radius:20px !important;padding:4px 10px !important;font-size:12px !important;font-weight:600 !important}" +
       W + " .zcc-cod svg{width:13px !important;height:13px !important;flex-shrink:0 !important}" +
       W + " .zcc-cod--available{background:" + cfg.successColor + "12 !important;border:1px solid " + cfg.successColor + "25 !important;color:" + cfg.successColor + " !important}" +
       W + " .zcc-cod--unavailable{background:#d72c0d10 !important;border:1px solid #d72c0d22 !important;color:#d72c0d !important}" +
       // Return policy row
-      W + " .zcc-return-policy{margin-top:5px !important;font-size:12px !important;color:#6d7175 !important;display:flex !important;align-items:center !important;gap:7px !important}" +
-      W + " .zcc-return-policy svg{width:13px !important;height:13px !important;flex-shrink:0 !important;opacity:0.6 !important}" +
+      W + " .zcc-return-policy{margin-top:0 !important;font-size:11px !important;color:#9ca3af !important;display:flex !important;align-items:center !important;gap:7px !important}" +
+      W + " .zcc-return-policy svg{width:12px !important;height:12px !important;flex-shrink:0 !important;opacity:0.45 !important}" +
       W + " .zcc-return-policy span{flex:1 !important}" +
       // Delivery date
-      W + " .zcc-delivery-date{margin-top:5px !important;font-size:12px !important;color:#4b5563 !important;display:flex !important;align-items:center !important;gap:7px !important;line-height:1.4 !important}" +
+      W + " .zcc-delivery-date{margin-top:0 !important;font-size:12px !important;color:#4b5563 !important;display:flex !important;align-items:center !important;gap:7px !important;line-height:1.4 !important}" +
       W + " .zcc-delivery-date svg{width:14px !important;height:14px !important;flex-shrink:0 !important;opacity:0.7 !important}" +
       W + " .zcc-delivery-date strong{font-weight:600 !important;color:" + cfg.textColor + " !important}" +
       // Countdown
-      W + " .zcc-countdown{margin-top:5px !important;font-size:12px !important;display:flex !important;align-items:center !important;gap:7px !important;line-height:1.4 !important}" +
-      W + " .zcc-countdown svg{width:13px !important;height:13px !important;flex-shrink:0 !important;opacity:0.7 !important}" +
+      W + " .zcc-countdown{margin-top:0 !important;font-size:12.5px !important;display:flex !important;align-items:center !important;gap:7px !important;line-height:1.4 !important;padding:6px 10px !important;border-radius:8px !important;background:#fef3c7 !important;border:1px solid #fde68a !important}" +
+      W + " .zcc-countdown svg{width:13px !important;height:13px !important;flex-shrink:0 !important}" +
       W + " .zcc-countdown strong{font-weight:700 !important}" +
-      W + " .zcc-countdown--green{color:#16a34a !important}" +
+      W + " .zcc-countdown--green{color:#16a34a !important;background:#f0fdf4 !important;border-color:#bbf7d0 !important}" +
       W + " .zcc-countdown--green strong{color:#16a34a !important}" +
-      W + " .zcc-countdown--amber{color:#d97706 !important}" +
-      W + " .zcc-countdown--amber strong{color:#d97706 !important}" +
-      W + " .zcc-countdown--red{color:#dc2626 !important}" +
+      W + " .zcc-countdown--green svg{opacity:0.8 !important}" +
+      W + " .zcc-countdown--amber{color:#92400e !important;background:#fef3c7 !important;border-color:#fde68a !important}" +
+      W + " .zcc-countdown--amber strong{color:#92400e !important}" +
+      W + " .zcc-countdown--amber svg{opacity:0.8 !important}" +
+      W + " .zcc-countdown--red{color:#dc2626 !important;background:#fef2f2 !important;border-color:#fecaca !important}" +
       W + " .zcc-countdown--red strong{color:#dc2626 !important}" +
-      W + " .zcc-countdown--passed{color:#6d7175 !important}" +
+      W + " .zcc-countdown--red svg{opacity:0.8 !important}" +
+      W + " .zcc-countdown--passed{color:#6d7175 !important;background:#f6f6f7 !important;border-color:#e5e7eb !important}" +
       // Delivery fee
-      W + " .zcc-delivery-fee{margin-top:8px !important;display:inline-flex !important;align-items:center !important;gap:5px !important;border-radius:20px !important;padding:4px 10px !important;font-size:12px !important;font-weight:600 !important}" +
+      W + " .zcc-delivery-fee{margin-top:0 !important;display:inline-flex !important;align-items:center !important;gap:5px !important;border-radius:20px !important;padding:4px 10px !important;font-size:12px !important;font-weight:600 !important}" +
       W + " .zcc-delivery-fee svg{width:13px !important;height:13px !important;flex-shrink:0 !important}" +
       W + " .zcc-delivery-fee--free{background:" + cfg.successColor + "12 !important;border:1px solid " + cfg.successColor + "25 !important;color:" + cfg.successColor + " !important}" +
       W + " .zcc-delivery-fee--paid{background:#f59e0b10 !important;border:1px solid #f59e0b22 !important;color:#92400e !important}" +
       // Order timeline (ORDER > SHIPS > DELIVER)
-      W + " .zcc-timeline{margin-top:10px !important;display:flex !important;align-items:center !important;justify-content:space-between !important;gap:0 !important;position:relative !important;padding:8px 0 !important}" +
-      W + " .zcc-timeline::before{content:'' !important;position:absolute !important;top:50% !important;left:18% !important;right:18% !important;height:2px !important;background:#e0e0e0 !important;transform:translateY(-50%) !important;z-index:0 !important}" +
+      W + " .zcc-timeline{margin-top:0 !important;display:flex !important;align-items:center !important;justify-content:space-between !important;gap:0 !important;position:relative !important;padding:10px 4px !important}" +
+      W + " .zcc-timeline::before{content:'' !important;position:absolute !important;top:50% !important;left:16% !important;right:16% !important;height:2px !important;background:#e0e0e0 !important;transform:translateY(-50%) !important;z-index:0 !important}" +
       W + " .zcc-timeline-step{display:flex !important;flex-direction:column !important;align-items:center !important;gap:4px !important;z-index:1 !important;position:relative !important}" +
-      W + " .zcc-timeline-dot{width:24px !important;height:24px !important;border-radius:50% !important;display:flex !important;align-items:center !important;justify-content:center !important;border:2px solid " + cfg.successColor + " !important;background:" + cfg.backgroundColor + " !important}" +
+      W + " .zcc-timeline-dot{width:26px !important;height:26px !important;border-radius:50% !important;display:flex !important;align-items:center !important;justify-content:center !important;border:2px solid " + cfg.successColor + " !important;background:" + cfg.backgroundColor + " !important}" +
       W + " .zcc-timeline-dot--active{background:" + cfg.successColor + " !important;border-color:" + cfg.successColor + " !important}" +
       W + " .zcc-timeline-dot svg{width:12px !important;height:12px !important}" +
       W + " .zcc-timeline-label{font-size:10px !important;font-weight:600 !important;color:#6d7175 !important;text-transform:uppercase !important;letter-spacing:0.03em !important}" +
@@ -772,6 +779,7 @@
             var html = '<div class="zcc-result ok">' +
               '<div class="zcc-result-icon">' + ICONS.check + '</div>' +
               '<div class="zcc-result-content">' +
+              '<div class="zcc-info-group">' +
               '<div class="zcc-result-message">' + esc(data.message) + '</div>';
             if (cfg.showEta && data.eta) {
               html += '<div class="zcc-meta">' + ICONS.truck + '<span>Estimated delivery: <strong>' + esc(data.eta) + '</strong></span></div>';
@@ -786,24 +794,10 @@
             if (cfg.showZone && data.zone) {
               html += '<div class="zcc-meta">' + ICONS.location + '<span>Zone: <strong>' + esc(data.zone) + '</strong></span></div>';
             }
-            if (cfg.showDeliveryDays && data.daysOfWeek) {
-              var days = data.daysOfWeek.split(',').map(function(d) { return d.trim(); }).join(' \u00b7 ');
-              html += '<div class="zcc-meta zcc-days">' + ICONS.calendar + '<span>' + esc(days) + '</span></div>';
-            }
-            if (cfg.showCutoffTime && data.cutoffTime) {
-              var parts = data.cutoffTime.split(':');
-              var hr = parseInt(parts[0], 10);
-              var min = parts[1] || '00';
-              var ampm = hr >= 12 ? 'PM' : 'AM';
-              var hr12 = hr % 12 || 12;
-              html += '<div class="zcc-meta zcc-cutoff">' + ICONS.clock + '<span>Order by <strong>' + hr12 + ':' + min + ' ' + ampm + '</strong> for same-day</span></div>';
-            }
-            // Countdown Timer
-            if (cfg.showCountdown && data.cutoffTime) {
-              html += buildCountdownHtml(data.cutoffTime, wid);
-            }
-            // Order Timeline (ORDER > SHIPS > DELIVER)
+            html += '</div>'; // close .zcc-info-group (primary info)
+            // Group 2: Order Timeline (ORDER > SHIPS > DELIVER)
             if (cfg.showDeliveryDate && data.estimatedDeliveryDate) {
+              html += '<div class="zcc-section-divider"></div>';
               var delivDateStr = formatDeliveryDate(data.estimatedDeliveryDate);
               var todayD = new Date();
               var tomorrowD = new Date(); tomorrowD.setDate(tomorrowD.getDate() + 1);
@@ -829,15 +823,45 @@
                 '</div>' +
               '</div>';
             }
+            // Group 3: Scheduling details (days + cutoff + countdown)
+            var hasScheduling = (cfg.showDeliveryDays && data.daysOfWeek) || (cfg.showCutoffTime && data.cutoffTime) || (cfg.showCountdown && data.cutoffTime);
+            if (hasScheduling) {
+              html += '<div class="zcc-section-divider"></div><div class="zcc-info-group">';
+            }
+            if (cfg.showDeliveryDays && data.daysOfWeek) {
+              var days = data.daysOfWeek.split(',').map(function(d) { return d.trim(); }).join(' \u00b7 ');
+              html += '<div class="zcc-meta zcc-days">' + ICONS.calendar + '<span>' + esc(days) + '</span></div>';
+            }
+            if (cfg.showCutoffTime && data.cutoffTime) {
+              var parts = data.cutoffTime.split(':');
+              var hr = parseInt(parts[0], 10);
+              var min = parts[1] || '00';
+              var ampm = hr >= 12 ? 'PM' : 'AM';
+              var hr12 = hr % 12 || 12;
+              html += '<div class="zcc-meta zcc-cutoff">' + ICONS.clock + '<span>Order by <strong>' + hr12 + ':' + min + ' ' + ampm + '</strong> for same-day</span></div>';
+            }
+            // Countdown Timer
+            if (cfg.showCountdown && data.cutoffTime) {
+              html += buildCountdownHtml(data.cutoffTime, wid);
+            }
+            if (hasScheduling) {
+              html += '</div>'; // close scheduling .zcc-info-group
+            }
+            // Badges section — COD + Delivery Fee in horizontal row
+            var hasBadges = (cfg.showCod !== false && (data.codAvailable === true || data.codAvailable === false)) || (cfg.showDeliveryFee !== false && data.deliveryFee != null);
+            var hasReturnPolicy = cfg.showReturnPolicy !== false && data.returnPolicy;
+            if (hasBadges || hasReturnPolicy) {
+              html += '<div class="zcc-section-divider"></div>';
+            }
+            if (hasBadges) {
+              html += '<div class="zcc-badges-row">';
+            }
             if (cfg.showCod !== false) {
               if (data.codAvailable === true) {
                 html += '<div class="zcc-cod zcc-cod--available">' + ICONS.card + ' Cash on Delivery Available</div>';
               } else if (data.codAvailable === false) {
                 html += '<div class="zcc-cod zcc-cod--unavailable">' + ICONS.card + ' COD Not Available</div>';
               }
-            }
-            if (cfg.showReturnPolicy !== false && data.returnPolicy) {
-              html += '<div class="zcc-return-policy">' + ICONS.refresh + '<span>' + esc(data.returnPolicy) + '</span></div>';
             }
             // Delivery Fee
             if (cfg.showDeliveryFee !== false) {
@@ -846,9 +870,15 @@
               } else if (data.deliveryFee != null && data.deliveryFee > 0) {
                 html += '<div class="zcc-delivery-fee zcc-delivery-fee--paid">' + ICONS.truck + ' Delivery: $' + data.deliveryFee.toFixed(2) + '</div>';
               }
-              if (data.freeShippingAbove != null && data.freeShippingAbove > 0 && (data.deliveryFee == null || data.deliveryFee > 0)) {
-                html += '<div class="zcc-meta" style="margin-top:3px !important"><span style="font-size:11px !important;color:#6d7175 !important">Free delivery on orders over $' + data.freeShippingAbove.toFixed(2) + '</span></div>';
-              }
+            }
+            if (hasBadges) {
+              html += '</div>'; // close .zcc-badges-row
+            }
+            if (cfg.showDeliveryFee !== false && data.freeShippingAbove != null && data.freeShippingAbove > 0 && (data.deliveryFee == null || data.deliveryFee > 0)) {
+              html += '<div class="zcc-meta" style="margin-top:3px !important"><span style="font-size:11px !important;color:#6d7175 !important">Free delivery on orders over $' + data.freeShippingAbove.toFixed(2) + '</span></div>';
+            }
+            if (cfg.showReturnPolicy !== false && data.returnPolicy) {
+              html += '<div class="zcc-return-policy">' + ICONS.refresh + '<span>' + esc(data.returnPolicy) + '</span></div>';
             }
             html += '</div></div>';
             res.innerHTML = html;

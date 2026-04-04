@@ -402,49 +402,56 @@ function buildSharedMetaCss(W: string, cfg: WidgetConfig): string {
     W + " .zcc-btn-icon{display:inline-flex;align-items:center;flex-shrink:0}" +
     W + " .zcc-btn-icon svg{width:15px;height:15px;display:block}" +
     W + " .zcc-btn-label{display:inline}" +
+    // Section grouping — visual hierarchy with dividers and breathing room
+    W + " .zcc-section-divider{height:1px;background:rgba(0,0,0,0.06);margin:12px 0;border:none}" +
+    W + " .zcc-info-group{display:flex;flex-direction:column;gap:6px}" +
+    W + " .zcc-badges-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}" +
     // Meta info rows — aligned with storefront values
-    W + " .zcc-meta{margin-top:6px;font-size:13px;display:flex;align-items:center;gap:7px;color:#4b5563;line-height:1.4}" +
+    W + " .zcc-meta{margin-top:0;font-size:13px;display:flex;align-items:center;gap:7px;color:#4b5563;line-height:1.4}" +
     W + " .zcc-meta svg{width:14px;height:14px;flex-shrink:0;opacity:0.7}" +
     W + " .zcc-meta strong{font-weight:600;color:" + cfg.textColor + "}" +
     W + " .zcc-meta span{flex:1}" +
     // Cutoff / days / return policy — separate classes matching storefront
-    W + " .zcc-cutoff{margin-top:5px;font-size:12px;color:#6d7175;display:flex;align-items:center;gap:7px}" +
+    W + " .zcc-cutoff{margin-top:0;font-size:12px;color:#6d7175;display:flex;align-items:center;gap:7px}" +
     W + " .zcc-cutoff svg{width:13px;height:13px;flex-shrink:0;opacity:0.6}" +
-    W + " .zcc-days{margin-top:5px;font-size:12px;color:#6d7175;display:flex;align-items:center;gap:7px}" +
+    W + " .zcc-days{margin-top:0;font-size:12px;color:#6d7175;display:flex;align-items:center;gap:7px}" +
     W + " .zcc-days svg{width:13px;height:13px;flex-shrink:0;opacity:0.6}" +
-    W + " .zcc-return-policy{margin-top:5px;font-size:12px;color:#6d7175;display:flex;align-items:center;gap:7px}" +
-    W + " .zcc-return-policy svg{width:13px;height:13px;flex-shrink:0;opacity:0.6}" +
+    W + " .zcc-return-policy{margin-top:0;font-size:11px;color:#9ca3af;display:flex;align-items:center;gap:7px}" +
+    W + " .zcc-return-policy svg{width:12px;height:12px;flex-shrink:0;opacity:0.45}" +
     W + " .zcc-return-policy span{flex:1}" +
     // COD badge — aligned with storefront values
-    W + " .zcc-cod{margin-top:8px;display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600}" +
+    W + " .zcc-cod{margin-top:0;display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600}" +
     W + " .zcc-cod svg{width:13px;height:13px;flex-shrink:0}" +
     W + " .zcc-cod--available{background:" + s + "12;border:1px solid " + s + "25;color:" + s + "}" +
     W + " .zcc-cod--unavailable{background:#d72c0d10;border:1px solid #d72c0d22;color:#d72c0d}" +
     // Delivery date
-    W + " .zcc-delivery-date{margin-top:5px;font-size:12px;color:#4b5563;display:flex;align-items:center;gap:7px;line-height:1.4}" +
+    W + " .zcc-delivery-date{margin-top:0;font-size:12px;color:#4b5563;display:flex;align-items:center;gap:7px;line-height:1.4}" +
     W + " .zcc-delivery-date svg{width:14px;height:14px;flex-shrink:0;opacity:0.7}" +
     W + " .zcc-delivery-date strong{font-weight:600;color:" + cfg.textColor + "}" +
-    // Countdown timer
-    W + " .zcc-countdown{margin-top:5px;font-size:12px;display:flex;align-items:center;gap:7px;line-height:1.4}" +
-    W + " .zcc-countdown svg{width:13px;height:13px;flex-shrink:0;opacity:0.7}" +
+    // Countdown timer — accent card for urgency
+    W + " .zcc-countdown{margin-top:0;font-size:12.5px;display:flex;align-items:center;gap:7px;line-height:1.4;padding:6px 10px;border-radius:8px;background:#fef3c7;border:1px solid #fde68a}" +
+    W + " .zcc-countdown svg{width:13px;height:13px;flex-shrink:0}" +
     W + " .zcc-countdown strong{font-weight:700}" +
-    W + " .zcc-countdown--green{color:#16a34a}" +
+    W + " .zcc-countdown--green{color:#16a34a;background:#f0fdf4;border-color:#bbf7d0}" +
     W + " .zcc-countdown--green strong{color:#16a34a}" +
-    W + " .zcc-countdown--amber{color:#d97706}" +
-    W + " .zcc-countdown--amber strong{color:#d97706}" +
-    W + " .zcc-countdown--red{color:#dc2626}" +
+    W + " .zcc-countdown--green svg{opacity:0.8}" +
+    W + " .zcc-countdown--amber{color:#92400e;background:#fef3c7;border-color:#fde68a}" +
+    W + " .zcc-countdown--amber strong{color:#92400e}" +
+    W + " .zcc-countdown--amber svg{opacity:0.8}" +
+    W + " .zcc-countdown--red{color:#dc2626;background:#fef2f2;border-color:#fecaca}" +
     W + " .zcc-countdown--red strong{color:#dc2626}" +
-    W + " .zcc-countdown--passed{color:#6d7175}" +
+    W + " .zcc-countdown--red svg{opacity:0.8}" +
+    W + " .zcc-countdown--passed{color:#6d7175;background:#f6f6f7;border-color:#e5e7eb}" +
     // Delivery fee
-    W + " .zcc-delivery-fee{margin-top:8px;display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600}" +
+    W + " .zcc-delivery-fee{margin-top:0;display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600}" +
     W + " .zcc-delivery-fee svg{width:13px;height:13px;flex-shrink:0}" +
     W + " .zcc-delivery-fee--free{background:" + s + "12;border:1px solid " + s + "25;color:" + s + "}" +
     W + " .zcc-delivery-fee--paid{background:#f59e0b10;border:1px solid #f59e0b22;color:#92400e}" +
-    // Order timeline (ORDER → SHIPS → DELIVER)
-    W + " .zcc-timeline{margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:0;position:relative;padding:8px 0}" +
-    W + " .zcc-timeline::before{content:'';position:absolute;top:50%;left:18%;right:18%;height:2px;background:#e0e0e0;transform:translateY(-50%);z-index:0}" +
+    // Order timeline (ORDER → SHIPS → DELIVER) — more breathing room
+    W + " .zcc-timeline{margin-top:0;display:flex;align-items:center;justify-content:space-between;gap:0;position:relative;padding:10px 4px}" +
+    W + " .zcc-timeline::before{content:'';position:absolute;top:50%;left:16%;right:16%;height:2px;background:#e0e0e0;transform:translateY(-50%);z-index:0}" +
     W + " .zcc-timeline-step{display:flex;flex-direction:column;align-items:center;gap:4px;z-index:1;position:relative}" +
-    W + " .zcc-timeline-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid " + s + ";background:" + cfg.backgroundColor + "}" +
+    W + " .zcc-timeline-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid " + s + ";background:" + cfg.backgroundColor + "}" +
     W + " .zcc-timeline-dot--active{background:" + s + ";border-color:" + s + "}" +
     W + " .zcc-timeline-dot svg{width:12px;height:12px}" +
     W + " .zcc-timeline-label{font-size:10px;font-weight:600;color:#6d7175;text-transform:uppercase;letter-spacing:0.03em}" +
@@ -904,25 +911,26 @@ const WidgetPreview = memo(function WidgetPreview({
         <div className="zcc-result ok">
           <div className="zcc-result-icon">{checkCircleIcon}</div>
           <div className="zcc-result-content">
-            <div className="zcc-result-message">{cfg.successMessage}</div>
-            {effectiveCfg.showEta && (
-              <div className="zcc-meta">{truckIcon}<span>Estimated delivery: <strong>2-3 business days</strong></span></div>
-            )}
+            {/* Group 1: Primary info — message + ETA + delivery date */}
+            <div className="zcc-info-group">
+              <div className="zcc-result-message">{cfg.successMessage}</div>
+              {effectiveCfg.showEta && (
+                <div className="zcc-meta">{truckIcon}<span>Estimated delivery: <strong>2-3 business days</strong></span></div>
+              )}
+              {effectiveCfg.showDeliveryDate && effectiveCfg.showEta && (
+                <div className="zcc-meta zcc-delivery-date">{calendarIcon}<span>Expected by <strong>Friday, Mar 28</strong></span></div>
+              )}
+              {effectiveCfg.showZone && (
+                <div className="zcc-meta">{locationIcon}<span>Zone: <strong>North</strong></span></div>
+              )}
+            </div>
+
+            {/* Divider before timeline (only if timeline is visible) */}
             {effectiveCfg.showDeliveryDate && effectiveCfg.showEta && (
-              <div className="zcc-meta zcc-delivery-date">{calendarIcon}<span>Expected by <strong>Friday, Mar 28</strong></span></div>
+              <div className="zcc-section-divider" />
             )}
-            {effectiveCfg.showZone && (
-              <div className="zcc-meta">{locationIcon}<span>Zone: <strong>North</strong></span></div>
-            )}
-            {effectiveCfg.showDeliveryDays && (
-              <div className="zcc-meta zcc-days">{calendarIcon}<span>Mon &middot; Tue &middot; Wed &middot; Thu &middot; Fri</span></div>
-            )}
-            {effectiveCfg.showCutoffTime && (
-              <div className="zcc-meta zcc-cutoff">{clockIcon}<span>Order by <strong>2:00 PM</strong> for same-day</span></div>
-            )}
-            {effectiveCfg.showCountdown && effectiveCfg.showCutoffTime && (
-              <div className="zcc-countdown zcc-countdown--amber">{clockIcon}<span>Order within <strong>2h 14m</strong> for same-day dispatch</span></div>
-            )}
+
+            {/* Group 2: Timeline */}
             {effectiveCfg.showDeliveryDate && effectiveCfg.showEta && (
               <div className="zcc-timeline">
                 <div className="zcc-timeline-step">
@@ -950,11 +958,42 @@ const WidgetPreview = memo(function WidgetPreview({
                 </div>
               </div>
             )}
-            {effectiveCfg.showCod && (
-              <div className="zcc-cod zcc-cod--available">{cardIcon} COD Available</div>
+
+            {/* Divider before scheduling details (only if any scheduling info is visible) */}
+            {(effectiveCfg.showDeliveryDays || effectiveCfg.showCutoffTime || (effectiveCfg.showCountdown && effectiveCfg.showCutoffTime)) && (
+              <div className="zcc-section-divider" />
             )}
-            {effectiveCfg.showDeliveryFee && (
-              <div className="zcc-delivery-fee zcc-delivery-fee--free">{truckIcon} Free Delivery</div>
+
+            {/* Group 3: Scheduling details — days + cutoff + countdown */}
+            {(effectiveCfg.showDeliveryDays || effectiveCfg.showCutoffTime || (effectiveCfg.showCountdown && effectiveCfg.showCutoffTime)) && (
+              <div className="zcc-info-group">
+                {effectiveCfg.showDeliveryDays && (
+                  <div className="zcc-meta zcc-days">{calendarIcon}<span>Mon &middot; Tue &middot; Wed &middot; Thu &middot; Fri</span></div>
+                )}
+                {effectiveCfg.showCutoffTime && (
+                  <div className="zcc-meta zcc-cutoff">{clockIcon}<span>Order by <strong>2:00 PM</strong> for same-day</span></div>
+                )}
+                {effectiveCfg.showCountdown && effectiveCfg.showCutoffTime && (
+                  <div className="zcc-countdown zcc-countdown--amber">{clockIcon}<span>Order within <strong>2h 14m</strong> for same-day dispatch</span></div>
+                )}
+              </div>
+            )}
+
+            {/* Divider before badges (only if any badge is visible) */}
+            {(effectiveCfg.showCod || effectiveCfg.showDeliveryFee || effectiveCfg.showReturnPolicy) && (
+              <div className="zcc-section-divider" />
+            )}
+
+            {/* Group 4: Badges + return policy */}
+            {(effectiveCfg.showCod || effectiveCfg.showDeliveryFee) && (
+              <div className="zcc-badges-row">
+                {effectiveCfg.showCod && (
+                  <div className="zcc-cod zcc-cod--available">{cardIcon} COD Available</div>
+                )}
+                {effectiveCfg.showDeliveryFee && (
+                  <div className="zcc-delivery-fee zcc-delivery-fee--free">{truckIcon} Free Delivery</div>
+                )}
+              </div>
             )}
             {effectiveCfg.showReturnPolicy && (
               <div className="zcc-return-policy">{refreshIcon}<span>7-day easy returns</span></div>

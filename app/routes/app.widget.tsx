@@ -1384,7 +1384,7 @@ export default function WidgetPage() {
                       )}
                     </InlineStack>
                     <InlineStack gap="300" wrap>
-                      <div style={{ flex: 1, minWidth: "140px" }}>
+                      <Box minWidth="140px" width="100%">
                         <BlockStack gap="100">
                           <Text as="p" variant="bodySm">
                             Button Color
@@ -1415,8 +1415,8 @@ export default function WidgetPage() {
                             />
                           </InlineStack>
                         </BlockStack>
-                      </div>
-                      <div style={{ flex: 1, minWidth: "140px" }}>
+                      </Box>
+                      <Box minWidth="140px" width="100%">
                         <BlockStack gap="100">
                           <Text as="p" variant="bodySm">
                             Success Color
@@ -1447,10 +1447,10 @@ export default function WidgetPage() {
                             />
                           </InlineStack>
                         </BlockStack>
-                      </div>
+                      </Box>
                     </InlineStack>
                     <InlineStack gap="300" wrap>
-                      <div style={{ flex: 1, minWidth: "140px" }}>
+                      <Box minWidth="140px" width="100%">
                         <BlockStack gap="100">
                           <Text as="p" variant="bodySm">
                             Error Color
@@ -1481,8 +1481,8 @@ export default function WidgetPage() {
                             />
                           </InlineStack>
                         </BlockStack>
-                      </div>
-                      <div style={{ flex: 1, minWidth: "140px" }}>
+                      </Box>
+                      <Box minWidth="140px" width="100%">
                         <BlockStack gap="100">
                           <Text as="p" variant="bodySm">
                             Background
@@ -1513,7 +1513,7 @@ export default function WidgetPage() {
                             />
                           </InlineStack>
                         </BlockStack>
-                      </div>
+                      </Box>
                     </InlineStack>
                     <BlockStack gap="100">
                       <Text as="p" variant="bodySm">

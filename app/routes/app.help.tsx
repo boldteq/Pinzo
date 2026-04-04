@@ -103,7 +103,10 @@ export default function HelpPage() {
               </Box>
               <Divider />
               {faqs.map((faq, index) => (
-                <div key={faq.question}>
+                <Box key={faq.question}>
+                  {/* Interactive accordion trigger — Polaris has no clickable container
+                      component, so a minimal div with role="button" is required here.
+                      Background uses Polaris design tokens. */}
                   <div
                     role="button"
                     tabIndex={0}
@@ -159,7 +162,7 @@ export default function HelpPage() {
                     </Box>
                   </Collapsible>
                   {index < faqs.length - 1 && <Divider />}
-                </div>
+                </Box>
               ))}
             </Card>
           </Layout.Section>

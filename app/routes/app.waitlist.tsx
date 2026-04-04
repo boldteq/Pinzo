@@ -1321,7 +1321,7 @@ export default function WaitlistPage() {
       >
         <Modal.Section>
           <Text as="p">
-            This will permanently delete all <strong>{stats.notified}</strong> notified waitlist entr{stats.notified === 1 ? "y" : "ies"}. This action cannot be undone.
+            This will permanently delete all <Text as="span" fontWeight="semibold">{stats.notified}</Text> notified waitlist entr{stats.notified === 1 ? "y" : "ies"}. This action cannot be undone.
           </Text>
         </Modal.Section>
       </Modal>
@@ -1347,9 +1347,9 @@ export default function WaitlistPage() {
         <Modal.Section>
           <Text as="p">
             This will permanently delete{" "}
-            <strong>
+            <Text as="span" fontWeight="semibold">
               {selectedEntryIds.length} waitlist entr{selectedEntryIds.length === 1 ? "y" : "ies"}
-            </strong>
+            </Text>
             . This action cannot be undone.
           </Text>
         </Modal.Section>

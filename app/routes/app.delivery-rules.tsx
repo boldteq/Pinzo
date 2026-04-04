@@ -773,9 +773,9 @@ export default function DeliveryRulesPage() {
         <Modal.Section>
           <Text as="p">
             This will permanently delete{" "}
-            <strong>
+            <Text as="span" fontWeight="semibold">
               {selectedResources.length} rule{selectedResources.length !== 1 ? "s" : ""}
-            </strong>
+            </Text>
             . This action cannot be undone.
           </Text>
         </Modal.Section>

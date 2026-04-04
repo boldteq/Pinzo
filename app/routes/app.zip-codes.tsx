@@ -1211,13 +1211,13 @@ export default function ZipCodesPage() {
                 >
                   {!checkResult.found ? (
                     <Text as="p">
-                      <strong>{checkResult.zipCode}</strong> is{" "}
-                      <strong>not found</strong> in your zip code list.
+                      <Text as="span" fontWeight="semibold">{checkResult.zipCode}</Text> is{" "}
+                      <Text as="span" fontWeight="semibold">not found</Text> in your zip code list.
                     </Text>
                   ) : checkResult.record?.type === "allowed" ? (
                     <Text as="p">
-                      <strong>{checkResult.zipCode}</strong> is{" "}
-                      <strong>allowed</strong>
+                      <Text as="span" fontWeight="semibold">{checkResult.zipCode}</Text> is{" "}
+                      <Text as="span" fontWeight="semibold">allowed</Text>
                       {checkResult.record.zone
                         ? ` — Zone: ${checkResult.record.zone}`
                         : ""}
@@ -1229,13 +1229,13 @@ export default function ZipCodesPage() {
                         : ""}
                       .{" "}
                       {!checkResult.record.isActive && (
-                        <em>(Currently inactive)</em>
+                        <Text as="span" tone="subdued">(Currently inactive)</Text>
                       )}
                     </Text>
                   ) : (
                     <Text as="p">
-                      <strong>{checkResult.zipCode}</strong> is{" "}
-                      <strong>blocked</strong>
+                      <Text as="span" fontWeight="semibold">{checkResult.zipCode}</Text> is{" "}
+                      <Text as="span" fontWeight="semibold">blocked</Text>
                       {checkResult.record?.zone
                         ? ` — Zone: ${checkResult.record.zone}`
                         : ""}
@@ -1244,7 +1244,7 @@ export default function ZipCodesPage() {
                         : ""}
                       .{" "}
                       {!checkResult.record?.isActive && (
-                        <em>(Currently inactive)</em>
+                        <Text as="span" tone="subdued">(Currently inactive)</Text>
                       )}
                     </Text>
                   )}
@@ -1261,7 +1261,7 @@ export default function ZipCodesPage() {
             <Box padding="400">
               <InlineStack gap="300" align="space-between" blockAlign="center" wrap>
                 <InlineStack gap="300" blockAlign="center" wrap>
-                  <div style={{ minWidth: "260px" }}>
+                  <Box minWidth="260px">
                     <TextField
                       label="Search zip codes"
                       labelHidden
@@ -1273,8 +1273,8 @@ export default function ZipCodesPage() {
                       clearButton
                       onClearButtonClick={() => handleSearchChange("")}
                     />
-                  </div>
-                  <div style={{ minWidth: "120px" }}>
+                  </Box>
+                  <Box minWidth="120px">
                     <Select
                       label="Filter"
                       labelHidden
@@ -1282,7 +1282,7 @@ export default function ZipCodesPage() {
                       value={statusFilter}
                       onChange={handleFilterChange}
                     />
-                  </div>
+                  </Box>
                 </InlineStack>
                 <InlineStack gap="200">
                   <Tooltip
@@ -1848,7 +1848,7 @@ export default function ZipCodesPage() {
                 }
               >
                 <Text as="p">
-                  Imported <strong>{importResult.imported as number}</strong> zip
+                  Imported <Text as="span" fontWeight="semibold">{importResult.imported as number}</Text> zip
                   codes.
                   {(importResult.skipped as number) > 0 &&
                     ` Skipped ${importResult.skipped} entries.`}
@@ -1967,7 +1967,7 @@ export default function ZipCodesPage() {
                   <Text as="p">{(rangeResult as unknown as { error: string }).error}</Text>
                 ) : (
                   <Text as="p">
-                    Imported <strong>{rangeResult.imported as number}</strong> zip codes
+                    Imported <Text as="span" fontWeight="semibold">{rangeResult.imported as number}</Text> zip codes
                     ({rangeResult.total as number} in range).
                   </Text>
                 )}
@@ -2073,9 +2073,9 @@ export default function ZipCodesPage() {
         <Modal.Section>
           <Text as="p">
             This will permanently delete{" "}
-            <strong>
+            <Text as="span" fontWeight="semibold">
               {selectedIds.length} zip code{selectedIds.length !== 1 ? "s" : ""}
-            </strong>
+            </Text>
             . This action cannot be undone.
           </Text>
         </Modal.Section>

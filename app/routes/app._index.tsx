@@ -255,12 +255,12 @@ export default function DashboardPage() {
             >
               <List type="number">
                 <List.Item>
-                  Open <strong>Theme Editor &gt; App Embeds</strong> and turn on{" "}
-                  <strong>Pinzo</strong>
+                  Open <Text as="span" fontWeight="semibold">Theme Editor &gt; App Embeds</Text> and turn on{" "}
+                  <Text as="span" fontWeight="semibold">Pinzo</Text>
                 </List.Item>
                 <List.Item>
-                  Go to your <strong>Product template</strong>, add the{" "}
-                  <strong>Pinzo</strong> block, and save
+                  Go to your <Text as="span" fontWeight="semibold">Product template</Text>, add the{" "}
+                  <Text as="span" fontWeight="semibold">Pinzo</Text> block, and save
                 </List.Item>
               </List>
             </Banner>

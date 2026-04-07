@@ -443,6 +443,67 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
+  if (intent === "bulk-type-change") {
+    const idsRaw = String(formData.get("ids") || "");
+    const ids = idsRaw
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
+    // Sanitize type — only accept known values
+    const rawType = String(formData.get("type") || "");
+    const type = rawType === "blocked" ? "blocked" : "allowed";
+
+    if (ids.length === 0) return { error: "No zip codes selected." };
+    if (ids.length > 5000) {
+      return { error: "Too many zip codes selected at once. Please select fewer than 5000." };
+    }
+
+    try {
+      const subscription = await getShopSubscription(shop);
+      const limits = PLAN_LIMITS[subscription.planTier];
+
+      if (type === "blocked" && !limits.allowBlocked) {
+        return {
+          error:
+            "Blocked zip codes are not available on your current plan. Upgrade to Starter or higher to use blocked zip codes.",
+          upgradeRequired: true,
+        };
+      }
+
+      const result = await db.zipCode.updateMany({
+        where: { id: { in: ids }, shop },
+        data: { type },
+      });
+      return { success: true, action: "bulk-type-change", updated: result.count, type };
+    } catch {
+      return { error: `Failed to set zip codes to ${type}.` };
+    }
+  }
+
+  if (intent === "bulk-activate") {
+    const idsRaw = String(formData.get("ids") || "");
+    const ids = idsRaw
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
+    const isActive = formData.get("isActive") === "true";
+
+    if (ids.length === 0) return { error: "No zip codes selected." };
+    if (ids.length > 5000) {
+      return { error: "Too many zip codes selected at once. Please select fewer than 5000." };
+    }
+
+    try {
+      const result = await db.zipCode.updateMany({
+        where: { id: { in: ids }, shop },
+        data: { isActive },
+      });
+      return { success: true, action: "bulk-activate", updated: result.count, isActive };
+    } catch {
+      return { error: `Failed to ${isActive ? "activate" : "deactivate"} selected zip codes.` };
+    }
+  }
+
   if (intent === "range-import") {
     const startZip = String(formData.get("startZip") || "").trim().toUpperCase();
     const endZip = String(formData.get("endZip") || "").trim().toUpperCase();
@@ -642,6 +703,12 @@ export default function ZipCodesPage() {
   const isBulkDeleteLoading =
     fetcher.state !== "idle" &&
     fetcher.formData?.get("intent") === "bulk-delete";
+  const isBulkTypeChangeLoading =
+    fetcher.state !== "idle" &&
+    fetcher.formData?.get("intent") === "bulk-type-change";
+  const isBulkActivateLoading =
+    fetcher.state !== "idle" &&
+    fetcher.formData?.get("intent") === "bulk-activate";
 
   const checkResult =
     fetcher.data && "checkResult" in fetcher.data
@@ -895,6 +962,30 @@ export default function ZipCodesPage() {
     setConfirmBulkDeleteOpen(false);
   }, [selectedIds, fetcher]);
 
+  const handleBulkTypeChange = useCallback(
+    (type: "allowed" | "blocked") => {
+      if (selectedIds.length === 0) return;
+      const fd = new FormData();
+      fd.set("intent", "bulk-type-change");
+      fd.set("ids", selectedIds.join(","));
+      fd.set("type", type);
+      fetcher.submit(fd, { method: "POST" });
+    },
+    [selectedIds, fetcher],
+  );
+
+  const handleBulkActivate = useCallback(
+    (isActive: boolean) => {
+      if (selectedIds.length === 0) return;
+      const fd = new FormData();
+      fd.set("intent", "bulk-activate");
+      fd.set("ids", selectedIds.join(","));
+      fd.set("isActive", String(isActive));
+      fetcher.submit(fd, { method: "POST" });
+    },
+    [selectedIds, fetcher],
+  );
+
   // React to server responses — show toasts, close modals, clear selection.
   // All feedback is driven from here so it only fires after server confirmation.
   useEffect(() => {
@@ -927,6 +1018,26 @@ export default function ZipCodesPage() {
           "deleted" in fetcher.data ? (fetcher.data.deleted as number) : selectedIds.length;
         shopify.toast.show(
           `${deleted} zip code${deleted !== 1 ? "s" : ""} deleted`,
+        );
+        setSelectedIds([]);
+        setAllSelected(false);
+      } else if (fetcherAction === "bulk-type-change") {
+        const updated =
+          "updated" in fetcher.data ? (fetcher.data.updated as number) : selectedIds.length;
+        const bulkType =
+          "type" in fetcher.data ? (fetcher.data.type as string) : "allowed";
+        shopify.toast.show(
+          `${updated} zip code${updated !== 1 ? "s" : ""} set to ${bulkType}`,
+        );
+        setSelectedIds([]);
+        setAllSelected(false);
+      } else if (fetcherAction === "bulk-activate") {
+        const updated =
+          "updated" in fetcher.data ? (fetcher.data.updated as number) : selectedIds.length;
+        const active =
+          "isActive" in fetcher.data ? (fetcher.data.isActive as boolean) : true;
+        shopify.toast.show(
+          `${updated} zip code${updated !== 1 ? "s" : ""} ${active ? "activated" : "deactivated"}`,
         );
         setSelectedIds([]);
         setAllSelected(false);
@@ -974,6 +1085,26 @@ export default function ZipCodesPage() {
   ];
 
   const promotedBulkActions = [
+    {
+      content: "Set Allowed",
+      onAction: () => handleBulkTypeChange("allowed"),
+    },
+    ...(limits.allowBlocked
+      ? [
+          {
+            content: "Set Blocked",
+            onAction: () => handleBulkTypeChange("blocked"),
+          },
+        ]
+      : []),
+    {
+      content: "Activate",
+      onAction: () => handleBulkActivate(true),
+    },
+    {
+      content: "Deactivate",
+      onAction: () => handleBulkActivate(false),
+    },
     {
       content: "Delete Selected",
       onAction: () => setConfirmBulkDeleteOpen(true),
@@ -1417,7 +1548,7 @@ export default function ZipCodesPage() {
                     { title: "Actions" },
                   ]}
                   promotedBulkActions={promotedBulkActions}
-                  loading={isBulkDeleteLoading}
+                  loading={isBulkDeleteLoading || isBulkTypeChangeLoading || isBulkActivateLoading}
                   pagination={
                     totalPages > 1
                       ? {

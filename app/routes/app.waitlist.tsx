@@ -64,7 +64,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     total: entries.length,
     waiting: entries.filter((e) => e.status === "waiting").length,
     accepted: entries.filter((e) => e.status === "accepted").length,
-    rejected: entries.filter((e) => e.status === "rejected").length,
     notified: entries.filter((e) => e.status === "notified").length,
     converted: entries.filter((e) => e.status === "converted").length,
     uniqueZips: [...new Set(entries.map((e) => e.zipCode))].length,
@@ -305,6 +304,45 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return { success: true, action: "deleted-notified", count: deleted.count };
   }
 
+  if (intent === "notify-all") {
+    const notifyAllSub = await getShopSubscription(shop);
+    if (PLAN_LIMITS[notifyAllSub.planTier].maxWaitlist < UNLIMITED) {
+      return { error: "Notify All is only available on Pro or Ultimate plans. Please upgrade." };
+    }
+
+    const allWaiting = await db.waitlistEntry.findMany({
+      where: { shop, status: "waiting" },
+      select: { id: true, email: true, zipCode: true },
+    });
+
+    if (allWaiting.length === 0) {
+      return { action: "notify-all", emails: [] as string[], count: 0, emailsSent: 0, zipBreakdown: [] as { zipCode: string; count: number }[] };
+    }
+
+    await db.waitlistEntry.updateMany({
+      where: { shop, status: "waiting" },
+      data: { status: "notified" },
+    });
+
+    const zipMap = new Map<string, number>();
+    for (const entry of allWaiting) {
+      zipMap.set(entry.zipCode, (zipMap.get(entry.zipCode) ?? 0) + 1);
+    }
+    const zipBreakdown = Array.from(zipMap.entries()).map(([zipCode, count]) => ({ zipCode, count }));
+    const emails = allWaiting.map((e) => e.email);
+    const shopUrl = `https://${shop}`;
+    const emailResults = await Promise.allSettled(
+      allWaiting.map((e) =>
+        sendZipAvailableNotification(e.email, e.zipCode, shop, shopUrl, emailOpts),
+      ),
+    );
+    const emailsSent = emailResults.filter(
+      (r) => r.status === "fulfilled" && r.value,
+    ).length;
+
+    return { action: "notify-all", emails, count: emails.length, emailsSent, zipBreakdown };
+  }
+
   if (intent === "accept") {
     const id = String(formData.get("id"));
     const entry = await db.waitlistEntry.findUnique({ where: { id } });
@@ -345,12 +383,11 @@ const STATUS_OPTIONS = [
   { content: "Converted", value: "converted" },
 ];
 
-const STATUS_TONE: Record<string, "warning" | "success" | "info" | "critical" | undefined> = {
-  waiting: "warning",
+const STATUS_TONE: Record<string, "attention" | "success" | "info" | undefined> = {
+  waiting: "attention",
   accepted: "success",
   notified: "info",
   converted: "success",
-  rejected: "critical",
 };
 
 function StatusAction({ id, status, onChangeStatus }: { id: string; status: string; onChangeStatus: (id: string, val: string) => void }) {
@@ -434,6 +471,7 @@ export default function WaitlistPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmClearNotifiedOpen, setConfirmClearNotifiedOpen] = useState(false);
   const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
+  const [confirmNotifyAllOpen, setConfirmNotifyAllOpen] = useState(false);
 
   // Form state
   const [newEmail, setNewEmail] = useState("");
@@ -471,7 +509,7 @@ export default function WaitlistPage() {
     if (
       fetcher.data &&
       "action" in fetcher.data &&
-      (fetcher.data.action === "notify-zip" || fetcher.data.action === "notify-selected-zips" || fetcher.data.action === "bulk-action-notify")
+      (fetcher.data.action === "notify-zip" || fetcher.data.action === "notify-selected-zips" || fetcher.data.action === "bulk-action-notify" || fetcher.data.action === "notify-all")
     ) {
       const data = fetcher.data as {
         action: string;
@@ -483,6 +521,13 @@ export default function WaitlistPage() {
       };
       if (data.action === "notify-zip") {
         setNotifyResult({ zipCode: data.zipCode!, emails: data.emails, count: data.count, emailsSent: data.emailsSent });
+      } else if (data.action === "notify-all") {
+        setNotifyResult({
+          zipCode: "All waiting ZIP codes",
+          emails: data.emails,
+          count: data.count,
+          emailsSent: data.emailsSent,
+        });
       } else {
         setNotifyResult({
           zipCode: data.zipBreakdown?.map(z => z.zipCode).join(", ") ?? "",
@@ -646,6 +691,13 @@ export default function WaitlistPage() {
     [fetcher],
   );
 
+  const doNotifyAll = useCallback(() => {
+    const fd = new FormData();
+    fd.set("intent", "notify-all");
+    fetcher.submit(fd, { method: "POST" });
+    setConfirmNotifyAllOpen(false);
+  }, [fetcher]);
+
   // ZIP checkbox handlers
   const handleToggleZip = useCallback((zipCode: string) => {
     setSelectedZips(prev => {
@@ -787,6 +839,8 @@ export default function WaitlistPage() {
     },
   ];
 
+  const canNotifyAll = limits.maxWaitlist >= UNLIMITED;
+
   return (
     <Page
       title="Customer Waitlist"
@@ -803,6 +857,24 @@ export default function WaitlistPage() {
               icon: PlusIcon,
               onAction: () => setAddModalOpen(true),
             }
+      }
+      secondaryActions={
+        stats.waiting > 0
+          ? [
+              canNotifyAll
+                ? {
+                    content: `Notify All Waiting (${stats.waiting})`,
+                    icon: EmailIcon,
+                    onAction: () => setConfirmNotifyAllOpen(true),
+                  }
+                : {
+                    content: "Notify All Waiting",
+                    icon: EmailIcon,
+                    disabled: true,
+                    onAction: () => navigate("/app/pricing"),
+                  },
+            ]
+          : undefined
       }
     >
       <Box paddingBlockEnd="1600">
@@ -1367,6 +1439,30 @@ export default function WaitlistPage() {
             </Text>
             . This action cannot be undone.
           </Text>
+        </Modal.Section>
+      </Modal>
+
+      {/* Notify All Confirmation Modal */}
+      <Modal
+        open={confirmNotifyAllOpen}
+        onClose={() => setConfirmNotifyAllOpen(false)}
+        title={`Notify All ${stats.waiting} Waiting Customer${stats.waiting === 1 ? "" : "s"}?`}
+        primaryAction={{
+          content: `Notify ${stats.waiting} Customer${stats.waiting === 1 ? "" : "s"}`,
+          onAction: doNotifyAll,
+          loading: fetcher.state !== "idle",
+        }}
+        secondaryActions={[{ content: "Cancel", onAction: () => setConfirmNotifyAllOpen(false) }]}
+      >
+        <Modal.Section>
+          <BlockStack gap="300">
+            <Banner tone="warning">
+              This will send notification emails to all <Text as="span" fontWeight="semibold">{stats.waiting}</Text> waiting customer{stats.waiting === 1 ? "" : "s"} across <Text as="span" fontWeight="semibold">{zipWaitingCounts.length}</Text> ZIP code{zipWaitingCounts.length === 1 ? "" : "s"} and mark them as notified. This action cannot be undone.
+            </Banner>
+            <Text as="p" tone="subdued" variant="bodySm">
+              Notification emails will be sent to all customers waiting in: {zipWaitingCounts.map(z => z.zipCode).join(", ")}
+            </Text>
+          </BlockStack>
         </Modal.Section>
       </Modal>
 

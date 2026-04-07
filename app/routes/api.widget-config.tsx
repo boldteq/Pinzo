@@ -47,6 +47,8 @@ const DEFAULTS = {
   blockCheckoutInCart: false,
   showSocialProof: true,
   lockButtonsUntilZipCheck: true,
+  waitlistTitle: "Get notified when we deliver to your area",
+  waitlistButtonText: "Notify Me",
   borderRadius: "8",
   customCss: null as string | null,
 };
@@ -144,6 +146,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         blockCartOnInvalid: config.blockCartOnInvalid ?? false,
         showSocialProof: config.showSocialProof ?? true,
         lockButtonsUntilZipCheck: config.lockButtonsUntilZipCheck ?? true,
+        waitlistTitle: (config as unknown as { waitlistTitle?: string }).waitlistTitle ?? "Get notified when we deliver to your area",
+        waitlistButtonText: (config as unknown as { waitlistButtonText?: string }).waitlistButtonText ?? "Notify Me",
         borderRadius: config.borderRadius,
         customCss: config.customCss ? sanitizeCss(config.customCss) : null,
       }

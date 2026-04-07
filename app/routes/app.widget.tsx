@@ -144,6 +144,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         blockCheckoutInCart: formData.get("blockCheckoutInCart") === "true",
         showSocialProof: formData.get("showSocialProof") === "true",
         lockButtonsUntilZipCheck: formData.get("lockButtonsUntilZipCheck") === "true",
+        waitlistTitle: String(formData.get("waitlistTitle") || "Get notified when we deliver to your area"),
+        waitlistButtonText: String(formData.get("waitlistButtonText") || "Notify Me"),
         borderRadius: String(formData.get("borderRadius") || "8"),
         customCss: String(formData.get("customCss") || "").slice(0, MAX_CUSTOM_CSS_LENGTH) || null,
       };
@@ -218,6 +220,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         blockCheckoutInCart: false,
         showSocialProof: true,
         lockButtonsUntilZipCheck: true,
+        waitlistTitle: "Get notified when we deliver to your area",
+        waitlistButtonText: "Notify Me",
         borderRadius: "8",
         customCss: null,
       };
@@ -269,6 +273,8 @@ type WidgetConfig = {
   blockCheckoutInCart: boolean;
   showSocialProof: boolean;
   lockButtonsUntilZipCheck: boolean;
+  waitlistTitle: string;
+  waitlistButtonText: string;
   borderRadius: string;
   customCss: string | null;
 };
@@ -301,6 +307,8 @@ const DEFAULTS = {
   blockCheckoutInCart: false,
   showSocialProof: true,
   lockButtonsUntilZipCheck: true,
+  waitlistTitle: "Get notified when we deliver to your area",
+  waitlistButtonText: "Notify Me",
   borderRadius: "8",
   customCss: "",
 };
@@ -1015,7 +1023,7 @@ const WidgetPreview = memo(function WidgetPreview({
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, display: "block" }}>
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
                 </svg>
-                {" "}Get Notified When We Deliver
+                {" "}{cfg.waitlistTitle || "Get notified when we deliver to your area"}
               </button>
               <div style={{ marginTop: 12 }}>
                 <input className="zcc-wl-input" type="text" placeholder="Your name" readOnly />
@@ -1026,7 +1034,7 @@ const WidgetPreview = memo(function WidgetPreview({
                       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
                     </svg>
                   </span>
-                  <span className="zcc-wl-btn-label">Notify Me</span>
+                  <span className="zcc-wl-btn-label">{cfg.waitlistButtonText || "Notify Me"}</span>
                 </button>
               </div>
             </div>
@@ -1166,6 +1174,8 @@ export default function WidgetPage() {
   const [blockCheckoutInCart, setBlockCheckoutInCart] = useState(c.blockCheckoutInCart ?? false);
   const [showSocialProof, setShowSocialProof] = useState(c.showSocialProof ?? true);
   const [lockButtonsUntilZipCheck, setLockButtonsUntilZipCheck] = useState((c as unknown as { lockButtonsUntilZipCheck?: boolean }).lockButtonsUntilZipCheck ?? true);
+  const [waitlistTitle, setWaitlistTitle] = useState((c as unknown as { waitlistTitle?: string }).waitlistTitle ?? DEFAULTS.waitlistTitle);
+  const [waitlistButtonText, setWaitlistButtonText] = useState((c as unknown as { waitlistButtonText?: string }).waitlistButtonText ?? DEFAULTS.waitlistButtonText);
   const [borderRadius, setBorderRadius] = useState(c.borderRadius);
   const [customCss, setCustomCss] = useState(c.customCss || "");
 
@@ -1232,6 +1242,8 @@ export default function WidgetPage() {
   const handleBlockCheckoutInCartChange = useCallback((v: boolean) => { setBlockCheckoutInCart(v); mark(); }, [mark]);
   const handleShowSocialProofChange = useCallback((v: boolean) => { setShowSocialProof(v); mark(); }, [mark]);
   const handleLockButtonsUntilZipCheckChange = useCallback((v: boolean) => { setLockButtonsUntilZipCheck(v); mark(); }, [mark]);
+  const handleWaitlistTitleChange = useCallback((v: string) => { setWaitlistTitle(v); mark(); }, [mark]);
+  const handleWaitlistButtonTextChange = useCallback((v: string) => { setWaitlistButtonText(v); mark(); }, [mark]);
   const handleBorderRadiusChange = useCallback((v: string) => { setBorderRadius(v); mark(); }, [mark]);
   const handleCustomCssChange = useCallback((v: string) => { setCustomCss(v); mark(); }, [mark]);
 
@@ -1264,6 +1276,8 @@ export default function WidgetPage() {
     fd.set("blockCheckoutInCart", String(blockCheckoutInCart));
     fd.set("showSocialProof", String(showSocialProof));
     fd.set("lockButtonsUntilZipCheck", String(lockButtonsUntilZipCheck));
+    fd.set("waitlistTitle", waitlistTitle);
+    fd.set("waitlistButtonText", waitlistButtonText);
     fd.set("borderRadius", borderRadius);
     fd.set("customCss", customCss);
     fetcher.submit(fd, { method: "POST" });
@@ -1274,7 +1288,8 @@ export default function WidgetPage() {
     notFoundMessage, showEta, showZone, showWaitlistOnFailure, showCod,
     showReturnPolicy, showCutoffTime, showDeliveryDays, showDeliveryDate,
     showCountdown, showDeliveryFee, blockCartOnInvalid,
-    blockCheckoutInCart, showSocialProof, lockButtonsUntilZipCheck, borderRadius, customCss,
+    blockCheckoutInCart, showSocialProof, lockButtonsUntilZipCheck,
+    waitlistTitle, waitlistButtonText, borderRadius, customCss,
     fetcher, shopify,
   ]);
 
@@ -1308,6 +1323,8 @@ export default function WidgetPage() {
     setBlockCheckoutInCart(DEFAULTS.blockCheckoutInCart);
     setShowSocialProof(DEFAULTS.showSocialProof);
     setLockButtonsUntilZipCheck(DEFAULTS.lockButtonsUntilZipCheck);
+    setWaitlistTitle(DEFAULTS.waitlistTitle);
+    setWaitlistButtonText(DEFAULTS.waitlistButtonText);
     setBorderRadius(DEFAULTS.borderRadius);
     setCustomCss(DEFAULTS.customCss);
     setPreviewState("idle");
@@ -1323,14 +1340,16 @@ export default function WidgetPage() {
     notFoundMessage, showEta, showZone, showWaitlistOnFailure, showCod,
     showReturnPolicy, showCutoffTime, showDeliveryDays, showDeliveryDate,
     showCountdown, showDeliveryFee, blockCartOnInvalid,
-    blockCheckoutInCart, showSocialProof, lockButtonsUntilZipCheck, borderRadius, customCss,
+    blockCheckoutInCart, showSocialProof, lockButtonsUntilZipCheck,
+    waitlistTitle, waitlistButtonText, borderRadius, customCss,
   }), [
     position, primaryColor, successColor, errorColor, backgroundColor,
     textColor, heading, placeholder, buttonText, successMessage, errorMessage,
     notFoundMessage, showEta, showZone, showWaitlistOnFailure, showCod,
     showReturnPolicy, showCutoffTime, showDeliveryDays, showDeliveryDate,
     showCountdown, showDeliveryFee, blockCartOnInvalid,
-    blockCheckoutInCart, showSocialProof, lockButtonsUntilZipCheck, borderRadius, customCss,
+    blockCheckoutInCart, showSocialProof, lockButtonsUntilZipCheck,
+    waitlistTitle, waitlistButtonText, borderRadius, customCss,
   ]);
 
   const handleDiscard = useCallback(() => {
@@ -1360,6 +1379,8 @@ export default function WidgetPage() {
     setBlockCheckoutInCart(c.blockCheckoutInCart ?? false);
     setShowSocialProof(c.showSocialProof ?? true);
     setLockButtonsUntilZipCheck((c as unknown as { lockButtonsUntilZipCheck?: boolean }).lockButtonsUntilZipCheck ?? true);
+    setWaitlistTitle((c as unknown as { waitlistTitle?: string }).waitlistTitle ?? DEFAULTS.waitlistTitle);
+    setWaitlistButtonText((c as unknown as { waitlistButtonText?: string }).waitlistButtonText ?? DEFAULTS.waitlistButtonText);
     setBorderRadius(c.borderRadius);
     setCustomCss(c.customCss || "");
     setIsDirty(false);
@@ -1844,6 +1865,22 @@ export default function WidgetPage() {
                       helpText="Displays how many other customers are waiting for delivery to the same ZIP code. Example: 'Join 23 others waiting for delivery to your area.'"
                       checked={showSocialProof}
                       onChange={handleShowSocialProofChange}
+                    />
+                    <TextField
+                      label="Waitlist form title"
+                      value={waitlistTitle}
+                      onChange={handleWaitlistTitleChange}
+                      autoComplete="off"
+                      helpText="The heading shown above the email input on the waitlist form."
+                      placeholder="Get notified when we deliver to your area"
+                    />
+                    <TextField
+                      label="Waitlist button text"
+                      value={waitlistButtonText}
+                      onChange={handleWaitlistButtonTextChange}
+                      autoComplete="off"
+                      helpText="The label on the submit button of the waitlist form."
+                      placeholder="Notify Me"
                     />
                   </BlockStack>
                 </Card>

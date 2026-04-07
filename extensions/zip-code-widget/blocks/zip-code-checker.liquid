@@ -242,6 +242,8 @@
       customCss: "",
       blockCartOnInvalid: false,
       showSocialProof: true,
+      waitlistTitle: "Get notified when we deliver to your area",
+      waitlistButtonText: "Notify Me",
     };
     // Default lockButtonsUntilZipCheck to true
     if (cfg.lockButtonsUntilZipCheck === undefined || cfg.lockButtonsUntilZipCheck === null) {
@@ -903,11 +905,11 @@
               html +=
                 '<div class="zcc-wl">' +
                 '<div id="' + wid + '-wl-form">' +
-                '<div class="zcc-wl-title">' + ICONS.mail + ' Get notified when we deliver to your area</div>' +
+                '<div class="zcc-wl-title">' + ICONS.mail + ' ' + (cfg.waitlistTitle || 'Get notified when we deliver to your area') + '</div>' +
                 '<input class="zcc-wl-input" type="text" id="' + wid + '-wl-name" placeholder="Your name (optional)" aria-label="Your name" />' +
                 '<input class="zcc-wl-input" type="email" id="' + wid + '-wl-email" placeholder="Your email address" aria-label="Your email address" required />' +
                 '<input class="zcc-wl-input" type="text" id="' + wid + '-wl-zip" placeholder="ZIP code" aria-label="ZIP code" value="' + escAttr(zip) + '" required />' +
-                '<button class="zcc-wl-btn" id="' + wid + '-wl-btn" type="button"><span class="zcc-wl-btn-icon">' + ICONS.mail + '</span><span class="zcc-wl-btn-label">Notify Me</span></button>' +
+                '<button class="zcc-wl-btn" id="' + wid + '-wl-btn" type="button"><span class="zcc-wl-btn-icon">' + ICONS.mail + '</span><span class="zcc-wl-btn-label">' + (cfg.waitlistButtonText || 'Notify Me') + '</span></button>' +
                 '</div>' +
                 '</div>';
             }

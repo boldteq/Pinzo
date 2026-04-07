@@ -36,6 +36,15 @@ function getClient(): Resend | null {
   return client;
 }
 
+/**
+ * Returns true if the Resend API key is configured and the client can be
+ * initialized. Callers use this to show actionable diagnostics in the UI
+ * (e.g. "API key missing" vs "send failed") without attempting a live send.
+ */
+export function isEmailConfigured(): boolean {
+  return Boolean(process.env.RESEND_API_KEY);
+}
+
 function getRawFromEmail(): string {
   return process.env.RESEND_FROM_EMAIL || "noreply@example.com";
 }
@@ -183,7 +192,10 @@ export async function sendZipAvailableNotification(
   options?: EmailOptions,
 ): Promise<boolean> {
   const resend = getClient();
-  if (!resend) return false;
+  if (!resend) {
+    console.warn("[email] sendZipAvailableNotification skipped — Resend client not initialized (RESEND_API_KEY missing)");
+    return false;
+  }
 
   const name = options?.senderName?.trim() || shopFallbackName(shop, options);
 

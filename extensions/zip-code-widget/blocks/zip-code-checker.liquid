@@ -12,16 +12,16 @@
     We check window.__zccAppEnabled which is set by the app embed block.
   {% endcomment %}
   <div id="zcc-editor-{{ block.id }}">
-    <!-- Inactive state (shown by default) -->
+    <!-- Inactive state (shown by default) — minimal single-line indicator -->
     <div id="zcc-inactive-{{ block.id }}" style="
-      background:#f6f6f7;border:1px dashed #c9cccf;border-radius:8px;
-      padding:20px;max-width:480px;text-align:center;
+      display:inline-flex;align-items:center;gap:6px;
+      background:#f6f6f7;border:1px solid #e1e3e5;border-radius:6px;
+      padding:6px 10px;
       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-      color:#6d7175;font-size:13px;box-sizing:border-box;
+      color:#8c9196;font-size:11px;box-sizing:border-box;
     ">
-      <p style="margin:0 0 6px;font-weight:600;color:#202223;font-size:15px;">Pinzo</p>
-      <p style="margin:0 0 4px;">This widget requires the app embed to be enabled.</p>
-      <p style="margin:0;font-size:12px;">Go to <strong>App Embeds</strong> and toggle on <strong>Pinzo</strong> to activate.</p>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#008060" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;flex-shrink:0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span>Enable App Embed to activate the ZIP Code Checker</span>
     </div>
     <!-- Active preview (hidden by default) -->
     <div id="zcc-active-{{ block.id }}" style="display:none;">
@@ -148,7 +148,7 @@
   // This eliminates the race window where ATC/Buy Now buttons are clickable
   // while the config fetch is in flight (typically 100–500 ms).
   // renderWidget() will call _zccUnlock() immediately if the feature is
-  // disabled (lockButtonsUntilZipCheck:false) or position is "inline".
+  // disabled (lockButtonsUntilZipCheck:false). The lock applies to all positions.
   var _zccLockStyleId = 'zcc-lock-style';
   function _zccInjectLockCss() {
     if (document.getElementById(_zccLockStyleId)) return;
@@ -203,9 +203,13 @@
       if (!r.ok) throw new Error("Widget config API returned " + r.status);
       return r.json();
     })
-    .then(function (cfg) { renderWidget(cfg); })
+    .then(function (cfg) {
+      console.warn("[Pinzo] Config loaded: position=" + cfg.position + ", plan allows full custom=" + (cfg.widgetFullCustom !== undefined));
+      renderWidget(cfg);
+    })
     .catch(function (err) {
-      console.warn("[Pinzo] Could not load widget config, using defaults:", err.message || err);
+      var attemptedUrl = API_BASE + "/api/widget-config?shop=" + encodeURIComponent(SHOP);
+      console.error("[Pinzo] Could not load widget config from " + attemptedUrl + ":", err.message || err);
       renderWidget({});
     });
 
@@ -247,9 +251,9 @@
       if (cfg[k] === undefined || cfg[k] === null) cfg[k] = D[k];
     });
 
-    // Release pre-lock if feature is disabled OR widget is inline
-    // (inline widget is directly visible — customer doesn't need to hunt for it)
-    if (!cfg.lockButtonsUntilZipCheck || cfg.position === 'inline') {
+    // Release pre-lock if feature is disabled
+    // lockButtonsUntilZipCheck is honored for ALL positions including inline
+    if (!cfg.lockButtonsUntilZipCheck) {
       _zccUnlock();
     }
 
@@ -270,12 +274,9 @@
       blockCartButtonsInitial();
     }
 
-    // If lockButtonsUntilZipCheck is enabled AND the widget is in floating or popup mode,
-    // disable ATC/Buy Now buttons until the customer successfully validates their ZIP code.
-    // This is separate from blockCartOnInvalid (which also re-blocks on invalid).
-    // lockButtonsUntilZipCheck only activates in non-inline modes (floating/popup) because
-    // in those modes the widget is not directly visible on the product page by default.
-    if (cfg.lockButtonsUntilZipCheck && (cfg.position === "floating" || cfg.position === "popup")) {
+    // If lockButtonsUntilZipCheck is enabled, wire up unlock event listener for
+    // all widget positions (inline, floating, and popup).
+    if (cfg.lockButtonsUntilZipCheck) {
       lockAtcButtonsForZipCheck();
     }
   }
@@ -731,13 +732,26 @@
       setBtnLoading(true);
       res.innerHTML = "";
 
-      fetch(
-        API_BASE + "/api/zip-check?shop=" + encodeURIComponent(SHOP) +
-          "&zip=" + encodeURIComponent(zip)
-      )
+      var zipCheckUrl = API_BASE + "/api/zip-check?shop=" + encodeURIComponent(SHOP) + "&zip=" + encodeURIComponent(zip);
+
+      // Try primary URL (App Proxy). If it returns 404, attempt fallback with relative proxy path.
+      function doZipFetch(url) {
+        return fetch(url).then(function(r) {
+          if (r.status === 404 && url.indexOf("http") === 0 && url !== (_proxyPath + "/api/zip-check?shop=" + encodeURIComponent(SHOP) + "&zip=" + encodeURIComponent(zip))) {
+            // App Proxy URL returned 404 — try relative proxy path as fallback
+            var fallbackUrl = _proxyPath + "/api/zip-check?shop=" + encodeURIComponent(SHOP) + "&zip=" + encodeURIComponent(zip);
+            console.warn("[Pinzo] Primary URL returned 404, retrying with proxy fallback: " + fallbackUrl);
+            return fetch(fallbackUrl);
+          }
+          return r;
+        });
+      }
+
+      doZipFetch(zipCheckUrl)
         .then(function (r) {
           if (!r.ok) {
-            // Non-2xx: try to parse JSON error body, fall back to status text
+            // Non-2xx: log URL + status for diagnostics, try to parse JSON error body
+            console.error("[Pinzo] ZIP check API returned " + r.status + " for URL: " + zipCheckUrl);
             return r.json().catch(function() {
               return { error: 'Server error (' + r.status + ')' };
             });
@@ -971,8 +985,8 @@
         .catch(function (err) {
           setBtnLoading(false);
           // Log to console so merchants/developers can diagnose API connectivity issues.
-          // The URL is logged so we can immediately see if the proxy/API base is wrong.
-          console.error('[Pinzo] ZIP check failed.', err);
+          // URL is logged so we can immediately see if the proxy/API base is wrong.
+          console.error('[Pinzo] ZIP check failed. URL attempted: ' + zipCheckUrl + ' | Error: ' + (err.message || err));
           res.innerHTML = '<div class="zcc-result fail"><div class="zcc-result-icon">' + ICONS.xCircle + '</div><div class="zcc-result-content"><div class="zcc-result-message">Something went wrong. Please try again.</div></div></div>';
           try {
             sessionStorage.removeItem('zcc:valid');
@@ -1098,7 +1112,8 @@
       "#" + WID + "-panel{" +
         "background:" + cfg.backgroundColor + " !important;border-radius:16px !important;" +
         "box-shadow:0 12px 40px rgba(0,0,0,.15),0 4px 12px rgba(0,0,0,.08) !important;overflow:hidden !important;" +
-        "animation:zcc-slide-in 0.25s ease !important;max-width:380px !important;width:380px !important" +
+        "animation:zcc-slide-in 0.25s ease !important;max-width:380px !important;width:380px !important;" +
+        "display:flex !important;flex-direction:column !important;max-height:70vh !important" +
       "}" +
       "#" + WID + "-panel.zcc-hidden{display:none !important}" +
       "#" + WID + "-panel .zcc-panel-header{" +
@@ -1137,7 +1152,7 @@
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>' +
           '</button>' +
         '</div>' +
-        '<div id="' + WID + '" data-zcc-widget="true" style="border:none !important;box-shadow:none !important;max-width:none !important;padding:16px 20px 20px !important">' +
+        '<div id="' + WID + '" data-zcc-widget="true" style="border:none !important;box-shadow:none !important;max-width:none !important;padding:16px 20px 20px !important;overflow-y:auto !important;max-height:calc(70vh - 56px) !important">' +
           buildWidgetInner(WID, cfg, cfg.buttonText, false) +
         '</div>' +
       '</div>' +
@@ -1187,7 +1202,8 @@
       "#" + WID + "-modal{" +
         "background:" + cfg.backgroundColor + " !important;border-radius:16px !important;overflow:hidden !important;" +
         "max-width:480px !important;width:100% !important;position:relative !important;" +
-        "box-shadow:0 24px 48px rgba(0,0,0,.2) !important;animation:zcc-slide-in 0.3s ease !important" +
+        "box-shadow:0 24px 48px rgba(0,0,0,.2) !important;animation:zcc-slide-in 0.3s ease !important;" +
+        "display:flex !important;flex-direction:column !important;max-height:70vh !important" +
       "}" +
       "#" + WID + "-modal .zcc-modal-header{" +
         "display:flex !important;align-items:center !important;justify-content:space-between !important;" +
@@ -1232,7 +1248,7 @@
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>' +
           '</button>' +
         '</div>' +
-        '<div id="' + WID + '" data-zcc-widget="true" style="border:none !important;box-shadow:none !important;max-width:none !important;padding:16px 24px 24px !important">' +
+        '<div id="' + WID + '" data-zcc-widget="true" style="border:none !important;box-shadow:none !important;max-width:none !important;padding:16px 24px 24px !important;overflow-y:auto !important;max-height:calc(70vh - 60px) !important">' +
           buildWidgetInner(WID, cfg, cfg.buttonText, false) +
         '</div>' +
       '</div>';

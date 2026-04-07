@@ -11,7 +11,7 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import { getShopSubscription } from "../billing.server";
 import { PLAN_LIMITS, UNLIMITED } from "../plans";
 import db from "../db.server";
-import { sendTestEmail } from "../email.server";
+import { sendTestEmail, isEmailConfigured } from "../email.server";
 import {
   Page,
   Layout,
@@ -131,6 +131,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (intent === "send-test-email") {
       const testEmail = (formData.get("testEmail") as string | null) ?? "";
       if (!testEmail) return { error: "No email address provided." };
+      if (!isEmailConfigured()) {
+        return { error: "Email is not configured — RESEND_API_KEY environment variable is missing. Add it to your .env file and redeploy." };
+      }
       const settings = await db.shopSettings.findUnique({ where: { shop } });
       const sent = await sendTestEmail(
         testEmail,
@@ -139,7 +142,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       );
       return sent
         ? { success: true, intent }
-        : { error: "Failed to send test email. Check your Resend API key and sender email." };
+        : { error: "Failed to send test email via Resend. Verify your RESEND_API_KEY is valid and your sender domain is verified in the Resend dashboard." };
     }
 
     return { error: "Unknown intent" };

@@ -653,6 +653,13 @@ export default function ZipCodesPage() {
     fetcher.data && "upgradeRequired" in fetcher.data
       ? fetcher.data.upgradeRequired
       : false;
+
+  // Scope errors to the modal that submitted the action so errors from one
+  // modal cannot bleed into another. We track the last submitted intent and
+  // only surface the error inside the matching modal.
+  const lastSubmittedIntent = fetcher.formData?.get("intent") as string | undefined;
+  const addModalError = actionError && lastSubmittedIntent === "add" ? actionError : null;
+  const editModalError = actionError && lastSubmittedIntent === "update" ? actionError : null;
   const importResult =
     fetcher.data &&
     "action" in fetcher.data &&
@@ -1551,7 +1558,7 @@ export default function ZipCodesPage() {
       >
         <Modal.Section>
           <BlockStack gap="400">
-            {actionError && (
+            {addModalError && (
               <Banner
                 tone="critical"
                 action={
@@ -1566,7 +1573,7 @@ export default function ZipCodesPage() {
                     : undefined
                 }
               >
-                {actionError}
+                {addModalError}
               </Banner>
             )}
             <TextField
@@ -1674,8 +1681,12 @@ export default function ZipCodesPage() {
         </Modal.Section>
       </Modal>
 
-      {/* Edit Zip Code Modal */}
+      {/* Edit Zip Code Modal
+          key={editId || 'new'} forces React to remount the modal DOM when
+          switching between different ZIP code records, preventing stale field
+          values and flickering caused by React reusing the existing modal node. */}
       <Modal
+        key={editId || "new"}
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         title="Edit Zip Code"
@@ -1693,9 +1704,13 @@ export default function ZipCodesPage() {
       >
         <Modal.Section>
           <BlockStack gap="400">
-            {actionError && (
-              <Banner tone="critical">{actionError}</Banner>
-            )}
+            {/* Reserve a stable min-height for the error slot so the form
+                fields don't shift when the Banner appears or disappears. */}
+            <div style={{ minHeight: editModalError ? undefined : 0 }}>
+              {editModalError && (
+                <Banner tone="critical">{editModalError}</Banner>
+              )}
+            </div>
             <TextField
               label="Zip Code"
               value={editZip}

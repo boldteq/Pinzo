@@ -1711,6 +1711,19 @@ export default function WidgetPage() {
                         <Badge tone="info">Starter+</Badge>
                       )}
                     </InlineStack>
+                    <Banner tone={showWaitlistOnFailure ? "success" : "info"}>
+                      <BlockStack gap="200">
+                        <Text as="p" variant="bodySm" fontWeight="semibold">
+                          ZIP Code Waitlist
+                        </Text>
+                        <Checkbox
+                          label="Show waitlist form on blocked/not-found zip codes"
+                          checked={showWaitlistOnFailure}
+                          onChange={handleShowWaitlistChange}
+                          helpText="Let customers enter their email to join a waitlist when their zip code isn't available. Toggle the Error preview to see it in action."
+                        />
+                      </BlockStack>
+                    </Banner>
                     <Checkbox
                       label="Show estimated delivery time (ETA)"
                       checked={showEta}
@@ -1723,12 +1736,6 @@ export default function WidgetPage() {
                       checked={showZone}
                       onChange={handleShowZoneChange}
                       helpText="Display the zone name in the success message."
-                    />
-                    <Checkbox
-                      label="Show waitlist form on blocked/not-found zip codes"
-                      checked={showWaitlistOnFailure}
-                      onChange={handleShowWaitlistChange}
-                      helpText="Let customers enter their email to join a waitlist when their zip code isn't available."
                     />
                     <Checkbox
                       label="Show cutoff time"
@@ -1812,8 +1819,8 @@ export default function WidgetPage() {
                       disabled={!limits.cartBlocking}
                     />
                     <Checkbox
-                      label="Disable Add to Cart until ZIP code is verified (Floating/Popup only)"
-                      helpText="When the widget is in Floating or Popup mode, the Add to Cart and Buy Now buttons are disabled until the customer successfully validates their ZIP code. Has no effect in Inline mode."
+                      label="Disable Add to Cart until ZIP code is verified"
+                      helpText="Disable Add to Cart and Buy Now buttons until a valid ZIP code is checked. Works for all widget positions."
                       checked={lockButtonsUntilZipCheck}
                       onChange={handleLockButtonsUntilZipCheckChange}
                     />

@@ -490,8 +490,17 @@ export default function WaitlistPage() {
       }
       setNotifyResultModalOpen(true);
       setSelectedZips(new Set());
+
+      // Fire a toast warning when customers were waiting but no emails were sent —
+      // this ensures the merchant sees the problem even if they dismiss the result modal quickly.
+      if (data.count > 0 && data.emailsSent === 0) {
+        shopify.toast.show(
+          "No emails were sent. Check your email settings in Settings \u2192 Email Notifications.",
+          { isError: true },
+        );
+      }
     }
-  }, [fetcher.data]);
+  }, [fetcher.data, shopify]);
 
   const filteredEntries = useMemo(() => {
     let filtered = entries as WaitlistEntry[];

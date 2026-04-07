@@ -125,16 +125,15 @@ const FEATURE_ROWS: { label: string; free: FeatureValue; starter: FeatureValue; 
   { label: "Zip codes", free: "20", starter: "500", pro: "Unlimited", ultimate: "Unlimited" },
   { label: "Blocked zip codes", free: false, starter: true, pro: true, ultimate: true },
   { label: "Delivery rules", free: false, starter: "3", pro: "Unlimited", ultimate: "Unlimited" },
-  { label: "Waitlist entries", free: false, starter: "50", pro: "Unlimited", ultimate: "Unlimited" },
+  { label: "ZIP code requests (waitlist)", free: false, starter: "50", pro: "Unlimited", ultimate: "Unlimited" },
   { label: "Widget text customization", free: true, starter: true, pro: true, ultimate: true },
   { label: "Full widget customization", free: false, starter: true, pro: true, ultimate: true },
   { label: "Delivery ETA & COD", free: false, starter: true, pro: true, ultimate: true },
   { label: "Zone organization", free: false, starter: true, pro: true, ultimate: true },
   { label: "CSV import", free: false, starter: true, pro: true, ultimate: true },
   { label: "CSV export", free: false, starter: false, pro: true, ultimate: true },
-  { label: "Cart & checkout blocking", free: false, starter: false, pro: true, ultimate: true },
+  { label: "Checkout validation by ZIP code", free: false, starter: false, pro: true, ultimate: true },
   { label: "Custom widget CSS", free: false, starter: false, pro: false, ultimate: true },
-  { label: "API access", free: false, starter: false, pro: false, ultimate: true },
   { label: "Priority support", free: false, starter: false, pro: true, ultimate: "24/7 VIP" },
 ];
 

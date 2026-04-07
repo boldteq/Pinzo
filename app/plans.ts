@@ -39,7 +39,6 @@ export interface PlanLimits {
   showEtaCodReturn: boolean;
   cartBlocking: boolean;
   customCss: boolean;
-  apiAccess: boolean;
   label: string;
 }
 
@@ -56,7 +55,6 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     showEtaCodReturn: false,
     cartBlocking: false,
     customCss: false,
-    apiAccess: false,
     label: "Free",
   },
   starter: {
@@ -71,7 +69,6 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     showEtaCodReturn: true,
     cartBlocking: false,
     customCss: false,
-    apiAccess: false,
     label: "Starter",
   },
   pro: {
@@ -86,7 +83,6 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     showEtaCodReturn: true,
     cartBlocking: true,
     customCss: false,
-    apiAccess: false,
     label: "Pro",
   },
   ultimate: {
@@ -101,7 +97,6 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     showEtaCodReturn: true,
     cartBlocking: true,
     customCss: true,
-    apiAccess: true,
     label: "Ultimate",
   },
 };

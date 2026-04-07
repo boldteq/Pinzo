@@ -355,16 +355,18 @@ export default function SettingsPage() {
                     <InlineStack align="space-between" blockAlign="center">
                       <InlineStack gap="200" blockAlign="center">
                         <Icon source={LocationIcon} tone="subdued" />
-                        <Text as="p" variant="bodyMd">Zip Codes</Text>
+                        <Text as="p" variant="bodySm">Zip Codes</Text>
                       </InlineStack>
                       {limits.maxZipCodes < UNLIMITED ? (
-                        <Text as="p" variant="bodyMd" fontWeight="semibold">
-                          {zipCount} / {limits.maxZipCodes}
-                          <Text as="span" tone="subdued" variant="bodySm"> used</Text>
-                        </Text>
+                        <InlineStack gap="100" blockAlign="baseline">
+                          <Text as="p" variant="headingLg" fontWeight="bold">
+                            {zipCount}
+                          </Text>
+                          <Text as="span" tone="subdued" variant="bodySm">/ {limits.maxZipCodes} used</Text>
+                        </InlineStack>
                       ) : (
                         <InlineStack gap="200" blockAlign="center">
-                          <Text as="p" variant="bodyMd" fontWeight="semibold">{zipCount}</Text>
+                          <Text as="p" variant="headingLg" fontWeight="bold">{zipCount}</Text>
                           <Badge tone="success">Unlimited</Badge>
                         </InlineStack>
                       )}
@@ -385,20 +387,22 @@ export default function SettingsPage() {
                     <InlineStack align="space-between" blockAlign="center">
                       <InlineStack gap="200" blockAlign="center">
                         <Icon source={DeliveryIcon} tone="subdued" />
-                        <Text as="p" variant="bodyMd">Delivery Rules</Text>
+                        <Text as="p" variant="bodySm">Delivery Rules</Text>
                       </InlineStack>
                       {limits.maxDeliveryRules >= UNLIMITED ? (
                         <InlineStack gap="200" blockAlign="center">
-                          <Text as="p" variant="bodyMd" fontWeight="semibold">{deliveryRuleCount}</Text>
+                          <Text as="p" variant="headingLg" fontWeight="bold">{deliveryRuleCount}</Text>
                           <Badge tone="success">Unlimited</Badge>
                         </InlineStack>
                       ) : limits.maxDeliveryRules === 0 ? (
                         <Badge tone="critical">Not Available</Badge>
                       ) : (
-                        <Text as="p" variant="bodyMd" fontWeight="semibold">
-                          {deliveryRuleCount} / {limits.maxDeliveryRules}
-                          <Text as="span" tone="subdued" variant="bodySm"> used</Text>
-                        </Text>
+                        <InlineStack gap="100" blockAlign="baseline">
+                          <Text as="p" variant="headingLg" fontWeight="bold">
+                            {deliveryRuleCount}
+                          </Text>
+                          <Text as="span" tone="subdued" variant="bodySm">/ {limits.maxDeliveryRules} used</Text>
+                        </InlineStack>
                       )}
                     </InlineStack>
                     {limits.maxDeliveryRules > 0 && limits.maxDeliveryRules < UNLIMITED && (
@@ -417,20 +421,22 @@ export default function SettingsPage() {
                     <InlineStack align="space-between" blockAlign="center">
                       <InlineStack gap="200" blockAlign="center">
                         <Icon source={PersonIcon} tone="subdued" />
-                        <Text as="p" variant="bodyMd">Waitlist Entries</Text>
+                        <Text as="p" variant="bodySm">Waitlist Entries</Text>
                       </InlineStack>
                       {limits.maxWaitlist >= UNLIMITED ? (
                         <InlineStack gap="200" blockAlign="center">
-                          <Text as="p" variant="bodyMd" fontWeight="semibold">{waitlistCount}</Text>
+                          <Text as="p" variant="headingLg" fontWeight="bold">{waitlistCount}</Text>
                           <Badge tone="success">Unlimited</Badge>
                         </InlineStack>
                       ) : limits.maxWaitlist === 0 ? (
                         <Badge tone="critical">Not Available</Badge>
                       ) : (
-                        <Text as="p" variant="bodyMd" fontWeight="semibold">
-                          {waitlistCount} / {limits.maxWaitlist}
-                          <Text as="span" tone="subdued" variant="bodySm"> used</Text>
-                        </Text>
+                        <InlineStack gap="100" blockAlign="baseline">
+                          <Text as="p" variant="headingLg" fontWeight="bold">
+                            {waitlistCount}
+                          </Text>
+                          <Text as="span" tone="subdued" variant="bodySm">/ {limits.maxWaitlist} used</Text>
+                        </InlineStack>
                       )}
                     </InlineStack>
                     {limits.maxWaitlist > 0 && limits.maxWaitlist < UNLIMITED && (
@@ -448,11 +454,12 @@ export default function SettingsPage() {
                   <InlineStack align="space-between" blockAlign="center">
                     <InlineStack gap="200" blockAlign="center">
                       <Icon source={DisabledIcon} tone="subdued" />
-                      <Text as="p" variant="bodyMd">Block List</Text>
+                      <Text as="p" variant="bodySm">Block List</Text>
                     </InlineStack>
                     {limits.allowBlocked ? (
                       <InlineStack gap="200" blockAlign="center">
-                        <Text as="p" variant="bodyMd" fontWeight="semibold">{blockedZipCount} blocked</Text>
+                        <Text as="p" variant="headingLg" fontWeight="bold">{blockedZipCount}</Text>
+                        <Text as="span" tone="subdued" variant="bodySm">blocked</Text>
                         <Badge tone="success">Enabled</Badge>
                       </InlineStack>
                     ) : (

@@ -357,15 +357,18 @@ function StatusAction({ id, status, onChangeStatus }: { id: string; status: stri
   const [popoverActive, setPopoverActive] = useState(false);
 
   const activator = (
-    <Tooltip content="Change status">
-      <Button
-        size="slim"
-        variant="tertiary"
-        icon={EditIcon}
-        onClick={() => setPopoverActive((v) => !v)}
-        accessibilityLabel="Change status"
-      />
-    </Tooltip>
+    /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
+    <div onClick={(e) => e.stopPropagation()}>
+      <Tooltip content="Change status">
+        <Button
+          size="slim"
+          variant="tertiary"
+          icon={EditIcon}
+          onClick={() => setPopoverActive((v) => !v)}
+          accessibilityLabel="Change status"
+        />
+      </Tooltip>
+    </div>
   );
 
   return (
@@ -734,7 +737,7 @@ export default function WaitlistPage() {
             <Banner
               tone="info"
               title="Waitlist requires Starter plan or higher"
-              action={{ content: "View pricing plans", onAction: () => navigate("/app/pricing") }}
+              action={{ content: "View pricing plans", url: "/app/pricing" }}
             >
               <Text as="p">
                 The customer waitlist feature is not available on the Free plan.
@@ -898,7 +901,7 @@ export default function WaitlistPage() {
               title={`Waitlist usage: ${stats.total}/${limits.maxWaitlist} entries`}
               action={
                 stats.total >= limits.maxWaitlist
-                  ? { content: "Upgrade to Pro for unlimited entries", onAction: () => navigate("/app/pricing") }
+                  ? { content: "Upgrade to Pro for unlimited entries", url: "/app/pricing" }
                   : undefined
               }
             >
@@ -1156,6 +1159,8 @@ export default function WaitlistPage() {
                       {formatDate(entry.createdAt)}
                     </IndexTable.Cell>
                     <IndexTable.Cell>
+                      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+                      <div onClick={(e) => e.stopPropagation()}>
                       <InlineStack gap="200" wrap={false} align="end">
                         <Box minWidth="28px">
                           {entry.status === "waiting" && (
@@ -1187,6 +1192,7 @@ export default function WaitlistPage() {
                           />
                         </Tooltip>
                       </InlineStack>
+                      </div>
                     </IndexTable.Cell>
                   </IndexTable.Row>
                 ))}

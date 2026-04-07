@@ -254,14 +254,14 @@ function PlanFeature({ feature }: { feature: string }) {
   );
 }
 
-function ComparisonCell({ value, isCurrentPlan }: { value: FeatureValue; isCurrentPlan: boolean }) {
+function ComparisonCell({ value }: { value: FeatureValue; isCurrentPlan: boolean }) {
   return (
     <InlineStack align="center" blockAlign="center">
       {typeof value === "string" ? (
         <Text
           as="p"
           variant="bodyLg"
-          fontWeight={isCurrentPlan ? "semibold" : "regular"}
+          fontWeight="regular"
           alignment="center"
         >
           {value}
@@ -354,7 +354,7 @@ function PlanCard({
         minHeight="4px"
       />
 
-      <Box padding="500">
+      <div style={{ padding: "var(--p-space-500)", display: "flex", flexDirection: "column", height: "100%" }}>
         <BlockStack gap="400">
 
           {/* Plan name + badges */}
@@ -402,15 +402,17 @@ function PlanCard({
 
           <Divider />
 
-          {/* Features */}
+        </BlockStack>
+
+        {/* Features — grows to fill remaining height, keeping button consistently positioned above */}
+        <div style={{ flex: 1 }}>
           <BlockStack gap="300">
             {plan.features.map((f) => (
               <PlanFeature key={f} feature={f} />
             ))}
           </BlockStack>
-
-        </BlockStack>
-      </Box>
+        </div>
+      </div>
     </Box>
   );
 }

@@ -3,6 +3,7 @@ import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { useNavigate, useRouteError } from "react-router";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
+import { useAppBridge } from "@shopify/app-bridge-react";
 import {
   Page,
   Layout,
@@ -43,11 +44,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export default function HelpPage() {
   const navigate = useNavigate();
+  const shopify = useAppBridge();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-
   const handleFaqToggle = useCallback((index: number) => {
     setOpenFaq((prev) => (prev === index ? null : index));
   }, []);
+
+  const handleCopyEmail = useCallback(() => {
+    navigator.clipboard.writeText("support@boldteq.com").then(() => {
+      shopify.toast.show("Email address copied!");
+    }).catch(() => {
+      shopify.toast.show("Could not copy email address", { isError: true });
+    });
+  }, [shopify]);
 
   const faqs: Array<{ question: string; answer: string }> = [
     // ── Setup & Installation ──
@@ -175,7 +184,7 @@ export default function HelpPage() {
           <Layout.Section>
             <Card padding="0">
               <Box padding="400" paddingBlockEnd="200">
-                <Text as="h2" variant="headingLg" fontWeight="bold">
+                <Text as="h2" variant="headingXl" fontWeight="bold">
                   Frequently Asked Questions
                 </Text>
               </Box>
@@ -323,8 +332,8 @@ export default function HelpPage() {
                         Send us a detailed message and we&rsquo;ll respond
                         within 2-4 hours.
                       </Text>
-                      <Button onClick={() => window.open("mailto:support@boldteq.com", "_blank")}>
-                        Send Email
+                      <Button onClick={handleCopyEmail}>
+                        Copy Email Address
                       </Button>
                     </BlockStack>
                   </Card>

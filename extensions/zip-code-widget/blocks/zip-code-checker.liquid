@@ -510,7 +510,7 @@
         "animation:zcc-spin 0.7s linear infinite !important;flex-shrink:0 !important}" +
       // Button icon/label structure
       W + " .zcc-btn-icon{display:inline-flex !important;align-items:center !important;flex-shrink:0 !important}" +
-      W + " .zcc-btn-icon svg{width:15px !important;height:15px !important;display:block !important}" +
+      W + " .zcc-btn-icon svg{width:17px !important;height:17px !important;display:block !important}" +
       W + " .zcc-btn-label{display:inline !important}" +
       // Loading state: button already has display:flex + justify-content:center from .zcc-btn,
       // so the lone .zcc-spinner child is automatically centred — just remove the gap
@@ -628,9 +628,10 @@
       W + " .zcc-result{margin-top:12px !important;padding:0 !important;border-radius:0 !important;font-size:13.5px !important;line-height:1.5 !important;animation:zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1) !important;display:flex !important;gap:8px !important;align-items:flex-start !important;background:none !important;border:none !important}" +
       W + " .zcc-result.ok{background:none !important;border:none !important;color:" + cfg.textColor + " !important}" +
       W + " .zcc-result.ok .zcc-result-icon svg{color:" + cfg.successColor + " !important;stroke:" + cfg.successColor + " !important}" +
-      W + " .zcc-result.fail{background:" + cfg.errorColor + "08 !important;border:1px solid " + cfg.errorColor + "18 !important;color:" + cfg.textColor + " !important;padding:10px 12px !important;border-radius:10px !important}" +
+      W + " .zcc-result.fail{background:" + cfg.errorColor + "08 !important;border:1px solid " + cfg.errorColor + "18 !important;color:" + cfg.textColor + " !important;padding:10px 12px !important;border-radius:10px !important;align-items:center !important}" +
+      W + " .zcc-result.fail .zcc-result-icon{margin-top:0 !important}" +
       W + " .zcc-result.fail .zcc-result-icon svg{color:" + cfg.errorColor + " !important;stroke:" + cfg.errorColor + " !important}" +
-      W + " .zcc-wl{margin-top:12px !important;padding:14px !important;background:linear-gradient(135deg,#f8fafc,#f0f4f8) !important;border-radius:12px !important;border:1px solid #dde3ec !important}" +
+      W + " .zcc-wl{margin-top:12px !important;padding:12px !important;background:linear-gradient(135deg,#f8fafc,#f0f4f8) !important;border-radius:12px !important;border:1px solid #dde3ec !important}" +
       W + " .zcc-wl-input{border-radius:8px !important;border:1.5px solid #dde3ec !important;padding:11px 14px !important;width:100% !important;display:block !important;margin-bottom:8px !important;outline:none !important;font-size:13.5px !important;transition:border-color 0.2s,box-shadow 0.2s !important;background:#fff !important;color:" + cfg.textColor + " !important;line-height:1.4 !important}" +
       W + " .zcc-wl-input::placeholder{color:#9ca3af !important}" +
       W + " .zcc-wl-btn{border-radius:" + btnRadius + " !important;background:" + cfg.primaryColor + " !important;color:#fff !important;padding:11px 20px !important;width:100% !important;font-weight:600 !important;border:none !important;cursor:pointer !important;font-size:13.5px !important;transition:filter 0.2s,box-shadow 0.2s,transform 0.2s !important;letter-spacing:0.01em !important;box-shadow:0 2px 8px " + cfg.primaryColor + "25 !important;display:flex !important;align-items:center !important;justify-content:center !important;gap:6px !important;margin-top:4px !important}" +
@@ -1094,6 +1095,10 @@
   // ── Inline position ─────────────────────────────────────────────────────────
   function renderInline(cfg, WID, rad) {
     injectCss(WID, cfg, rad);
+    // Add breathing room from surrounding product page elements (inline only — overlays don't need margin)
+    var inlineMarginStyle = document.createElement("style");
+    inlineMarginStyle.textContent = "#" + WID + "{margin:12px 0 !important}";
+    document.head.appendChild(inlineMarginStyle);
     container.id = WID;
     container.innerHTML = buildWidgetInner(WID, cfg, cfg.buttonText);
     wireWidget(WID, cfg, API_BASE, SHOP);
@@ -1123,7 +1128,7 @@
       "#" + WID + "-panel .zcc-panel-title{font-size:14px !important;font-weight:700 !important;color:" + cfg.textColor + " !important;display:flex !important;align-items:center !important;gap:8px !important}" +
       "#" + WID + "-panel .zcc-panel-close{" +
         "background:none !important;border:none !important;cursor:pointer !important;line-height:1 !important;" +
-        "color:" + cfg.textColor + " !important;opacity:.5 !important;padding:4px !important;border-radius:6px !important;transition:all 0.15s !important" +
+        "color:" + cfg.textColor + " !important;opacity:.7 !important;padding:4px !important;border-radius:6px !important;transition:all 0.15s !important" +
       "}" +
       "#" + WID + "-panel .zcc-panel-close:hover{opacity:1 !important;background:#f6f6f7 !important}" +
       "#" + WID + "-trigger{" +
@@ -1212,7 +1217,7 @@
       "#" + WID + "-modal .zcc-modal-title{font-size:15px !important;font-weight:700 !important;color:" + cfg.textColor + " !important;display:flex !important;align-items:center !important;gap:8px !important}" +
       "#" + WID + "-modal .zcc-modal-close{" +
         "background:none !important;border:none !important;" +
-        "cursor:pointer !important;color:" + cfg.textColor + " !important;opacity:.5 !important;" +
+        "cursor:pointer !important;color:" + cfg.textColor + " !important;opacity:.7 !important;" +
         "padding:4px !important;border-radius:6px !important;transition:all 0.15s !important;line-height:1 !important" +
       "}" +
       "#" + WID + "-modal .zcc-modal-close:hover{opacity:1 !important;background:#f6f6f7 !important}" +
@@ -1232,7 +1237,7 @@
     container.innerHTML =
       '<button id="' + WID + '-popup-trigger" type="button">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
-        esc(cfg.buttonText || cfg.heading) +
+        esc(cfg.buttonText || "Check") +
       '</button>';
 
     // Overlay + modal append to body
@@ -1248,7 +1253,7 @@
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>' +
           '</button>' +
         '</div>' +
-        '<div id="' + WID + '" data-zcc-widget="true" style="border:none !important;box-shadow:none !important;max-width:none !important;padding:16px 24px 24px !important;overflow-y:auto !important;max-height:calc(70vh - 60px) !important">' +
+        '<div id="' + WID + '" data-zcc-widget="true" style="border:none !important;box-shadow:none !important;max-width:none !important;padding:16px 24px 24px !important;overflow-y:auto !important;max-height:calc(70vh - 60px) !important;border-radius:0 0 16px 16px !important">' +
           buildWidgetInner(WID, cfg, cfg.buttonText, false) +
         '</div>' +
       '</div>';

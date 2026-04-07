@@ -1001,15 +1001,38 @@ export default function ZipCodesPage() {
     >
       <Box paddingBlockEnd="1600">
       <Layout>
-        {/* Upgrade banner for free plan */}
-        {isFreePlan && (
+        {/* Zip limit reached — takes priority over general upgrade nudge */}
+        {atZipLimit && (
+          <Layout.Section>
+            <Banner
+              title="Zip code limit reached"
+              tone="warning"
+              action={{
+                content: `Upgrade to ${isFreePlan ? "Starter" : "Pro"}`,
+                url: "/app/pricing",
+              }}
+            >
+              <Text as="p" variant="bodyMd">
+                You have reached the {limits.maxZipCodes} zip code limit on the{" "}
+                {limits.label} plan. Upgrade to{" "}
+                {isFreePlan ? "Starter" : "Pro"} for a higher limit.
+                {isFreePlan
+                  ? " Starter unlocks 500 zip codes and CSV import. Pro unlocks unlimited zip codes, blocked zones, and CSV export."
+                  : " Pro unlocks unlimited zip codes, blocked zones, CSV export, and delivery rules."}
+              </Text>
+            </Banner>
+          </Layout.Section>
+        )}
+
+        {/* General upgrade nudge — only shown when NOT at the limit */}
+        {!atZipLimit && isFreePlan && (
           <Layout.Section>
             <Banner
               title="Unlock more zip codes, blocked zones & CSV tools"
               tone="info"
               action={{
                 content: "View Plans",
-                onAction: () => navigate("/app/pricing"),
+                url: "/app/pricing",
               }}
             >
               <Text as="p" variant="bodyMd">
@@ -1023,15 +1046,15 @@ export default function ZipCodesPage() {
           </Layout.Section>
         )}
 
-        {/* Upgrade banner for starter plan — nudge toward Pro */}
-        {isStarterPlan && (
+        {/* Upgrade banner for starter plan — only shown when NOT at the limit */}
+        {!atZipLimit && isStarterPlan && (
           <Layout.Section>
             <Banner
               title="Unlock unlimited zip codes, blocked zones & CSV export"
               tone="info"
               action={{
                 content: "View Plans",
-                onAction: () => navigate("/app/pricing"),
+                url: "/app/pricing",
               }}
             >
               <Text as="p" variant="bodyMd">
@@ -1040,24 +1063,6 @@ export default function ZipCodesPage() {
                 export. Pro unlocks unlimited zip codes, blocked zones, CSV
                 export, and delivery rules.
               </Text>
-            </Banner>
-          </Layout.Section>
-        )}
-
-        {/* Zip limit warning */}
-        {atZipLimit && (
-          <Layout.Section>
-            <Banner
-              title="Zip code limit reached"
-              tone="warning"
-              action={{
-                content: `Upgrade to ${isFreePlan ? "Starter" : "Pro"}`,
-                onAction: () => navigate("/app/pricing"),
-              }}
-            >
-              You have reached the {limits.maxZipCodes} zip code limit on the{" "}
-              {limits.label} plan. Upgrade to{" "}
-              {isFreePlan ? "Starter" : "Pro"} for a higher limit.
             </Banner>
           </Layout.Section>
         )}
@@ -1446,16 +1451,19 @@ export default function ZipCodesPage() {
                       </IndexTable.Cell>
                       <IndexTable.Cell>
                         <InlineStack gap="300" blockAlign="center">
-                          <Tooltip content={z.isActive ? "Click to deactivate" : "Click to activate"}>
-                            <Button
-                              variant="plain"
-                              tone={z.isActive ? "success" : undefined}
-                              onClick={() => handleToggle(z.id, z.isActive)}
-                              accessibilityLabel={z.isActive ? "Deactivate zip code" : "Activate zip code"}
-                            >
-                              {z.isActive ? "Active" : "Inactive"}
-                            </Button>
-                          </Tooltip>
+                          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <Tooltip content={z.isActive ? "Click to deactivate" : "Click to activate"}>
+                              <Button
+                                variant="plain"
+                                tone={z.isActive ? "success" : undefined}
+                                onClick={() => handleToggle(z.id, z.isActive)}
+                                accessibilityLabel={z.isActive ? "Deactivate zip code" : "Activate zip code"}
+                              >
+                                {z.isActive ? "Active" : "Inactive"}
+                              </Button>
+                            </Tooltip>
+                          </div>
                           <Badge tone={z.type === "allowed" ? "success" : "critical"}>
                             {z.type === "allowed" ? "Allow" : "Block"}
                           </Badge>
@@ -1487,6 +1495,8 @@ export default function ZipCodesPage() {
                         )}
                       </IndexTable.Cell>
                       <IndexTable.Cell>
+                        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+                        <div onClick={(e) => e.stopPropagation()}>
                         <InlineStack gap="200" blockAlign="center">
                           <Tooltip content="Edit zip code">
                             <Button
@@ -1508,6 +1518,7 @@ export default function ZipCodesPage() {
                             />
                           </Tooltip>
                         </InlineStack>
+                        </div>
                       </IndexTable.Cell>
                     </IndexTable.Row>
                   ))}

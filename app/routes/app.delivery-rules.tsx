@@ -449,7 +449,7 @@ export default function DeliveryRulesPage() {
               title="Delivery rules require a paid plan"
               action={{
                 content: "View pricing plans",
-                onAction: () => navigate("/app/pricing"),
+                url: "/app/pricing",
               }}
             >
               <Text as="p">
@@ -546,6 +546,8 @@ export default function DeliveryRulesPage() {
                     <IndexTable.Cell>{rule.estimatedDays || "—"}</IndexTable.Cell>
                     <IndexTable.Cell>{rule.daysOfWeek || "All days"}</IndexTable.Cell>
                     <IndexTable.Cell>
+                      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+                      <div onClick={(e) => e.stopPropagation()}>
                       <InlineStack gap="200">
                         <Tooltip content={rule.isActive ? "Click to deactivate" : "Click to activate"}>
                           <Button
@@ -577,6 +579,7 @@ export default function DeliveryRulesPage() {
                           />
                         </Tooltip>
                       </InlineStack>
+                      </div>
                     </IndexTable.Cell>
                   </IndexTable.Row>
                 ))}

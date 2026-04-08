@@ -1500,168 +1500,43 @@ export default function WidgetPage() {
                             <Badge tone="info">Starter+</Badge>
                           )}
                         </InlineStack>
-                          <InlineStack gap="300" wrap>
-                            <Box minWidth="140px" width="100%">
-                              <BlockStack gap="100">
-                                <Text as="p" variant="bodySm">
-                                  Button Color
-                                </Text>
-                                <InlineStack gap="200" blockAlign="center">
-                                  <input
-                                    type="color"
-                                    value={primaryColor}
-                                    onChange={(e) => handlePrimaryColorChange(e.target.value)}
-                                    disabled={!limits.widgetFullCustom}
-                                    style={{
-                                      width: "36px",
-                                      height: "36px",
-                                      border: "2px solid var(--p-color-border-secondary)",
-                                      borderRadius: "var(--p-border-radius-200)",
-                                      cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
-                                      padding: "2px",
-                                      opacity: limits.widgetFullCustom ? 1 : 0.5,
-                                    }}
-                                  />
-                                  <TextField
-                                    label="Button"
-                                    labelHidden
-                                    value={primaryColor}
-                                    onChange={handlePrimaryColorChange}
-                                    autoComplete="off"
-                                    disabled={!limits.widgetFullCustom}
-                                  />
-                                </InlineStack>
-                              </BlockStack>
-                            </Box>
-                            <Box minWidth="140px" width="100%">
-                              <BlockStack gap="100">
-                                <Text as="p" variant="bodySm">
-                                  Success Color
-                                </Text>
-                                <InlineStack gap="200" blockAlign="center">
-                                  <input
-                                    type="color"
-                                    value={successColor}
-                                    onChange={(e) => handleSuccessColorChange(e.target.value)}
-                                    disabled={!limits.widgetFullCustom}
-                                    style={{
-                                      width: "36px",
-                                      height: "36px",
-                                      border: "2px solid var(--p-color-border-secondary)",
-                                      borderRadius: "var(--p-border-radius-200)",
-                                      cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
-                                      padding: "2px",
-                                      opacity: limits.widgetFullCustom ? 1 : 0.5,
-                                    }}
-                                  />
-                                  <TextField
-                                    label="Success"
-                                    labelHidden
-                                    value={successColor}
-                                    onChange={handleSuccessColorChange}
-                                    autoComplete="off"
-                                    disabled={!limits.widgetFullCustom}
-                                  />
-                                </InlineStack>
-                              </BlockStack>
-                            </Box>
-                          </InlineStack>
-                          <InlineStack gap="300" wrap>
-                            <Box minWidth="140px" width="100%">
-                              <BlockStack gap="100">
-                                <Text as="p" variant="bodySm">
-                                  Error Color
-                                </Text>
-                                <InlineStack gap="200" blockAlign="center">
-                                  <input
-                                    type="color"
-                                    value={errorColor}
-                                    onChange={(e) => handleErrorColorChange(e.target.value)}
-                                    disabled={!limits.widgetFullCustom}
-                                    style={{
-                                      width: "36px",
-                                      height: "36px",
-                                      border: "2px solid var(--p-color-border-secondary)",
-                                      borderRadius: "var(--p-border-radius-200)",
-                                      cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
-                                      padding: "2px",
-                                      opacity: limits.widgetFullCustom ? 1 : 0.5,
-                                    }}
-                                  />
-                                  <TextField
-                                    label="Error"
-                                    labelHidden
-                                    value={errorColor}
-                                    onChange={handleErrorColorChange}
-                                    autoComplete="off"
-                                    disabled={!limits.widgetFullCustom}
-                                  />
-                                </InlineStack>
-                              </BlockStack>
-                            </Box>
-                            <Box minWidth="140px" width="100%">
-                              <BlockStack gap="100">
-                                <Text as="p" variant="bodySm">
-                                  Background
-                                </Text>
-                                <InlineStack gap="200" blockAlign="center">
-                                  <input
-                                    type="color"
-                                    value={backgroundColor}
-                                    onChange={(e) => handleBackgroundColorChange(e.target.value)}
-                                    disabled={!limits.widgetFullCustom}
-                                    style={{
-                                      width: "36px",
-                                      height: "36px",
-                                      border: "2px solid var(--p-color-border-secondary)",
-                                      borderRadius: "var(--p-border-radius-200)",
-                                      cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
-                                      padding: "2px",
-                                      opacity: limits.widgetFullCustom ? 1 : 0.5,
-                                    }}
-                                  />
-                                  <TextField
-                                    label="BG"
-                                    labelHidden
-                                    value={backgroundColor}
-                                    onChange={handleBackgroundColorChange}
-                                    autoComplete="off"
-                                    disabled={!limits.widgetFullCustom}
-                                  />
-                                </InlineStack>
-                              </BlockStack>
-                            </Box>
-                          </InlineStack>
-                          <BlockStack gap="100">
-                            <Text as="p" variant="bodySm">
-                              Text Color
-                            </Text>
-                            <InlineStack gap="200" blockAlign="center">
-                              <input
-                                type="color"
-                                value={textColor}
-                                onChange={(e) => handleTextColorChange(e.target.value)}
-                                disabled={!limits.widgetFullCustom}
-                                style={{
-                                  width: "36px",
-                                  height: "36px",
-                                  border: "2px solid var(--p-color-border-secondary)",
-                                  borderRadius: "var(--p-border-radius-200)",
-                                  cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
-                                  padding: "2px",
-                                  opacity: limits.widgetFullCustom ? 1 : 0.5,
-                                }}
-                              />
-                              <TextField
-                                label="Text"
-                                labelHidden
-                                value={textColor}
-                                onChange={handleTextColorChange}
-                                autoComplete="off"
-                                disabled={!limits.widgetFullCustom}
-                              />
-                            </InlineStack>
-                          </BlockStack>
+                          <InlineGrid columns={2} gap="300">
+                            <BlockStack gap="100">
+                              <Text as="p" variant="bodySm">Button Color</Text>
+                              <InlineStack gap="200" blockAlign="center">
+                                <input type="color" value={primaryColor} onChange={(e) => handlePrimaryColorChange(e.target.value)} disabled={!limits.widgetFullCustom} style={{ width: "32px", height: "32px", border: "2px solid var(--p-color-border-secondary)", borderRadius: "var(--p-border-radius-200)", cursor: limits.widgetFullCustom ? "pointer" : "not-allowed", padding: "2px", opacity: limits.widgetFullCustom ? 1 : 0.5 }} />
+                                <TextField label="Button" labelHidden value={primaryColor} onChange={handlePrimaryColorChange} autoComplete="off" disabled={!limits.widgetFullCustom} />
+                              </InlineStack>
+                            </BlockStack>
+                            <BlockStack gap="100">
+                              <Text as="p" variant="bodySm">Success Color</Text>
+                              <InlineStack gap="200" blockAlign="center">
+                                <input type="color" value={successColor} onChange={(e) => handleSuccessColorChange(e.target.value)} disabled={!limits.widgetFullCustom} style={{ width: "32px", height: "32px", border: "2px solid var(--p-color-border-secondary)", borderRadius: "var(--p-border-radius-200)", cursor: limits.widgetFullCustom ? "pointer" : "not-allowed", padding: "2px", opacity: limits.widgetFullCustom ? 1 : 0.5 }} />
+                                <TextField label="Success" labelHidden value={successColor} onChange={handleSuccessColorChange} autoComplete="off" disabled={!limits.widgetFullCustom} />
+                              </InlineStack>
+                            </BlockStack>
+                            <BlockStack gap="100">
+                              <Text as="p" variant="bodySm">Error Color</Text>
+                              <InlineStack gap="200" blockAlign="center">
+                                <input type="color" value={errorColor} onChange={(e) => handleErrorColorChange(e.target.value)} disabled={!limits.widgetFullCustom} style={{ width: "32px", height: "32px", border: "2px solid var(--p-color-border-secondary)", borderRadius: "var(--p-border-radius-200)", cursor: limits.widgetFullCustom ? "pointer" : "not-allowed", padding: "2px", opacity: limits.widgetFullCustom ? 1 : 0.5 }} />
+                                <TextField label="Error" labelHidden value={errorColor} onChange={handleErrorColorChange} autoComplete="off" disabled={!limits.widgetFullCustom} />
+                              </InlineStack>
+                            </BlockStack>
+                            <BlockStack gap="100">
+                              <Text as="p" variant="bodySm">Background</Text>
+                              <InlineStack gap="200" blockAlign="center">
+                                <input type="color" value={backgroundColor} onChange={(e) => handleBackgroundColorChange(e.target.value)} disabled={!limits.widgetFullCustom} style={{ width: "32px", height: "32px", border: "2px solid var(--p-color-border-secondary)", borderRadius: "var(--p-border-radius-200)", cursor: limits.widgetFullCustom ? "pointer" : "not-allowed", padding: "2px", opacity: limits.widgetFullCustom ? 1 : 0.5 }} />
+                                <TextField label="BG" labelHidden value={backgroundColor} onChange={handleBackgroundColorChange} autoComplete="off" disabled={!limits.widgetFullCustom} />
+                              </InlineStack>
+                            </BlockStack>
+                            <BlockStack gap="100">
+                              <Text as="p" variant="bodySm">Text Color</Text>
+                              <InlineStack gap="200" blockAlign="center">
+                                <input type="color" value={textColor} onChange={(e) => handleTextColorChange(e.target.value)} disabled={!limits.widgetFullCustom} style={{ width: "32px", height: "32px", border: "2px solid var(--p-color-border-secondary)", borderRadius: "var(--p-border-radius-200)", cursor: limits.widgetFullCustom ? "pointer" : "not-allowed", padding: "2px", opacity: limits.widgetFullCustom ? 1 : 0.5 }} />
+                                <TextField label="Text" labelHidden value={textColor} onChange={handleTextColorChange} autoComplete="off" disabled={!limits.widgetFullCustom} />
+                              </InlineStack>
+                            </BlockStack>
+                          </InlineGrid>
                           <Divider />
                           <TextField
                             label="Border Radius (px)"

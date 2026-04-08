@@ -74,10 +74,10 @@ function parseCsvRow(line: string): string[] {
 /** Downloads a pre-filled sample CSV template the user can fill in and import. */
 function downloadSampleCsv() {
   const sample = [
-    "Zip Code,Zone,Status,Message,ETA,COD,Return Policy",
-    "10001,Manhattan,allowed,We deliver here! Estimated 2-3 days.,2-3 days,Yes,30-day returns accepted",
-    "90210,Beverly Hills,allowed,Same day delivery available.,1 day,No,",
-    "33101,Miami,blocked,Sorry we do not deliver to this area.,,",
+    "Zip Code,Zone,Status",
+    "10001,Manhattan,allowed",
+    "90210,Beverly Hills,allowed",
+    "33101,Miami,blocked",
   ].join("\n");
   const blob = new Blob([sample], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
@@ -118,20 +118,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === "add") {
     const zipCode = String(formData.get("zipCode") ?? "").trim().toUpperCase();
-    const label = String(formData.get("label") || "").trim();
     const zone = String(formData.get("zone") || "").trim();
-    const message = String(formData.get("message") || "").trim();
-    const eta = String(formData.get("eta") || "").trim();
     // Sanitize type — only accept known values, default to "allowed"
     const rawType = String(formData.get("type") || "");
     const type = rawType === "blocked" ? "blocked" : "allowed";
-    const codAvailable =
-      formData.get("codAvailable") === "true"
-        ? true
-        : formData.get("codAvailable") === "false"
-          ? false
-          : null;
-    const returnPolicy = (formData.get("returnPolicy") as string | null) || null;
 
     if (!zipCode) return { error: "Zip code is required." };
 
@@ -161,13 +151,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         data: {
           shop,
           zipCode,
-          label: label || null,
           zone: zone || null,
-          message: message || null,
-          eta: eta || null,
           type,
-          codAvailable: codAvailable ?? undefined,
-          returnPolicy: returnPolicy ?? undefined,
         },
       });
       return { success: true, action: "added", zipCode };
@@ -198,21 +183,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (intent === "update") {
     const id = String(formData.get("id") ?? "");
     const zipCode = String(formData.get("zipCode") ?? "").trim().toUpperCase();
-    const label = String(formData.get("label") || "").trim();
     const zone = String(formData.get("zone") || "").trim();
-    const message = String(formData.get("message") || "").trim();
-    const eta = String(formData.get("eta") || "").trim();
     // Sanitize type — only accept known values, default to "allowed"
     const rawType = String(formData.get("type") || "");
     const type = rawType === "blocked" ? "blocked" : "allowed";
     const isActive = formData.get("isActive") === "true";
-    const codAvailable =
-      formData.get("codAvailable") === "true"
-        ? true
-        : formData.get("codAvailable") === "false"
-          ? false
-          : null;
-    const returnPolicy = (formData.get("returnPolicy") as string | null) || null;
 
     if (!id) return { error: "Missing zip code ID." };
     if (!zipCode) return { error: "Zip code is required." };
@@ -225,14 +200,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         where: { id: existing.id },
         data: {
           zipCode,
-          label: label || null,
           zone: zone || null,
-          message: message || null,
-          eta: eta || null,
           type,
           isActive,
-          codAvailable,
-          returnPolicy,
         },
       });
       return { success: true, action: "updated", zipCode };
@@ -643,26 +613,16 @@ export default function ZipCodesPage() {
   // Add modal state
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [newZip, setNewZip] = useState("");
-  const [newLabel, setNewLabel] = useState("");
   const [newZone, setNewZone] = useState("");
-  const [newMessage, setNewMessage] = useState("");
-  const [newEta, setNewEta] = useState("");
   const [newType, setNewType] = useState("allowed");
-  const [newCodAvailable, setNewCodAvailable] = useState(""); // "", "true", "false"
-  const [newReturnPolicy, setNewReturnPolicy] = useState("");
 
   // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editId, setEditId] = useState("");
   const [editZip, setEditZip] = useState("");
-  const [editLabel, setEditLabel] = useState("");
   const [editZone, setEditZone] = useState("");
-  const [editMessage, setEditMessage] = useState("");
-  const [editEta, setEditEta] = useState("");
   const [editType, setEditType] = useState("allowed");
   const [editIsActive, setEditIsActive] = useState(true);
-  const [editCodAvailable, setEditCodAvailable] = useState(""); // "", "true", "false"
-  const [editReturnPolicy, setEditReturnPolicy] = useState("");
 
   // Import modal state
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -675,8 +635,6 @@ export default function ZipCodesPage() {
   const [rangeEnd, setRangeEnd] = useState("");
   const [rangeZone, setRangeZone] = useState("");
   const [rangeType, setRangeType] = useState("allowed");
-  const [rangeMessage, setRangeMessage] = useState("");
-  const [rangeEta, setRangeEta] = useState("");
 
   // Bulk selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -804,16 +762,11 @@ export default function ZipCodesPage() {
     const fd = new FormData();
     fd.set("intent", "add");
     fd.set("zipCode", newZip);
-    fd.set("label", newLabel);
     fd.set("zone", newZone);
-    fd.set("message", newMessage);
-    fd.set("eta", newEta);
     fd.set("type", newType);
-    if (newCodAvailable !== "") fd.set("codAvailable", newCodAvailable);
-    fd.set("returnPolicy", newReturnPolicy);
     fetcher.submit(fd, { method: "POST" });
     // Close/reset is handled in useEffect after server confirms success
-  }, [newZip, newLabel, newZone, newMessage, newEta, newType, newCodAvailable, newReturnPolicy, fetcher]);
+  }, [newZip, newZone, newType, fetcher]);
 
   const doDelete = useCallback(
     (id: string) => {
@@ -836,16 +789,9 @@ export default function ZipCodesPage() {
   const handleOpenEdit = useCallback((z: ZipCodeRecord) => {
     setEditId(z.id);
     setEditZip(z.zipCode);
-    setEditLabel(z.label || "");
     setEditZone(z.zone || "");
-    setEditMessage(z.message || "");
-    setEditEta(z.eta || "");
     setEditType(z.type);
     setEditIsActive(z.isActive);
-    setEditCodAvailable(
-      z.codAvailable === true ? "true" : z.codAvailable === false ? "false" : "",
-    );
-    setEditReturnPolicy(z.returnPolicy || "");
     setEditModalOpen(true);
   }, []);
 
@@ -855,17 +801,12 @@ export default function ZipCodesPage() {
     fd.set("intent", "update");
     fd.set("id", editId);
     fd.set("zipCode", editZip);
-    fd.set("label", editLabel);
     fd.set("zone", editZone);
-    fd.set("message", editMessage);
-    fd.set("eta", editEta);
     fd.set("type", editType);
     fd.set("isActive", String(editIsActive));
-    fd.set("codAvailable", editCodAvailable);
-    fd.set("returnPolicy", editReturnPolicy);
     fetcher.submit(fd, { method: "POST" });
     // Close/toast handled in useEffect after server confirms success
-  }, [editId, editZip, editLabel, editZone, editMessage, editEta, editType, editIsActive, editCodAvailable, editReturnPolicy, fetcher]);
+  }, [editId, editZip, editZone, editType, editIsActive, fetcher]);
 
   const handleToggle = useCallback(
     (id: string, isActive: boolean) => {
@@ -918,10 +859,8 @@ export default function ZipCodesPage() {
     fd.set("endZip", rangeEnd);
     if (rangeZone) fd.set("zone", rangeZone);
     fd.set("type", rangeType);
-    if (rangeMessage) fd.set("message", rangeMessage);
-    if (rangeEta) fd.set("eta", rangeEta);
     fetcher.submit(fd, { method: "POST" });
-  }, [rangeStart, rangeEnd, rangeZone, rangeType, rangeMessage, rangeEta, fetcher]);
+  }, [rangeStart, rangeEnd, rangeZone, rangeType, fetcher]);
 
   const handleSelectionChange = useCallback<NonNullable<IndexTableProps["onSelectionChange"]>>(
     (selectionType, isSelecting, selection) => {
@@ -999,13 +938,8 @@ export default function ZipCodesPage() {
         shopify.toast.show("Zip code added");
         setAddModalOpen(false);
         setNewZip("");
-        setNewLabel("");
         setNewZone("");
-        setNewMessage("");
-        setNewEta("");
         setNewType("allowed");
-        setNewCodAvailable("");
-        setNewReturnPolicy("");
       } else if (fetcherAction === "updated") {
         shopify.toast.show("Zip code updated");
         setEditModalOpen(false);
@@ -1542,9 +1476,6 @@ export default function ZipCodesPage() {
                     { title: "Zip Code" },
                     { title: "Zone" },
                     { title: "Status" },
-                    { title: "Message" },
-                    { title: "ETA" },
-                    { title: "COD" },
                     { title: "Actions" },
                   ]}
                   promotedBulkActions={promotedBulkActions}
@@ -1601,31 +1532,6 @@ export default function ZipCodesPage() {
                         </InlineStack>
                       </IndexTable.Cell>
                       <IndexTable.Cell>
-                        {z.message || (
-                          <Text as="span" tone="subdued">
-                            —
-                          </Text>
-                        )}
-                      </IndexTable.Cell>
-                      <IndexTable.Cell>
-                        {z.eta || (
-                          <Text as="span" tone="subdued">
-                            —
-                          </Text>
-                        )}
-                      </IndexTable.Cell>
-                      <IndexTable.Cell>
-                        {z.codAvailable === true ? (
-                          <Badge tone="success">COD</Badge>
-                        ) : z.codAvailable === false ? (
-                          <Badge tone="critical">No COD</Badge>
-                        ) : (
-                          <Text as="span" tone="subdued">
-                            —
-                          </Text>
-                        )}
-                      </IndexTable.Cell>
-                      <IndexTable.Cell>
                         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
                         <div onClick={(e) => e.stopPropagation()}>
                         <InlineStack gap="200" blockAlign="center">
@@ -1667,13 +1573,8 @@ export default function ZipCodesPage() {
         onClose={() => {
           setAddModalOpen(false);
           setNewZip("");
-          setNewLabel("");
           setNewZone("");
-          setNewMessage("");
-          setNewEta("");
           setNewType("allowed");
-          setNewCodAvailable("");
-          setNewReturnPolicy("");
         }}
         title="Add Zip Code"
         primaryAction={{
@@ -1687,13 +1588,8 @@ export default function ZipCodesPage() {
             onAction: () => {
               setAddModalOpen(false);
               setNewZip("");
-              setNewLabel("");
               setNewZone("");
-              setNewMessage("");
-              setNewEta("");
               setNewType("allowed");
-              setNewCodAvailable("");
-              setNewReturnPolicy("");
             },
           },
         ]}
@@ -1724,7 +1620,7 @@ export default function ZipCodesPage() {
               onChange={setNewZip}
               placeholder="e.g. 90210"
               autoComplete="off"
-              helpText="Enter a 5-digit US zip code or postal code."
+              helpText="Enter a zip / pin / postal code"
             />
             <InlineStack gap="300">
               <Box minWidth="0" width="100%">
@@ -1734,7 +1630,7 @@ export default function ZipCodesPage() {
                   onChange={setNewZone}
                   placeholder="e.g. Manhattan, Beverly Hills"
                   autoComplete="off"
-                  helpText="The delivery zone or area name."
+                  helpText="Choose the zone this zip code belongs to (optional)"
                 />
               </Box>
               <Box minWidth="0" width="100%">
@@ -1746,61 +1642,11 @@ export default function ZipCodesPage() {
                   helpText={
                     !limits.allowBlocked
                       ? "Blocked zip codes require Pro or Ultimate plan."
-                      : "Allow or block this zip code."
+                      : "Whether this zip code is allowed or blocked"
                   }
                 />
               </Box>
             </InlineStack>
-            <TextField
-              label="Message"
-              value={newMessage}
-              onChange={setNewMessage}
-              placeholder="e.g. Delivery available!, Sorry we don't deliver here"
-              autoComplete="off"
-              helpText="Custom message shown to customers for this zip code."
-            />
-            <InlineStack gap="300">
-              <Box minWidth="0" width="100%">
-                <TextField
-                  label="ETA"
-                  value={newEta}
-                  onChange={setNewEta}
-                  placeholder="e.g. 2-3 days"
-                  autoComplete="off"
-                  helpText="Estimated delivery time."
-                />
-              </Box>
-              <Box minWidth="0" width="100%">
-                <TextField
-                  label="Label (optional)"
-                  value={newLabel}
-                  onChange={setNewLabel}
-                  placeholder="e.g. Downtown LA"
-                  autoComplete="off"
-                  helpText="Internal label for your reference."
-                />
-              </Box>
-            </InlineStack>
-            <Select
-              label="COD Available"
-              options={[
-                { label: "Not set", value: "" },
-                { label: "Yes (COD available)", value: "true" },
-                { label: "No (COD not available)", value: "false" },
-              ]}
-              value={newCodAvailable}
-              onChange={setNewCodAvailable}
-              helpText="Whether cash on delivery is available for this zip code."
-            />
-            <TextField
-              label="Return / Exchange Policy"
-              value={newReturnPolicy}
-              onChange={setNewReturnPolicy}
-              placeholder="e.g. 30-day returns accepted. Exchange within 7 days."
-              autoComplete="off"
-              multiline={3}
-              helpText="Return and exchange policy displayed to customers for this zip code."
-            />
             {!limits.allowBlocked && (
               <Banner tone="info">
                 <InlineStack gap="200" blockAlign="center">
@@ -1819,6 +1665,12 @@ export default function ZipCodesPage() {
                 </InlineStack>
               </Banner>
             )}
+            <Banner tone="info">
+              <Text as="p" variant="bodySm">
+                <Text as="span" fontWeight="semibold">Where do delivery details live?</Text>
+                {" "}ETA, COD, and custom messages are set on Delivery Rules — not on individual zip codes. This keeps your data clean and lets you update 100 zip codes at once.
+              </Text>
+            </Banner>
           </BlockStack>
         </Modal.Section>
       </Modal>
@@ -1859,7 +1711,7 @@ export default function ZipCodesPage() {
               onChange={setEditZip}
               placeholder="e.g. 90210"
               autoComplete="off"
-              helpText="Enter a 5-digit US zip code or postal code."
+              helpText="Enter a zip / pin / postal code"
             />
             <InlineStack gap="300">
               <Box minWidth="0" width="100%">
@@ -1869,7 +1721,7 @@ export default function ZipCodesPage() {
                   onChange={setEditZone}
                   placeholder="e.g. Manhattan, Beverly Hills"
                   autoComplete="off"
-                  helpText="The delivery zone or area name."
+                  helpText="Choose the zone this zip code belongs to (optional)"
                 />
               </Box>
               <Box minWidth="0" width="100%">
@@ -1881,38 +1733,8 @@ export default function ZipCodesPage() {
                   helpText={
                     !limits.allowBlocked
                       ? "Blocked zip codes require Pro or Ultimate plan."
-                      : "Allow or block this zip code."
+                      : "Whether this zip code is allowed or blocked"
                   }
-                />
-              </Box>
-            </InlineStack>
-            <TextField
-              label="Message"
-              value={editMessage}
-              onChange={setEditMessage}
-              placeholder="e.g. Delivery available!, Sorry we don't deliver here"
-              autoComplete="off"
-              helpText="Custom message shown to customers for this zip code."
-            />
-            <InlineStack gap="300">
-              <Box minWidth="0" width="100%">
-                <TextField
-                  label="ETA"
-                  value={editEta}
-                  onChange={setEditEta}
-                  placeholder="e.g. 2-3 days"
-                  autoComplete="off"
-                  helpText="Estimated delivery time."
-                />
-              </Box>
-              <Box minWidth="0" width="100%">
-                <TextField
-                  label="Label (optional)"
-                  value={editLabel}
-                  onChange={setEditLabel}
-                  placeholder="e.g. Downtown LA"
-                  autoComplete="off"
-                  helpText="Internal label for your reference."
                 />
               </Box>
             </InlineStack>
@@ -1926,26 +1748,12 @@ export default function ZipCodesPage() {
               onChange={(val) => setEditIsActive(val === "true")}
               helpText="Inactive zip codes are ignored by the widget."
             />
-            <Select
-              label="COD Available"
-              options={[
-                { label: "Not set", value: "" },
-                { label: "Yes (COD available)", value: "true" },
-                { label: "No (COD not available)", value: "false" },
-              ]}
-              value={editCodAvailable}
-              onChange={setEditCodAvailable}
-              helpText="Whether cash on delivery is available for this zip code."
-            />
-            <TextField
-              label="Return / Exchange Policy"
-              value={editReturnPolicy}
-              onChange={setEditReturnPolicy}
-              placeholder="e.g. 30-day returns accepted. Exchange within 7 days."
-              autoComplete="off"
-              multiline={3}
-              helpText="Return and exchange policy displayed to customers for this zip code."
-            />
+            <Banner tone="info">
+              <Text as="p" variant="bodySm">
+                <Text as="span" fontWeight="semibold">Where do delivery details live?</Text>
+                {" "}ETA, COD, and custom messages are set on Delivery Rules — not on individual zip codes. This keeps your data clean and lets you update 100 zip codes at once.
+              </Text>
+            </Banner>
           </BlockStack>
         </Modal.Section>
       </Modal>
@@ -2095,8 +1903,6 @@ export default function ZipCodesPage() {
           setRangeEnd("");
           setRangeZone("");
           setRangeType("allowed");
-          setRangeMessage("");
-          setRangeEta("");
         }}
         title="Import ZIP Code Range"
         primaryAction={{
@@ -2165,20 +1971,6 @@ export default function ZipCodesPage() {
               placeholder="Manhattan"
               autoComplete="off"
               helpText="Group these ZIP codes under a zone name."
-            />
-            <TextField
-              label="Delivery Message (optional)"
-              value={rangeMessage}
-              onChange={setRangeMessage}
-              placeholder="We deliver to your area!"
-              autoComplete="off"
-            />
-            <TextField
-              label="ETA (optional)"
-              value={rangeEta}
-              onChange={setRangeEta}
-              placeholder="2-3 business days"
-              autoComplete="off"
             />
           </BlockStack>
         </Modal.Section>

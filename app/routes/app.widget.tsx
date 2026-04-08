@@ -28,6 +28,7 @@ import {
   Banner,
   Badge,
   Modal,
+  Tabs,
 } from "@shopify/polaris";
 
 /** Maximum length for custom CSS (characters). Prevents DB bloat and slow responses. */
@@ -1190,6 +1191,15 @@ export default function WidgetPage() {
   // Reset confirmation modal
   const [resetModalOpen, setResetModalOpen] = useState(false);
 
+  // Settings tab state
+  const [settingsTab, setSettingsTab] = useState(0);
+  const settingsTabs = [
+    { id: "design", content: "Design" },
+    { id: "content", content: "Content" },
+    { id: "display", content: "Display" },
+    { id: "advanced", content: "Advanced" },
+  ];
+
   const isSaving =
     fetcher.state !== "idle" && fetcher.formData?.get("intent") === "save";
 
@@ -1472,457 +1482,490 @@ export default function WidgetPage() {
                   </BlockStack>
                 </Card>
 
-                {/* Colors */}
-                <Card>
-                  <BlockStack gap="400">
-                    <InlineStack align="space-between" blockAlign="center">
-                      <Text as="h2" variant="headingMd">
-                        Colors
-                      </Text>
-                      {!limits.widgetFullCustom && (
-                        <Badge tone="info">Starter+</Badge>
-                      )}
-                    </InlineStack>
-                    <InlineStack gap="300" wrap>
-                      <Box minWidth="140px" width="100%">
-                        <BlockStack gap="100">
-                          <Text as="p" variant="bodySm">
-                            Button Color
-                          </Text>
-                          <InlineStack gap="200" blockAlign="center">
-                            <input
-                              type="color"
-                              value={primaryColor}
-                              onChange={(e) => handlePrimaryColorChange(e.target.value)}
-                              disabled={!limits.widgetFullCustom}
-                              style={{
-                                width: "36px",
-                                height: "36px",
-                                border: "2px solid var(--p-color-border-secondary)",
-                                borderRadius: "var(--p-border-radius-200)",
-                                cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
-                                padding: "2px",
-                                opacity: limits.widgetFullCustom ? 1 : 0.5,
-                              }}
-                            />
-                            <TextField
-                              label="Button"
-                              labelHidden
-                              value={primaryColor}
-                              onChange={handlePrimaryColorChange}
-                              autoComplete="off"
-                              disabled={!limits.widgetFullCustom}
-                            />
+                {/* Settings Tabs — Design | Content | Display | Advanced */}
+                <Tabs tabs={settingsTabs} selected={settingsTab} onSelect={setSettingsTab}>
+                  {/* Tab 0: Design — Colors + Border Radius */}
+                  {settingsTab === 0 && (
+                    <Box paddingBlockStart="400">
+                      <Card>
+                        <BlockStack gap="400">
+                          <InlineStack align="space-between" blockAlign="center">
+                            <Text as="h2" variant="headingMd">
+                              Colors
+                            </Text>
+                            {!limits.widgetFullCustom && (
+                              <Badge tone="info">Starter+</Badge>
+                            )}
                           </InlineStack>
-                        </BlockStack>
-                      </Box>
-                      <Box minWidth="140px" width="100%">
-                        <BlockStack gap="100">
-                          <Text as="p" variant="bodySm">
-                            Success Color
-                          </Text>
-                          <InlineStack gap="200" blockAlign="center">
-                            <input
-                              type="color"
-                              value={successColor}
-                              onChange={(e) => handleSuccessColorChange(e.target.value)}
-                              disabled={!limits.widgetFullCustom}
-                              style={{
-                                width: "36px",
-                                height: "36px",
-                                border: "2px solid var(--p-color-border-secondary)",
-                                borderRadius: "var(--p-border-radius-200)",
-                                cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
-                                padding: "2px",
-                                opacity: limits.widgetFullCustom ? 1 : 0.5,
-                              }}
-                            />
-                            <TextField
-                              label="Success"
-                              labelHidden
-                              value={successColor}
-                              onChange={handleSuccessColorChange}
-                              autoComplete="off"
-                              disabled={!limits.widgetFullCustom}
-                            />
+                          <InlineStack gap="300" wrap>
+                            <Box minWidth="140px" width="100%">
+                              <BlockStack gap="100">
+                                <Text as="p" variant="bodySm">
+                                  Button Color
+                                </Text>
+                                <InlineStack gap="200" blockAlign="center">
+                                  <input
+                                    type="color"
+                                    value={primaryColor}
+                                    onChange={(e) => handlePrimaryColorChange(e.target.value)}
+                                    disabled={!limits.widgetFullCustom}
+                                    style={{
+                                      width: "36px",
+                                      height: "36px",
+                                      border: "2px solid var(--p-color-border-secondary)",
+                                      borderRadius: "var(--p-border-radius-200)",
+                                      cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
+                                      padding: "2px",
+                                      opacity: limits.widgetFullCustom ? 1 : 0.5,
+                                    }}
+                                  />
+                                  <TextField
+                                    label="Button"
+                                    labelHidden
+                                    value={primaryColor}
+                                    onChange={handlePrimaryColorChange}
+                                    autoComplete="off"
+                                    disabled={!limits.widgetFullCustom}
+                                  />
+                                </InlineStack>
+                              </BlockStack>
+                            </Box>
+                            <Box minWidth="140px" width="100%">
+                              <BlockStack gap="100">
+                                <Text as="p" variant="bodySm">
+                                  Success Color
+                                </Text>
+                                <InlineStack gap="200" blockAlign="center">
+                                  <input
+                                    type="color"
+                                    value={successColor}
+                                    onChange={(e) => handleSuccessColorChange(e.target.value)}
+                                    disabled={!limits.widgetFullCustom}
+                                    style={{
+                                      width: "36px",
+                                      height: "36px",
+                                      border: "2px solid var(--p-color-border-secondary)",
+                                      borderRadius: "var(--p-border-radius-200)",
+                                      cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
+                                      padding: "2px",
+                                      opacity: limits.widgetFullCustom ? 1 : 0.5,
+                                    }}
+                                  />
+                                  <TextField
+                                    label="Success"
+                                    labelHidden
+                                    value={successColor}
+                                    onChange={handleSuccessColorChange}
+                                    autoComplete="off"
+                                    disabled={!limits.widgetFullCustom}
+                                  />
+                                </InlineStack>
+                              </BlockStack>
+                            </Box>
                           </InlineStack>
-                        </BlockStack>
-                      </Box>
-                    </InlineStack>
-                    <InlineStack gap="300" wrap>
-                      <Box minWidth="140px" width="100%">
-                        <BlockStack gap="100">
-                          <Text as="p" variant="bodySm">
-                            Error Color
-                          </Text>
-                          <InlineStack gap="200" blockAlign="center">
-                            <input
-                              type="color"
-                              value={errorColor}
-                              onChange={(e) => handleErrorColorChange(e.target.value)}
-                              disabled={!limits.widgetFullCustom}
-                              style={{
-                                width: "36px",
-                                height: "36px",
-                                border: "2px solid var(--p-color-border-secondary)",
-                                borderRadius: "var(--p-border-radius-200)",
-                                cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
-                                padding: "2px",
-                                opacity: limits.widgetFullCustom ? 1 : 0.5,
-                              }}
-                            />
-                            <TextField
-                              label="Error"
-                              labelHidden
-                              value={errorColor}
-                              onChange={handleErrorColorChange}
-                              autoComplete="off"
-                              disabled={!limits.widgetFullCustom}
-                            />
+                          <InlineStack gap="300" wrap>
+                            <Box minWidth="140px" width="100%">
+                              <BlockStack gap="100">
+                                <Text as="p" variant="bodySm">
+                                  Error Color
+                                </Text>
+                                <InlineStack gap="200" blockAlign="center">
+                                  <input
+                                    type="color"
+                                    value={errorColor}
+                                    onChange={(e) => handleErrorColorChange(e.target.value)}
+                                    disabled={!limits.widgetFullCustom}
+                                    style={{
+                                      width: "36px",
+                                      height: "36px",
+                                      border: "2px solid var(--p-color-border-secondary)",
+                                      borderRadius: "var(--p-border-radius-200)",
+                                      cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
+                                      padding: "2px",
+                                      opacity: limits.widgetFullCustom ? 1 : 0.5,
+                                    }}
+                                  />
+                                  <TextField
+                                    label="Error"
+                                    labelHidden
+                                    value={errorColor}
+                                    onChange={handleErrorColorChange}
+                                    autoComplete="off"
+                                    disabled={!limits.widgetFullCustom}
+                                  />
+                                </InlineStack>
+                              </BlockStack>
+                            </Box>
+                            <Box minWidth="140px" width="100%">
+                              <BlockStack gap="100">
+                                <Text as="p" variant="bodySm">
+                                  Background
+                                </Text>
+                                <InlineStack gap="200" blockAlign="center">
+                                  <input
+                                    type="color"
+                                    value={backgroundColor}
+                                    onChange={(e) => handleBackgroundColorChange(e.target.value)}
+                                    disabled={!limits.widgetFullCustom}
+                                    style={{
+                                      width: "36px",
+                                      height: "36px",
+                                      border: "2px solid var(--p-color-border-secondary)",
+                                      borderRadius: "var(--p-border-radius-200)",
+                                      cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
+                                      padding: "2px",
+                                      opacity: limits.widgetFullCustom ? 1 : 0.5,
+                                    }}
+                                  />
+                                  <TextField
+                                    label="BG"
+                                    labelHidden
+                                    value={backgroundColor}
+                                    onChange={handleBackgroundColorChange}
+                                    autoComplete="off"
+                                    disabled={!limits.widgetFullCustom}
+                                  />
+                                </InlineStack>
+                              </BlockStack>
+                            </Box>
                           </InlineStack>
+                          <BlockStack gap="100">
+                            <Text as="p" variant="bodySm">
+                              Text Color
+                            </Text>
+                            <InlineStack gap="200" blockAlign="center">
+                              <input
+                                type="color"
+                                value={textColor}
+                                onChange={(e) => handleTextColorChange(e.target.value)}
+                                disabled={!limits.widgetFullCustom}
+                                style={{
+                                  width: "36px",
+                                  height: "36px",
+                                  border: "2px solid var(--p-color-border-secondary)",
+                                  borderRadius: "var(--p-border-radius-200)",
+                                  cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
+                                  padding: "2px",
+                                  opacity: limits.widgetFullCustom ? 1 : 0.5,
+                                }}
+                              />
+                              <TextField
+                                label="Text"
+                                labelHidden
+                                value={textColor}
+                                onChange={handleTextColorChange}
+                                autoComplete="off"
+                                disabled={!limits.widgetFullCustom}
+                              />
+                            </InlineStack>
+                          </BlockStack>
+                          <Divider />
+                          <TextField
+                            label="Border Radius (px)"
+                            type="number"
+                            value={borderRadius}
+                            onChange={handleBorderRadiusChange}
+                            autoComplete="off"
+                            disabled={!limits.widgetFullCustom}
+                            helpText="Roundness of corners. 0 = square, 16 = very rounded."
+                          />
+                          {!limits.widgetFullCustom && (
+                            <Banner tone="info">
+                              <Text as="p" variant="bodySm">
+                                Upgrade to Starter to customize widget colors.{" "}
+                                <Button
+                                  variant="plain"
+                                  onClick={() => navigate("/app/pricing")}
+                                >
+                                  View plans
+                                </Button>
+                              </Text>
+                            </Banner>
+                          )}
                         </BlockStack>
-                      </Box>
-                      <Box minWidth="140px" width="100%">
-                        <BlockStack gap="100">
-                          <Text as="p" variant="bodySm">
-                            Background
-                          </Text>
-                          <InlineStack gap="200" blockAlign="center">
-                            <input
-                              type="color"
-                              value={backgroundColor}
-                              onChange={(e) => handleBackgroundColorChange(e.target.value)}
-                              disabled={!limits.widgetFullCustom}
-                              style={{
-                                width: "36px",
-                                height: "36px",
-                                border: "2px solid var(--p-color-border-secondary)",
-                                borderRadius: "var(--p-border-radius-200)",
-                                cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
-                                padding: "2px",
-                                opacity: limits.widgetFullCustom ? 1 : 0.5,
-                              }}
-                            />
-                            <TextField
-                              label="BG"
-                              labelHidden
-                              value={backgroundColor}
-                              onChange={handleBackgroundColorChange}
-                              autoComplete="off"
-                              disabled={!limits.widgetFullCustom}
-                            />
-                          </InlineStack>
-                        </BlockStack>
-                      </Box>
-                    </InlineStack>
-                    <BlockStack gap="100">
-                      <Text as="p" variant="bodySm">
-                        Text Color
-                      </Text>
-                      <InlineStack gap="200" blockAlign="center">
-                        <input
-                          type="color"
-                          value={textColor}
-                          onChange={(e) => handleTextColorChange(e.target.value)}
-                          disabled={!limits.widgetFullCustom}
-                          style={{
-                            width: "36px",
-                            height: "36px",
-                            border: "2px solid var(--p-color-border-secondary)",
-                            borderRadius: "var(--p-border-radius-200)",
-                            cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
-                            padding: "2px",
-                            opacity: limits.widgetFullCustom ? 1 : 0.5,
-                          }}
-                        />
-                        <TextField
-                          label="Text"
-                          labelHidden
-                          value={textColor}
-                          onChange={handleTextColorChange}
-                          autoComplete="off"
-                          disabled={!limits.widgetFullCustom}
-                        />
-                      </InlineStack>
-                    </BlockStack>
-                    <Divider />
-                    <TextField
-                      label="Border Radius (px)"
-                      type="number"
-                      value={borderRadius}
-                      onChange={handleBorderRadiusChange}
-                      autoComplete="off"
-                      disabled={!limits.widgetFullCustom}
-                      helpText="Roundness of corners. 0 = square, 16 = very rounded."
-                    />
-                    {!limits.widgetFullCustom && (
-                      <Banner tone="info">
-                        <Text as="p" variant="bodySm">
-                          Upgrade to Starter to customize widget colors.{" "}
-                          <Button
-                            variant="plain"
-                            onClick={() => navigate("/app/pricing")}
-                          >
-                            View plans
-                          </Button>
-                        </Text>
-                      </Banner>
-                    )}
-                  </BlockStack>
-                </Card>
+                      </Card>
+                    </Box>
+                  )}
 
-                {/* Text Content */}
-                <Card>
-                  <BlockStack gap="400">
-                    <Text as="h2" variant="headingMd">
-                      Text Content
-                    </Text>
-                    <TextField
-                      label="Heading"
-                      value={heading}
-                      onChange={handleHeadingChange}
-                      autoComplete="off"
-                    />
-                    <InlineGrid columns={2} gap="300">
-                      <TextField
-                        label="Placeholder"
-                        value={placeholder}
-                        onChange={handlePlaceholderChange}
-                        autoComplete="off"
-                      />
-                      <TextField
-                        label="Button Text"
-                        value={buttonText}
-                        onChange={handleButtonTextChange}
-                        autoComplete="off"
-                      />
-                    </InlineGrid>
-                    <TextField
-                      label="Success Message"
-                      value={successMessage}
-                      onChange={handleSuccessMessageChange}
-                      autoComplete="off"
-                      multiline={2}
-                    />
-                    <TextField
-                      label="Error Message (blocked)"
-                      value={errorMessage}
-                      onChange={handleErrorMessageChange}
-                      autoComplete="off"
-                      multiline={2}
-                    />
-                    <TextField
-                      label="Not Found Message"
-                      value={notFoundMessage}
-                      onChange={handleNotFoundMessageChange}
-                      autoComplete="off"
-                      multiline={2}
-                    />
-                  </BlockStack>
-                </Card>
-
-                {/* Display Options */}
-                <Card>
-                  <BlockStack gap="400">
-                    <InlineStack align="space-between" blockAlign="center">
-                      <Text as="h2" variant="headingMd">
-                        Display Options
-                      </Text>
-                      {!limits.showEtaCodReturn && (
-                        <Badge tone="info">Starter+</Badge>
-                      )}
-                    </InlineStack>
-                    <Banner tone={showWaitlistOnFailure ? "success" : "info"}>
-                      <BlockStack gap="200">
-                        <Text as="p" variant="bodySm" fontWeight="semibold">
-                          ZIP Code Waitlist
-                        </Text>
-                        <Checkbox
-                          label="Show waitlist form on blocked/not-found zip codes"
-                          checked={showWaitlistOnFailure}
-                          onChange={handleShowWaitlistChange}
-                          helpText="Let customers enter their email to join a waitlist when their zip code isn't available. Toggle the Error preview to see it in action."
-                        />
+                  {/* Tab 1: Content — Text Content + Waitlist Labels */}
+                  {settingsTab === 1 && (
+                    <Box paddingBlockStart="400">
+                      <BlockStack gap="400">
+                        <Card>
+                          <BlockStack gap="400">
+                            <Text as="h2" variant="headingMd">
+                              Text Content
+                            </Text>
+                            <TextField
+                              label="Heading"
+                              value={heading}
+                              onChange={handleHeadingChange}
+                              autoComplete="off"
+                            />
+                            <InlineGrid columns={2} gap="300">
+                              <TextField
+                                label="Placeholder"
+                                value={placeholder}
+                                onChange={handlePlaceholderChange}
+                                autoComplete="off"
+                              />
+                              <TextField
+                                label="Button Text"
+                                value={buttonText}
+                                onChange={handleButtonTextChange}
+                                autoComplete="off"
+                              />
+                            </InlineGrid>
+                            <TextField
+                              label="Success Message"
+                              value={successMessage}
+                              onChange={handleSuccessMessageChange}
+                              autoComplete="off"
+                              multiline={2}
+                            />
+                            <TextField
+                              label="Error Message (blocked)"
+                              value={errorMessage}
+                              onChange={handleErrorMessageChange}
+                              autoComplete="off"
+                              multiline={2}
+                            />
+                            <TextField
+                              label="Not Found Message"
+                              value={notFoundMessage}
+                              onChange={handleNotFoundMessageChange}
+                              autoComplete="off"
+                              multiline={2}
+                            />
+                          </BlockStack>
+                        </Card>
+                        <Card>
+                          <BlockStack gap="400">
+                            <Text as="h2" variant="headingMd">
+                              Waitlist Labels
+                            </Text>
+                            <TextField
+                              label="Waitlist form title"
+                              value={waitlistTitle}
+                              onChange={handleWaitlistTitleChange}
+                              autoComplete="off"
+                              helpText="The heading shown above the email input on the waitlist form."
+                              placeholder="Get notified when we deliver to your area"
+                            />
+                            <TextField
+                              label="Waitlist button text"
+                              value={waitlistButtonText}
+                              onChange={handleWaitlistButtonTextChange}
+                              autoComplete="off"
+                              helpText="The label on the submit button of the waitlist form."
+                              placeholder="Notify Me"
+                            />
+                          </BlockStack>
+                        </Card>
                       </BlockStack>
-                    </Banner>
-                    <Checkbox
-                      label="Show estimated delivery time (ETA)"
-                      checked={showEta}
-                      onChange={handleShowEtaChange}
-                      disabled={!limits.showEtaCodReturn}
-                      helpText="Display the ETA below the success message when available."
-                    />
-                    <Checkbox
-                      label="Show delivery zone name"
-                      checked={showZone}
-                      onChange={handleShowZoneChange}
-                      helpText="Display the zone name in the success message."
-                    />
-                    <Checkbox
-                      label="Show cutoff time"
-                      checked={showCutoffTime}
-                      onChange={handleShowCutoffTimeChange}
-                      helpText="Display order cutoff time for same-day delivery (from the matched delivery rule)."
-                    />
-                    <Checkbox
-                      label="Show delivery days"
-                      checked={showDeliveryDays}
-                      onChange={handleShowDeliveryDaysChange}
-                      helpText="Display which days of the week delivery is available (from the matched delivery rule)."
-                    />
-                    <Checkbox
-                      label="Show estimated delivery date"
-                      checked={showDeliveryDate}
-                      onChange={handleShowDeliveryDateChange}
-                      disabled={!limits.showEtaCodReturn}
-                      helpText='Calculates and shows "Expected by Friday, Mar 27" from ETA.'
-                    />
-                    <Checkbox
-                      label="Show countdown timer"
-                      checked={showCountdown}
-                      onChange={handleShowCountdownChange}
-                      disabled={!limits.showEtaCodReturn}
-                      helpText='Live countdown to order cutoff with urgency colors.'
-                    />
-                    <Checkbox
-                      label="Show delivery fee"
-                      checked={showDeliveryFee}
-                      onChange={handleShowDeliveryFeeChange}
-                      disabled={!limits.showEtaCodReturn}
-                      helpText='Shows "Free Delivery" or delivery cost from your rules.'
-                    />
-                    <Checkbox
-                      label="Show COD (Cash on Delivery) availability"
-                      checked={showCod}
-                      onChange={handleShowCodChange}
-                      disabled={!limits.showEtaCodReturn}
-                      helpText="Display whether cash on delivery is available for the entered zip code."
-                    />
-                    <Checkbox
-                      label="Show return / exchange policy"
-                      checked={showReturnPolicy}
-                      onChange={handleShowReturnPolicyChange}
-                      disabled={!limits.showEtaCodReturn}
-                      helpText="Display the return and exchange policy associated with the entered zip code."
-                    />
-                    {!limits.showEtaCodReturn && (
-                      <Banner tone="info">
-                        <Text as="p" variant="bodySm">
-                          Upgrade to Starter to enable ETA, COD, and return policy toggles.{" "}
-                          <Button
-                            variant="plain"
-                            onClick={() => navigate("/app/pricing")}
-                          >
-                            View plans
-                          </Button>
-                        </Text>
-                      </Banner>
-                    )}
-                    <Divider />
-                    <InlineStack align="space-between" blockAlign="center">
-                      <Text variant="headingMd" as="h3">Purchase Protection</Text>
-                      {!limits.cartBlocking && (
-                        <Badge tone="info">Pro+</Badge>
-                      )}
-                    </InlineStack>
-                    <Checkbox
-                      label="Block Add to Cart for unserviceable ZIP codes"
-                      helpText="Disables the Add to Cart and Buy Now buttons when a customer enters an invalid ZIP code. Buttons re-enable on a valid check."
-                      checked={blockCartOnInvalid}
-                      onChange={handleBlockCartOnInvalidChange}
-                      disabled={!limits.cartBlocking}
-                    />
-                    <Checkbox
-                      label="Block checkout in cart for unserviceable ZIP codes"
-                      helpText="Shows a warning and hides the checkout button on the cart page if the last checked ZIP was unserviceable. Requires the Cart Validator block on your cart page."
-                      checked={blockCheckoutInCart}
-                      onChange={handleBlockCheckoutInCartChange}
-                      disabled={!limits.cartBlocking}
-                    />
-                    <Checkbox
-                      label="Disable Add to Cart until ZIP code is verified"
-                      helpText="Disable Add to Cart and Buy Now buttons until a valid ZIP code is checked. Works for all widget positions."
-                      checked={lockButtonsUntilZipCheck}
-                      onChange={handleLockButtonsUntilZipCheckChange}
-                    />
-                    {!limits.cartBlocking && (
-                      <Banner tone="info">
-                        <Text as="p" variant="bodySm">
-                          Upgrade to Pro to block Add to Cart for unserviceable ZIP codes and block checkout in the cart.{" "}
-                          <Button
-                            variant="plain"
-                            onClick={() => navigate("/app/pricing")}
-                          >
-                            View plans
-                          </Button>
-                        </Text>
-                      </Banner>
-                    )}
-                    <Divider />
-                    <Text variant="headingMd" as="h3">Waitlist Engagement</Text>
-                    <Checkbox
-                      label="Show social proof on waitlist form"
-                      helpText="Displays how many other customers are waiting for delivery to the same ZIP code. Example: 'Join 23 others waiting for delivery to your area.'"
-                      checked={showSocialProof}
-                      onChange={handleShowSocialProofChange}
-                    />
-                    <TextField
-                      label="Waitlist form title"
-                      value={waitlistTitle}
-                      onChange={handleWaitlistTitleChange}
-                      autoComplete="off"
-                      helpText="The heading shown above the email input on the waitlist form."
-                      placeholder="Get notified when we deliver to your area"
-                    />
-                    <TextField
-                      label="Waitlist button text"
-                      value={waitlistButtonText}
-                      onChange={handleWaitlistButtonTextChange}
-                      autoComplete="off"
-                      helpText="The label on the submit button of the waitlist form."
-                      placeholder="Notify Me"
-                    />
-                  </BlockStack>
-                </Card>
+                    </Box>
+                  )}
 
-                {/* Custom CSS */}
-                <Card>
-                  <BlockStack gap="400">
-                    <InlineStack align="space-between" blockAlign="center">
-                      <Text as="h2" variant="headingMd">
-                        Custom CSS
-                      </Text>
-                      {!limits.customCss && (
-                        <Badge tone="info">Ultimate</Badge>
-                      )}
-                    </InlineStack>
-                    <TextField
-                      label="Custom CSS"
-                      labelHidden
-                      value={customCss}
-                      onChange={handleCustomCssChange}
-                      multiline={4}
-                      placeholder=".zcc-heading { font-size: 18px; } .zcc-btn { border-radius: 4px; }"
-                      autoComplete="off"
-                      disabled={!limits.customCss}
-                      maxLength={MAX_CUSTOM_CSS_LENGTH}
-                      helpText="Target widget elements with these classes: .zcc-heading, .zcc-heading-icon, .zcc-search-bar, .zcc-input, .zcc-btn, .zcc-btn-icon, .zcc-btn-label, .zcc-result, .zcc-result-icon, .zcc-result-message, .zcc-meta, .zcc-cutoff, .zcc-days, .zcc-cod, .zcc-return-policy, .zcc-delivery-date, .zcc-countdown, .zcc-delivery-fee, .zcc-wl (waitlist), .zcc-wl-input, .zcc-wl-btn, .zcc-social-proof. All selectors are automatically scoped to the widget — your CSS won't affect the rest of your store."
-                    />
-                    {!limits.customCss && (
-                      <Banner tone="info">
-                        <Text as="p" variant="bodySm">
-                          Upgrade to Ultimate to add custom CSS overrides.{" "}
-                          <Button
-                            variant="plain"
-                            onClick={() => navigate("/app/pricing")}
-                          >
-                            View plans
-                          </Button>
-                        </Text>
-                      </Banner>
-                    )}
-                  </BlockStack>
-                </Card>
+                  {/* Tab 2: Display — Delivery Info Toggles + Waitlist & Social */}
+                  {settingsTab === 2 && (
+                    <Box paddingBlockStart="400">
+                      <Card>
+                        <BlockStack gap="400">
+                          <InlineStack align="space-between" blockAlign="center">
+                            <Text as="h2" variant="headingMd">
+                              Display Options
+                            </Text>
+                            {!limits.showEtaCodReturn && (
+                              <Badge tone="info">Starter+</Badge>
+                            )}
+                          </InlineStack>
+                          <Banner tone={showWaitlistOnFailure ? "success" : "info"}>
+                            <BlockStack gap="200">
+                              <Text as="p" variant="bodySm" fontWeight="semibold">
+                                ZIP Code Waitlist
+                              </Text>
+                              <Checkbox
+                                label="Show waitlist form on blocked/not-found zip codes"
+                                checked={showWaitlistOnFailure}
+                                onChange={handleShowWaitlistChange}
+                                helpText="Let customers enter their email to join a waitlist when their zip code isn't available. Toggle the Error preview to see it in action."
+                              />
+                            </BlockStack>
+                          </Banner>
+                          <Checkbox
+                            label="Show estimated delivery time (ETA)"
+                            checked={showEta}
+                            onChange={handleShowEtaChange}
+                            disabled={!limits.showEtaCodReturn}
+                            helpText="Display the ETA below the success message when available."
+                          />
+                          <Checkbox
+                            label="Show delivery zone name"
+                            checked={showZone}
+                            onChange={handleShowZoneChange}
+                            helpText="Display the zone name in the success message."
+                          />
+                          <Checkbox
+                            label="Show cutoff time"
+                            checked={showCutoffTime}
+                            onChange={handleShowCutoffTimeChange}
+                            helpText="Display order cutoff time for same-day delivery (from the matched delivery rule)."
+                          />
+                          <Checkbox
+                            label="Show delivery days"
+                            checked={showDeliveryDays}
+                            onChange={handleShowDeliveryDaysChange}
+                            helpText="Display which days of the week delivery is available (from the matched delivery rule)."
+                          />
+                          <Checkbox
+                            label="Show estimated delivery date"
+                            checked={showDeliveryDate}
+                            onChange={handleShowDeliveryDateChange}
+                            disabled={!limits.showEtaCodReturn}
+                            helpText='Calculates and shows "Expected by Friday, Mar 27" from ETA.'
+                          />
+                          <Checkbox
+                            label="Show countdown timer"
+                            checked={showCountdown}
+                            onChange={handleShowCountdownChange}
+                            disabled={!limits.showEtaCodReturn}
+                            helpText='Live countdown to order cutoff with urgency colors.'
+                          />
+                          <Checkbox
+                            label="Show delivery fee"
+                            checked={showDeliveryFee}
+                            onChange={handleShowDeliveryFeeChange}
+                            disabled={!limits.showEtaCodReturn}
+                            helpText='Shows "Free Delivery" or delivery cost from your rules.'
+                          />
+                          <Checkbox
+                            label="Show COD (Cash on Delivery) availability"
+                            checked={showCod}
+                            onChange={handleShowCodChange}
+                            disabled={!limits.showEtaCodReturn}
+                            helpText="Display whether cash on delivery is available for the entered zip code."
+                          />
+                          <Checkbox
+                            label="Show return / exchange policy"
+                            checked={showReturnPolicy}
+                            onChange={handleShowReturnPolicyChange}
+                            disabled={!limits.showEtaCodReturn}
+                            helpText="Display the return and exchange policy associated with the entered zip code."
+                          />
+                          {!limits.showEtaCodReturn && (
+                            <Banner tone="info">
+                              <Text as="p" variant="bodySm">
+                                Upgrade to Starter to enable ETA, COD, and return policy toggles.{" "}
+                                <Button
+                                  variant="plain"
+                                  onClick={() => navigate("/app/pricing")}
+                                >
+                                  View plans
+                                </Button>
+                              </Text>
+                            </Banner>
+                          )}
+                          <Divider />
+                          <Text variant="headingMd" as="h3">Social Proof</Text>
+                          <Checkbox
+                            label="Show social proof on waitlist form"
+                            helpText="Displays how many other customers are waiting for delivery to the same ZIP code. Example: 'Join 23 others waiting for delivery to your area.'"
+                            checked={showSocialProof}
+                            onChange={handleShowSocialProofChange}
+                          />
+                        </BlockStack>
+                      </Card>
+                    </Box>
+                  )}
+
+                  {/* Tab 3: Advanced — Purchase Protection + Custom CSS */}
+                  {settingsTab === 3 && (
+                    <Box paddingBlockStart="400">
+                      <BlockStack gap="400">
+                        <Card>
+                          <BlockStack gap="400">
+                            <InlineStack align="space-between" blockAlign="center">
+                              <Text as="h2" variant="headingMd">Purchase Protection</Text>
+                              {!limits.cartBlocking && (
+                                <Badge tone="info">Pro+</Badge>
+                              )}
+                            </InlineStack>
+                            <Checkbox
+                              label="Block Add to Cart for unserviceable ZIP codes"
+                              helpText="Disables the Add to Cart and Buy Now buttons when a customer enters an invalid ZIP code. Buttons re-enable on a valid check."
+                              checked={blockCartOnInvalid}
+                              onChange={handleBlockCartOnInvalidChange}
+                              disabled={!limits.cartBlocking}
+                            />
+                            <Checkbox
+                              label="Block checkout in cart for unserviceable ZIP codes"
+                              helpText="Shows a warning and hides the checkout button on the cart page if the last checked ZIP was unserviceable. Requires the Cart Validator block on your cart page."
+                              checked={blockCheckoutInCart}
+                              onChange={handleBlockCheckoutInCartChange}
+                              disabled={!limits.cartBlocking}
+                            />
+                            <Checkbox
+                              label="Disable Add to Cart until ZIP code is verified"
+                              helpText="Disable Add to Cart and Buy Now buttons until a valid ZIP code is checked. Works for all widget positions."
+                              checked={lockButtonsUntilZipCheck}
+                              onChange={handleLockButtonsUntilZipCheckChange}
+                            />
+                            {!limits.cartBlocking && (
+                              <Banner tone="info">
+                                <Text as="p" variant="bodySm">
+                                  Upgrade to Pro to block Add to Cart for unserviceable ZIP codes and block checkout in the cart.{" "}
+                                  <Button
+                                    variant="plain"
+                                    onClick={() => navigate("/app/pricing")}
+                                  >
+                                    View plans
+                                  </Button>
+                                </Text>
+                              </Banner>
+                            )}
+                          </BlockStack>
+                        </Card>
+                        <Card>
+                          <BlockStack gap="400">
+                            <InlineStack align="space-between" blockAlign="center">
+                              <Text as="h2" variant="headingMd">
+                                Custom CSS
+                              </Text>
+                              {!limits.customCss && (
+                                <Badge tone="info">Ultimate</Badge>
+                              )}
+                            </InlineStack>
+                            <TextField
+                              label="Custom CSS"
+                              labelHidden
+                              value={customCss}
+                              onChange={handleCustomCssChange}
+                              multiline={4}
+                              placeholder=".zcc-heading { font-size: 18px; } .zcc-btn { border-radius: 4px; }"
+                              autoComplete="off"
+                              disabled={!limits.customCss}
+                              maxLength={MAX_CUSTOM_CSS_LENGTH}
+                              helpText="Target widget elements with these classes: .zcc-heading, .zcc-heading-icon, .zcc-search-bar, .zcc-input, .zcc-btn, .zcc-btn-icon, .zcc-btn-label, .zcc-result, .zcc-result-icon, .zcc-result-message, .zcc-meta, .zcc-cutoff, .zcc-days, .zcc-cod, .zcc-return-policy, .zcc-delivery-date, .zcc-countdown, .zcc-delivery-fee, .zcc-wl (waitlist), .zcc-wl-input, .zcc-wl-btn, .zcc-social-proof. All selectors are automatically scoped to the widget — your CSS won't affect the rest of your store."
+                            />
+                            {!limits.customCss && (
+                              <Banner tone="info">
+                                <Text as="p" variant="bodySm">
+                                  Upgrade to Ultimate to add custom CSS overrides.{" "}
+                                  <Button
+                                    variant="plain"
+                                    onClick={() => navigate("/app/pricing")}
+                                  >
+                                    View plans
+                                  </Button>
+                                </Text>
+                              </Banner>
+                            )}
+                          </BlockStack>
+                        </Card>
+                      </BlockStack>
+                    </Box>
+                  )}
+                </Tabs>
               </BlockStack>
 
               {/* ── Live Preview Column ── */}

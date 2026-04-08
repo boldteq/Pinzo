@@ -28,7 +28,7 @@ import {
   Banner,
   Badge,
   Modal,
-  Tabs,
+  ButtonGroup,
 } from "@shopify/polaris";
 
 /** Maximum length for custom CSS (characters). Prevents DB bloat and slow responses. */
@@ -1193,12 +1193,6 @@ export default function WidgetPage() {
 
   // Settings tab state
   const [settingsTab, setSettingsTab] = useState(0);
-  const settingsTabs = [
-    { id: "design", content: "Design" },
-    { id: "content", content: "Content" },
-    { id: "display", content: "Display" },
-    { id: "advanced", content: "Advanced" },
-  ];
 
   const isSaving =
     fetcher.state !== "idle" && fetcher.formData?.get("intent") === "save";
@@ -1435,68 +1429,77 @@ export default function WidgetPage() {
               {/* ── Settings Column ── */}
               <BlockStack gap="400">
 
-                {/* Layout — Position Only */}
-                <Card>
-                  <BlockStack gap="300">
-                    <InlineStack align="space-between" blockAlign="center">
-                      <Text as="h2" variant="headingMd">Layout</Text>
-                      {!limits.widgetFullCustom && (
-                        <Badge tone="info">Starter+</Badge>
-                      )}
-                    </InlineStack>
-                    <InlineStack gap="200" wrap>
-                      <PositionTile value="inline" label="Inline" selected={position === "inline"} disabled={!limits.widgetFullCustom} onSelect={handlePositionChange}>
-                        <svg viewBox="0 0 32 32" fill="none" style={{ width: 28, height: 28, margin: "0 auto" }}>
-                          <rect x="4" y="4" width="24" height="24" rx="4" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                          <rect x="8" y="12" width="16" height="8" rx="2" fill={position === "inline" ? "var(--p-color-icon-emphasis)" : "var(--p-color-icon-secondary)"} opacity="0.6"/>
-                        </svg>
-                      </PositionTile>
-                      <PositionTile value="floating" label="Floating" selected={position === "floating"} disabled={!limits.widgetFullCustom} onSelect={handlePositionChange}>
-                        <svg viewBox="0 0 32 32" fill="none" style={{ width: 28, height: 28, margin: "0 auto" }}>
-                          <rect x="4" y="4" width="24" height="24" rx="4" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                          <circle cx="24" cy="24" r="5" fill={position === "floating" ? "var(--p-color-icon-emphasis)" : "var(--p-color-icon-secondary)"} opacity="0.7"/>
-                        </svg>
-                      </PositionTile>
-                      <PositionTile value="popup" label="Popup" selected={position === "popup"} disabled={!limits.widgetFullCustom} onSelect={handlePositionChange}>
-                        <svg viewBox="0 0 32 32" fill="none" style={{ width: 28, height: 28, margin: "0 auto" }}>
-                          <rect x="4" y="4" width="24" height="24" rx="4" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                          <rect x="9" y="9" width="14" height="14" rx="3" stroke={position === "popup" ? "var(--p-color-icon-emphasis)" : "var(--p-color-icon-secondary)"} strokeWidth="1.5" fill={position === "popup" ? "var(--p-color-icon-emphasis)" : "var(--p-color-icon-secondary)"} opacity="0.5"/>
-                        </svg>
-                      </PositionTile>
-                    </InlineStack>
-                    <Text as="p" variant="bodySm" tone="subdued">
-                      {position === "floating"
-                        ? "Fixed button in the bottom-right corner of every page."
-                        : position === "popup"
-                        ? "A trigger button that opens a centered popup overlay."
-                        : "Renders directly where you place the block in the Theme Editor."}
-                    </Text>
-                    {!limits.widgetFullCustom && (
-                      <Banner tone="info">
-                        <Text as="p" variant="bodySm">
-                          Upgrade to Starter to customize widget position.{" "}
-                          <Button variant="plain" onClick={() => navigate("/app/pricing")}>View plans</Button>
-                        </Text>
-                      </Banner>
-                    )}
-                  </BlockStack>
+                {/* Segmented tab navigation */}
+                <Card padding="300">
+                  <ButtonGroup variant="segmented" fullWidth>
+                    <Button pressed={settingsTab === 0} onClick={() => setSettingsTab(0)}>Design</Button>
+                    <Button pressed={settingsTab === 1} onClick={() => setSettingsTab(1)}>Content</Button>
+                    <Button pressed={settingsTab === 2} onClick={() => setSettingsTab(2)}>Display</Button>
+                    <Button pressed={settingsTab === 3} onClick={() => setSettingsTab(3)}>Advanced</Button>
+                  </ButtonGroup>
                 </Card>
 
-                {/* Settings Tabs — Design | Content | Display | Advanced */}
-                <Tabs tabs={settingsTabs} selected={settingsTab} onSelect={setSettingsTab}>
-                  {/* Tab 0: Design — Colors + Border Radius */}
-                  {settingsTab === 0 && (
-                    <Box paddingBlockStart="400">
-                      <Card>
-                        <BlockStack gap="400">
-                          <InlineStack align="space-between" blockAlign="center">
-                            <Text as="h2" variant="headingMd">
-                              Colors
+                {/* Tab 0: Design — Layout + Colors + Border Radius */}
+                {settingsTab === 0 && (
+                  <BlockStack gap="400">
+                    {/* Layout — Position */}
+                    <Card>
+                      <BlockStack gap="300">
+                        <InlineStack align="space-between" blockAlign="center">
+                          <Text as="h2" variant="headingMd">Layout</Text>
+                          {!limits.widgetFullCustom && (
+                            <Badge tone="info">Starter+</Badge>
+                          )}
+                        </InlineStack>
+                        <InlineStack gap="200" wrap>
+                          <PositionTile value="inline" label="Inline" selected={position === "inline"} disabled={!limits.widgetFullCustom} onSelect={handlePositionChange}>
+                            <svg viewBox="0 0 32 32" fill="none" style={{ width: 28, height: 28, margin: "0 auto" }}>
+                              <rect x="4" y="4" width="24" height="24" rx="4" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                              <rect x="8" y="12" width="16" height="8" rx="2" fill={position === "inline" ? "var(--p-color-icon-emphasis)" : "var(--p-color-icon-secondary)"} opacity="0.6"/>
+                            </svg>
+                          </PositionTile>
+                          <PositionTile value="floating" label="Floating" selected={position === "floating"} disabled={!limits.widgetFullCustom} onSelect={handlePositionChange}>
+                            <svg viewBox="0 0 32 32" fill="none" style={{ width: 28, height: 28, margin: "0 auto" }}>
+                              <rect x="4" y="4" width="24" height="24" rx="4" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                              <circle cx="24" cy="24" r="5" fill={position === "floating" ? "var(--p-color-icon-emphasis)" : "var(--p-color-icon-secondary)"} opacity="0.7"/>
+                            </svg>
+                          </PositionTile>
+                          <PositionTile value="popup" label="Popup" selected={position === "popup"} disabled={!limits.widgetFullCustom} onSelect={handlePositionChange}>
+                            <svg viewBox="0 0 32 32" fill="none" style={{ width: 28, height: 28, margin: "0 auto" }}>
+                              <rect x="4" y="4" width="24" height="24" rx="4" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                              <rect x="9" y="9" width="14" height="14" rx="3" stroke={position === "popup" ? "var(--p-color-icon-emphasis)" : "var(--p-color-icon-secondary)"} strokeWidth="1.5" fill={position === "popup" ? "var(--p-color-icon-emphasis)" : "var(--p-color-icon-secondary)"} opacity="0.5"/>
+                            </svg>
+                          </PositionTile>
+                        </InlineStack>
+                        <Text as="p" variant="bodySm" tone="subdued">
+                          {position === "floating"
+                            ? "Fixed button in the bottom-right corner of every page."
+                            : position === "popup"
+                            ? "A trigger button that opens a centered popup overlay."
+                            : "Renders directly where you place the block in the Theme Editor."}
+                        </Text>
+                        {!limits.widgetFullCustom && (
+                          <Banner tone="info">
+                            <Text as="p" variant="bodySm">
+                              Upgrade to Starter to customize widget position.{" "}
+                              <Button variant="plain" onClick={() => navigate("/app/pricing")}>View plans</Button>
                             </Text>
-                            {!limits.widgetFullCustom && (
-                              <Badge tone="info">Starter+</Badge>
-                            )}
-                          </InlineStack>
+                          </Banner>
+                        )}
+                      </BlockStack>
+                    </Card>
+
+                    {/* Colors + Border Radius */}
+                    <Card>
+                      <BlockStack gap="400">
+                        <InlineStack align="space-between" blockAlign="center">
+                          <Text as="h2" variant="headingMd">
+                            Colors
+                          </Text>
+                          {!limits.widgetFullCustom && (
+                            <Badge tone="info">Starter+</Badge>
+                          )}
+                        </InlineStack>
                           <InlineStack gap="300" wrap>
                             <Box minWidth="140px" width="100%">
                               <BlockStack gap="100">
@@ -1684,13 +1687,12 @@ export default function WidgetPage() {
                           )}
                         </BlockStack>
                       </Card>
-                    </Box>
-                  )}
+                  </BlockStack>
+                )}
 
-                  {/* Tab 1: Content — Text Content + Waitlist Labels */}
-                  {settingsTab === 1 && (
-                    <Box paddingBlockStart="400">
-                      <BlockStack gap="400">
+                {/* Tab 1: Content — Text Content + Waitlist Labels */}
+                {settingsTab === 1 && (
+                  <BlockStack gap="400">
                         <Card>
                           <BlockStack gap="400">
                             <Text as="h2" variant="headingMd">
@@ -1762,14 +1764,12 @@ export default function WidgetPage() {
                             />
                           </BlockStack>
                         </Card>
-                      </BlockStack>
-                    </Box>
-                  )}
+                  </BlockStack>
+                )}
 
-                  {/* Tab 2: Display — Delivery Info Toggles + Waitlist & Social */}
-                  {settingsTab === 2 && (
-                    <Box paddingBlockStart="400">
-                      <Card>
+                {/* Tab 2: Display — Delivery Info Toggles + Waitlist & Social */}
+                {settingsTab === 2 && (
+                  <Card>
                         <BlockStack gap="400">
                           <InlineStack align="space-between" blockAlign="center">
                             <Text as="h2" variant="headingMd">
@@ -1874,15 +1874,13 @@ export default function WidgetPage() {
                             onChange={handleShowSocialProofChange}
                           />
                         </BlockStack>
-                      </Card>
-                    </Box>
-                  )}
+                  </Card>
+                )}
 
-                  {/* Tab 3: Advanced — Purchase Protection + Custom CSS */}
-                  {settingsTab === 3 && (
-                    <Box paddingBlockStart="400">
-                      <BlockStack gap="400">
-                        <Card>
+                {/* Tab 3: Advanced — Purchase Protection + Custom CSS */}
+                {settingsTab === 3 && (
+                  <BlockStack gap="400">
+                    <Card>
                           <BlockStack gap="400">
                             <InlineStack align="space-between" blockAlign="center">
                               <Text as="h2" variant="headingMd">Purchase Protection</Text>
@@ -1962,10 +1960,8 @@ export default function WidgetPage() {
                             )}
                           </BlockStack>
                         </Card>
-                      </BlockStack>
-                    </Box>
-                  )}
-                </Tabs>
+                  </BlockStack>
+                )}
               </BlockStack>
 
               {/* ── Live Preview Column ── */}

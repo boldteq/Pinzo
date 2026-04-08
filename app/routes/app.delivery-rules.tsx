@@ -32,6 +32,8 @@ import {
   Tooltip,
   Checkbox,
   Banner,
+  ChoiceList,
+  Tag,
 } from "@shopify/polaris";
 import { PlusIcon, DeleteIcon, EditIcon, ViewIcon, HideIcon } from "@shopify/polaris-icons";
 
@@ -45,9 +47,23 @@ const DAYS_OPTIONS = [
   { label: "Sunday", value: "Sun" },
 ];
 
+interface ProductNameNode {
+  id: string;
+  title: string;
+}
+
+interface NodesQueryResponse {
+  data?: {
+    nodes?: Array<ProductNameNode | null>;
+  };
+}
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
+  const { session, admin } = await authenticate.admin(request);
   const shop = session.shop;
+
+  // Check if merchant has approved read_products scope
+  const hasProductScope = session.scope?.includes("read_products") ?? false;
 
   const [rules, zones, subscription] = await Promise.all([
     db.deliveryRule.findMany({
@@ -62,10 +78,87 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getShopSubscription(shop),
   ]);
 
+  // Batch-fetch names for rules that target specific products or collections
+  let productNames: Record<string, string> = {};
+  let collectionNames: Record<string, string> = {};
+
+  if (hasProductScope) {
+    const allProductIds = new Set<string>();
+    const allCollectionIds = new Set<string>();
+
+    for (const rule of rules) {
+      if (rule.targetType === "products" && rule.productIds) {
+        rule.productIds.split(",").forEach((id) => allProductIds.add(id.trim()));
+      }
+      if (rule.targetType === "collections" && rule.collectionIds) {
+        rule.collectionIds
+          .split(",")
+          .forEach((id) => allCollectionIds.add(id.trim()));
+      }
+    }
+
+    try {
+      if (allProductIds.size > 0) {
+        const productGids = [...allProductIds].map(
+          (id) => `gid://shopify/Product/${id}`,
+        );
+        const response = await admin.graphql(
+          `#graphql
+          query ProductNames($ids: [ID!]!) {
+            nodes(ids: $ids) {
+              ... on Product {
+                id
+                title
+              }
+            }
+          }`,
+          { variables: { ids: productGids } },
+        );
+        const data = (await response.json()) as NodesQueryResponse;
+        for (const node of data?.data?.nodes ?? []) {
+          if (node?.id && node?.title) {
+            const numId = node.id.match(/\/(\d+)$/)?.[1];
+            if (numId) productNames[numId] = node.title;
+          }
+        }
+      }
+
+      if (allCollectionIds.size > 0) {
+        const collectionGids = [...allCollectionIds].map(
+          (id) => `gid://shopify/Collection/${id}`,
+        );
+        const response = await admin.graphql(
+          `#graphql
+          query CollectionNames($ids: [ID!]!) {
+            nodes(ids: $ids) {
+              ... on Collection {
+                id
+                title
+              }
+            }
+          }`,
+          { variables: { ids: collectionGids } },
+        );
+        const data = (await response.json()) as NodesQueryResponse;
+        for (const node of data?.data?.nodes ?? []) {
+          if (node?.id && node?.title) {
+            const numId = node.id.match(/\/(\d+)$/)?.[1];
+            if (numId) collectionNames[numId] = node.title;
+          }
+        }
+      }
+    } catch {
+      // Non-critical — names are cosmetic; fall back to showing IDs
+    }
+  }
+
   return {
     rules,
     zones: zones.map((z) => z.zone).filter(Boolean) as string[],
     subscription,
+    hasProductScope,
+    productNames,
+    collectionNames,
   };
 };
 
@@ -97,7 +190,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       String(formData.get("daysOfWeek") || "").trim() || null;
     const priority = parseInt(String(formData.get("priority") || "0"), 10);
 
+    // Product/Collection targeting fields
+    const targetType =
+      (String(formData.get("targetType") || "all") as
+        | "all"
+        | "products"
+        | "collections") || "all";
+    const productIds =
+      String(formData.get("productIds") || "").trim() || null;
+    const collectionIds =
+      String(formData.get("collectionIds") || "").trim() || null;
+
     if (!name) return { error: "Rule name is required." };
+
+    // Plan-gating for product/collection targeting
+    if (targetType !== "all") {
+      const subscription = await getShopSubscription(shop);
+      if (!subscription.limits.productCollectionRules) {
+        return {
+          error: `Product and collection targeting requires the Pro plan or higher. Upgrade to use this feature.`,
+        };
+      }
+    }
 
     const data = {
       name,
@@ -110,6 +224,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       cutoffTime,
       daysOfWeek,
       priority,
+      targetType,
+      productIds,
+      collectionIds,
     };
 
     if (intent === "update" && id) {
@@ -217,10 +334,14 @@ type Rule = {
   daysOfWeek: string | null;
   isActive: boolean;
   priority: number;
+  targetType: string;
+  productIds: string | null;
+  collectionIds: string | null;
 };
 
 export default function DeliveryRulesPage() {
-  const { rules, zones, subscription } = useLoaderData<typeof loader>();
+  const { rules, zones, subscription, hasProductScope, productNames, collectionNames } =
+    useLoaderData<typeof loader>();
   const limits = PLAN_LIMITS[subscription.planTier];
   const isFreePlan = limits.maxDeliveryRules === 0;
   const hasFiniteLimit = limits.maxDeliveryRules < UNLIMITED && !isFreePlan;
@@ -236,7 +357,7 @@ export default function DeliveryRulesPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
 
-  // Form state
+  // Form state — existing fields
   const [name, setName] = useState("");
   const [zone, setZone] = useState("");
   const [zipCodes, setZipCodes] = useState("");
@@ -253,6 +374,17 @@ export default function DeliveryRulesPage() {
     "Fri",
   ]);
   const [priority, setPriority] = useState("0");
+
+  // Form state — product/collection targeting fields
+  const [targetType, setTargetType] = useState<"all" | "products" | "collections">("all");
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [selectedProductNames, setSelectedProductNames] = useState<
+    Record<string, string>
+  >({});
+  const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([]);
+  const [selectedCollectionNames, setSelectedCollectionNames] = useState<
+    Record<string, string>
+  >({});
 
   const actionError =
     fetcher.data && "error" in fetcher.data ? fetcher.data.error : null;
@@ -273,6 +405,11 @@ export default function DeliveryRulesPage() {
     setCutoffTime("");
     setSelectedDays(["Mon", "Tue", "Wed", "Thu", "Fri"]);
     setPriority("0");
+    setTargetType("all");
+    setSelectedProductIds([]);
+    setSelectedProductNames({});
+    setSelectedCollectionIds([]);
+    setSelectedCollectionNames({});
     setEditingRule(null);
   }, []);
 
@@ -281,22 +418,56 @@ export default function DeliveryRulesPage() {
     setModalOpen(true);
   }, [resetForm]);
 
-  const openEdit = useCallback((rule: Rule) => {
-    setEditingRule(rule);
-    setName(rule.name);
-    setZone(rule.zone || "");
-    setZipCodes(rule.zipCodes || "");
-    setMinOrderAmount(rule.minOrderAmount != null ? String(rule.minOrderAmount) : "");
-    setDeliveryFee(rule.deliveryFee != null ? String(rule.deliveryFee) : "");
-    setFreeShippingAbove(
-      rule.freeShippingAbove != null ? String(rule.freeShippingAbove) : "",
-    );
-    setEstimatedDays(rule.estimatedDays || "");
-    setCutoffTime(rule.cutoffTime || "");
-    setSelectedDays(rule.daysOfWeek ? rule.daysOfWeek.split(",") : []);
-    setPriority(String(rule.priority));
-    setModalOpen(true);
-  }, []);
+  const openEdit = useCallback(
+    (rule: Rule) => {
+      setEditingRule(rule);
+      setName(rule.name);
+      setZone(rule.zone || "");
+      setZipCodes(rule.zipCodes || "");
+      setMinOrderAmount(rule.minOrderAmount != null ? String(rule.minOrderAmount) : "");
+      setDeliveryFee(rule.deliveryFee != null ? String(rule.deliveryFee) : "");
+      setFreeShippingAbove(
+        rule.freeShippingAbove != null ? String(rule.freeShippingAbove) : "",
+      );
+      setEstimatedDays(rule.estimatedDays || "");
+      setCutoffTime(rule.cutoffTime || "");
+      setSelectedDays(rule.daysOfWeek ? rule.daysOfWeek.split(",") : []);
+      setPriority(String(rule.priority));
+
+      // Populate targeting fields from existing rule data
+      const tt = (rule.targetType || "all") as "all" | "products" | "collections";
+      setTargetType(tt);
+
+      if (tt === "products" && rule.productIds) {
+        const ids = rule.productIds.split(",").map((id) => id.trim()).filter(Boolean);
+        setSelectedProductIds(ids);
+        const names: Record<string, string> = {};
+        ids.forEach((id) => {
+          if (productNames[id]) names[id] = productNames[id];
+        });
+        setSelectedProductNames(names);
+      } else {
+        setSelectedProductIds([]);
+        setSelectedProductNames({});
+      }
+
+      if (tt === "collections" && rule.collectionIds) {
+        const ids = rule.collectionIds.split(",").map((id) => id.trim()).filter(Boolean);
+        setSelectedCollectionIds(ids);
+        const names: Record<string, string> = {};
+        ids.forEach((id) => {
+          if (collectionNames[id]) names[id] = collectionNames[id];
+        });
+        setSelectedCollectionNames(names);
+      } else {
+        setSelectedCollectionIds([]);
+        setSelectedCollectionNames({});
+      }
+
+      setModalOpen(true);
+    },
+    [productNames, collectionNames],
+  );
 
   const handleSave = useCallback(() => {
     const fd = new FormData();
@@ -312,6 +483,9 @@ export default function DeliveryRulesPage() {
     fd.set("cutoffTime", cutoffTime);
     fd.set("daysOfWeek", selectedDays.join(","));
     fd.set("priority", priority);
+    fd.set("targetType", targetType);
+    fd.set("productIds", selectedProductIds.join(","));
+    fd.set("collectionIds", selectedCollectionIds.join(","));
     fetcher.submit(fd, { method: "POST" });
   }, [
     editingRule,
@@ -325,6 +499,9 @@ export default function DeliveryRulesPage() {
     cutoffTime,
     selectedDays,
     priority,
+    targetType,
+    selectedProductIds,
+    selectedCollectionIds,
     fetcher,
   ]);
 
@@ -339,12 +516,9 @@ export default function DeliveryRulesPage() {
     [fetcher],
   );
 
-  const handleDelete = useCallback(
-    (id: string) => {
-      setConfirmDeleteId(id);
-    },
-    [],
-  );
+  const handleDelete = useCallback((id: string) => {
+    setConfirmDeleteId(id);
+  }, []);
 
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data) {
@@ -388,14 +562,11 @@ export default function DeliveryRulesPage() {
     [fetcher],
   );
 
-  const toggleDay = useCallback(
-    (day: string) => {
-      setSelectedDays((prev) =>
-        prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
-      );
-    },
-    [],
-  );
+  const toggleDay = useCallback((day: string) => {
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
+    );
+  }, []);
 
   const doBulkDelete = useCallback(() => {
     const fd = new FormData();
@@ -420,9 +591,101 @@ export default function DeliveryRulesPage() {
     [selectedResources, fetcher],
   );
 
+  // Resource Picker handlers (App Bridge v4)
+  const handleSelectProducts = useCallback(async () => {
+    const selection = await shopify.resourcePicker({
+      type: "product",
+      multiple: true,
+      selectionIds: selectedProductIds.map((id) => ({
+        id: `gid://shopify/Product/${id}`,
+      })),
+    });
+    if (selection) {
+      const ids = selection
+        .map((p) => p.id.split("/").pop())
+        .filter((id): id is string => !!id);
+      const names: Record<string, string> = {};
+      selection.forEach((p) => {
+        const id = p.id.split("/").pop();
+        if (id) names[id] = p.title;
+      });
+      setSelectedProductIds(ids);
+      setSelectedProductNames(names);
+    }
+  }, [shopify, selectedProductIds]);
+
+  const handleSelectCollections = useCallback(async () => {
+    const selection = await shopify.resourcePicker({
+      type: "collection",
+      multiple: true,
+      selectionIds: selectedCollectionIds.map((id) => ({
+        id: `gid://shopify/Collection/${id}`,
+      })),
+    });
+    if (selection) {
+      const ids = selection
+        .map((c) => c.id.split("/").pop())
+        .filter((id): id is string => !!id);
+      const names: Record<string, string> = {};
+      selection.forEach((c) => {
+        const id = c.id.split("/").pop();
+        if (id) names[id] = c.title;
+      });
+      setSelectedCollectionIds(ids);
+      setSelectedCollectionNames(names);
+    }
+  }, [shopify, selectedCollectionIds]);
+
+  const removeProduct = useCallback((id: string) => {
+    setSelectedProductIds((prev) => prev.filter((p) => p !== id));
+    setSelectedProductNames((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  }, []);
+
+  const removeCollection = useCallback((id: string) => {
+    setSelectedCollectionIds((prev) => prev.filter((c) => c !== id));
+    setSelectedCollectionNames((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  }, []);
+
   const zoneOptions = [
     { label: "All zones", value: "" },
     ...zones.map((z) => ({ label: z, value: z })),
+  ];
+
+  // Helper: display text for target column in table
+  const getTargetDisplay = (rule: Rule): string => {
+    if (rule.targetType === "products" && rule.productIds) {
+      const count = rule.productIds.split(",").filter(Boolean).length;
+      return `${count} product${count !== 1 ? "s" : ""}`;
+    }
+    if (rule.targetType === "collections" && rule.collectionIds) {
+      const count = rule.collectionIds.split(",").filter(Boolean).length;
+      return `${count} collection${count !== 1 ? "s" : ""}`;
+    }
+    return "All products";
+  };
+
+  // Whether the targeting section is available for this merchant
+  const targetingDisabled = !limits.productCollectionRules;
+  const targetingChoices = [
+    { label: "All products", value: "all" },
+    {
+      label: targetingDisabled ? "Specific products (Pro+ required)" : "Specific products",
+      value: "products",
+      disabled: targetingDisabled || !hasProductScope,
+    },
+    {
+      label: targetingDisabled ? "Specific collections (Pro+ required)" : "Specific collections",
+      value: "collections",
+      disabled: targetingDisabled || !hasProductScope,
+    },
   ];
 
   return (
@@ -506,6 +769,7 @@ export default function DeliveryRulesPage() {
                 onSelectionChange={handleSelectionChange}
                 headings={[
                   { title: "Rule Name" },
+                  { title: "Target" },
                   { title: "Zone" },
                   { title: "Delivery Fee" },
                   { title: "Min. Order" },
@@ -535,6 +799,13 @@ export default function DeliveryRulesPage() {
                           {rule.isActive ? "Active" : "Inactive"}
                         </Badge>
                       </InlineStack>
+                    </IndexTable.Cell>
+                    <IndexTable.Cell>
+                      <Badge
+                        tone={rule.targetType !== "all" ? "info" : undefined}
+                      >
+                        {getTargetDisplay(rule)}
+                      </Badge>
                     </IndexTable.Cell>
                     <IndexTable.Cell>{rule.zone || "All"}</IndexTable.Cell>
                     <IndexTable.Cell>
@@ -624,6 +895,101 @@ export default function DeliveryRulesPage() {
               autoComplete="off"
               helpText="A descriptive name for this delivery rule."
             />
+
+            {/* Product Targeting Section */}
+            <Divider />
+            <BlockStack gap="300">
+              <InlineStack gap="200" blockAlign="center">
+                <Text as="h3" variant="headingSm">
+                  Product Targeting
+                </Text>
+                {targetingDisabled && (
+                  <Badge tone="warning">Pro+ required</Badge>
+                )}
+              </InlineStack>
+
+              {!hasProductScope && !targetingDisabled && (
+                <Banner
+                  tone="warning"
+                  title="Additional permission required"
+                  action={{
+                    content: "Approve permissions",
+                    url: "/auth/login",
+                  }}
+                >
+                  <Text as="p">
+                    Product and collection-based delivery rules require access
+                    to your store&apos;s product data. Click &ldquo;Approve
+                    permissions&rdquo; to enable this feature.
+                  </Text>
+                </Banner>
+              )}
+
+              <ChoiceList
+                title="Apply this rule to"
+                titleHidden
+                choices={targetingChoices}
+                selected={[targetType]}
+                onChange={(value) =>
+                  setTargetType(value[0] as "all" | "products" | "collections")
+                }
+              />
+
+              {targetType === "products" && hasProductScope && !targetingDisabled && (
+                <BlockStack gap="200">
+                  <Button onClick={handleSelectProducts} variant="secondary">
+                    {selectedProductIds.length > 0
+                      ? "Change products"
+                      : "Select products"}
+                  </Button>
+                  {selectedProductIds.length > 0 && (
+                    <InlineStack gap="200" wrap>
+                      {selectedProductIds.map((id) => (
+                        <Tag key={id} onRemove={() => removeProduct(id)}>
+                          {selectedProductNames[id] || `Product ${id}`}
+                        </Tag>
+                      ))}
+                    </InlineStack>
+                  )}
+                  {selectedProductIds.length === 0 && (
+                    <Text as="p" tone="subdued" variant="bodySm">
+                      No products selected. This rule will not match any products
+                      until you select at least one.
+                    </Text>
+                  )}
+                </BlockStack>
+              )}
+
+              {targetType === "collections" && hasProductScope && !targetingDisabled && (
+                <BlockStack gap="200">
+                  <Button onClick={handleSelectCollections} variant="secondary">
+                    {selectedCollectionIds.length > 0
+                      ? "Change collections"
+                      : "Select collections"}
+                  </Button>
+                  {selectedCollectionIds.length > 0 && (
+                    <InlineStack gap="200" wrap>
+                      {selectedCollectionIds.map((id) => (
+                        <Tag key={id} onRemove={() => removeCollection(id)}>
+                          {selectedCollectionNames[id] || `Collection ${id}`}
+                        </Tag>
+                      ))}
+                    </InlineStack>
+                  )}
+                  {selectedCollectionIds.length === 0 && (
+                    <Text as="p" tone="subdued" variant="bodySm">
+                      No collections selected. This rule will not match any
+                      products until you select at least one collection.
+                    </Text>
+                  )}
+                </BlockStack>
+              )}
+            </BlockStack>
+
+            <Divider />
+            <Text as="h3" variant="headingSm">
+              Geography
+            </Text>
 
             <InlineGrid columns={2} gap="300">
               <Select

@@ -21,6 +21,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         db.subscription.deleteMany({ where: { shop } }),
         db.shopSettings.deleteMany({ where: { shop } }),
         db.featureRequest.deleteMany({ where: { shop } }),
+        db.productCollectionCache.deleteMany({ where: { shop } }),
       ]);
     } catch {
       // Log failures silently — Shopify requires a 200 response regardless

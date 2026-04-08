@@ -27,6 +27,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       db.session.deleteMany({ where: { shop } }),
       db.shopSettings.deleteMany({ where: { shop } }), // contains notificationEmail (PII)
       db.featureRequest.deleteMany({ where: { shop } }),
+      db.productCollectionCache.deleteMany({ where: { shop } }),
     ]);
   } catch {
     // Shopify requires a 200 response regardless of errors

@@ -35,7 +35,7 @@ api_version = "2026-01"
 [access_scopes]
 # read_themes is required to detect whether the app embed is enabled in the
 # merchant's active theme (reads config/settings_data.json via GraphQL themes API).
-scopes = "read_themes"
+scopes = "read_themes,read_products"
 optional_scopes = []
 use_legacy_install_flow = false
 

@@ -16,6 +16,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import db from "../db.server";
 import { normalizeZipCode } from "../utils/zip";
 import { rateLimit, getClientIp, rateLimitResponse } from "../utils/rate-limit.server";
+import { getProductCollections } from "../utils/product-collections.server";
 
 function calculateDeliveryDate(
   estimatedDays: string,
@@ -81,7 +82,33 @@ const DENY_HEADERS = {
 
 const SHOP_DOMAIN_RE = /^[a-zA-Z0-9][a-zA-Z0-9-]*\.myshopify\.com$/;
 
-async function handleZipCheck(shop: string | null, zip: string | null) {
+/**
+ * Returns true if a delivery rule's geographic constraints (zone or explicit
+ * zip codes) match the given normalized zip and its zone.
+ * Product/collection rules can optionally layer geographic constraints on top.
+ * A rule with no zone and no zipCodes matches all geographies.
+ */
+function matchesZipOrZone(
+  rule: { zipCodes: string | null; zone: string | null },
+  normalizedZip: string,
+  zipZone: string | null,
+): boolean {
+  if (rule.zipCodes?.trim()) {
+    const zips = rule.zipCodes.split(",").map((z) => z.trim().toUpperCase());
+    return zips.includes(normalizedZip);
+  }
+  if (rule.zone) {
+    return rule.zone === zipZone;
+  }
+  // No geographic constraint — matches everywhere
+  return true;
+}
+
+async function handleZipCheck(
+  shop: string | null,
+  zip: string | null,
+  productId?: string | null,
+) {
   if (!shop || !zip) {
     return new Response(
       JSON.stringify({ error: "Missing shop or zip parameter" }),
@@ -225,21 +252,62 @@ async function handleZipCheck(shop: string | null, zip: string | null) {
 
   let matchedRule: (typeof activeRules)[number] | null = null;
 
-  // Pass 1: explicit zip match — zipCodes field contains this zip code
-  for (const rule of activeRules) {
-    if (rule.zipCodes) {
-      const zips = rule.zipCodes.split(",").map((z) => z.trim().toUpperCase());
-      if (zips.includes(zipCodeUpper)) {
-        matchedRule = rule;
-        break;
+  if (productId) {
+    // Pass 1: product-specific rules — targetType "products", productIds contains this product
+    for (const rule of activeRules) {
+      if (rule.targetType === "products" && rule.productIds) {
+        const ids = rule.productIds.split(",").map((id) => id.trim());
+        if (ids.includes(productId)) {
+          if (matchesZipOrZone(rule, zipCodeUpper, zipZone)) {
+            matchedRule = rule;
+            break;
+          }
+        }
+      }
+    }
+
+    // Pass 2: collection-specific rules — only run if collection-targeted rules exist
+    if (!matchedRule) {
+      const hasCollectionRules = activeRules.some(
+        (r) => r.targetType === "collections",
+      );
+      if (hasCollectionRules) {
+        const productCollections = await getProductCollections(shop, productId);
+        for (const rule of activeRules) {
+          if (rule.targetType === "collections" && rule.collectionIds) {
+            const ruleCollectionIds = rule.collectionIds
+              .split(",")
+              .map((id) => id.trim());
+            if (ruleCollectionIds.some((cid) => productCollections.includes(cid))) {
+              if (matchesZipOrZone(rule, zipCodeUpper, zipZone)) {
+                matchedRule = rule;
+                break;
+              }
+            }
+          }
+        }
       }
     }
   }
 
-  // Pass 2: zone match — rule's zone matches the zip's zone and no explicit zip list
+  // Pass 3: explicit zip match on general rules (targetType "all")
+  if (!matchedRule) {
+    for (const rule of activeRules) {
+      if (rule.targetType === "all" && rule.zipCodes) {
+        const zips = rule.zipCodes.split(",").map((z) => z.trim().toUpperCase());
+        if (zips.includes(zipCodeUpper)) {
+          matchedRule = rule;
+          break;
+        }
+      }
+    }
+  }
+
+  // Pass 4: zone match on general rules — rule's zone matches and no explicit zip list
   if (!matchedRule && zipZone) {
     for (const rule of activeRules) {
       if (
+        rule.targetType === "all" &&
         rule.zone === zipZone &&
         (!rule.zipCodes || rule.zipCodes.trim() === "")
       ) {
@@ -318,7 +386,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const shop = url.searchParams.get("shop");
   const zip = url.searchParams.get("zip");
-  return handleZipCheck(shop, zip);
+  const product = url.searchParams.get("product");
+  return handleZipCheck(shop, zip, product);
 };
 
 // Handle POST requests with JSON body: { shop, zip }
@@ -329,10 +398,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   let shop: string | null = null;
   let zip: string | null = null;
 
+  let product: string | null = null;
+
   try {
     const body = await request.json();
     shop = body?.shop ?? null;
     zip = body?.zip ?? null;
+    product = body?.product ?? null;
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
       status: 400,
@@ -340,5 +412,5 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
-  return handleZipCheck(shop, zip);
+  return handleZipCheck(shop, zip, product);
 };

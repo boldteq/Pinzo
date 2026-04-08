@@ -70,10 +70,27 @@ model DeliveryRule {
   daysOfWeek    String?  // e.g. "Mon,Tue,Wed,Thu,Fri"
   isActive      Boolean  @default(true)
   priority      Int      @default(0)
+  // Product/Collection targeting
+  targetType    String   @default("all")  // "all" | "products" | "collections"
+  productIds    String?  // comma-separated numeric Shopify product IDs
+  collectionIds String?  // comma-separated numeric Shopify collection IDs
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   @@index([shop])
+}
+
+model ProductCollectionCache {
+  id           String   @id @default(cuid())
+  shop         String
+  productId    String   // numeric Shopify product ID (as string)
+  collectionId String   // numeric Shopify collection ID (as string)
+  cachedAt     DateTime @default(now())
+
+  @@unique([shop, productId, collectionId])
+  @@index([shop, productId])
+  @@index([shop, collectionId])
+  @@index([cachedAt])
 }
 
 model WaitlistEntry {

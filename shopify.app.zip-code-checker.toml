@@ -33,7 +33,7 @@ api_version = "2026-01"
 # Route handlers exist at: webhooks.customers.data_request.tsx, webhooks.customers.redact.tsx, webhooks.shop.redact.tsx
 
 [access_scopes]
-scopes = "read_themes"
+scopes = "read_themes,read_products"
 optional_scopes = [ ]
 use_legacy_install_flow = false
 

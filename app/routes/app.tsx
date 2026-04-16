@@ -108,7 +108,6 @@ export default function App() {
           <a href="/app/delivery-rules">Delivery Rules</a>
           <a href="/app/waitlist">Waitlist</a>
           <a href="/app/widget">Widget Customization</a>
-          <a href="/app/widget-visibility">Widget Visibility</a>
           <a href="/app/settings">Settings</a>
           <a href="/app/feature-requests">Feature Requests</a>
           <a href="/app/help">Help &amp; Support</a>

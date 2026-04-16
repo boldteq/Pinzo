@@ -14,5 +14,8 @@
       "NotebookEdit"
     ],
     "defaultMode": "bypassPermissions"
-  }
+  },
+  "disabledMcpjsonServers": [
+    "shopify-dev-mcp"
+  ]
 }

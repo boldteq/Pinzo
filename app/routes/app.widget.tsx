@@ -30,6 +30,8 @@ import {
   Badge,
   Modal,
   ButtonGroup,
+  ChoiceList,
+  Tag,
 } from "@shopify/polaris";
 
 /** Maximum length for custom CSS (characters). Prevents DB bloat and slow responses. */
@@ -150,6 +152,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         waitlistButtonText: String(formData.get("waitlistButtonText") || "Notify Me"),
         borderRadius: String(formData.get("borderRadius") || "8"),
         customCss: String(formData.get("customCss") || "").slice(0, MAX_CUSTOM_CSS_LENGTH) || null,
+        visibilityMode: String(formData.get("visibilityMode") || "all_products"),
+        visibilityProductIds: String(formData.get("visibilityProductIds") || "") || null,
+        visibilityCollectionIds: String(formData.get("visibilityCollectionIds") || "") || null,
+        visibilityPages: String(formData.get("visibilityPages") || "product") || null,
       };
 
       // Server-side plan gating: strip premium fields the shop's plan doesn't allow
@@ -183,20 +189,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         // lockButtonsUntilZipCheck is allowed on all plans — do not strip it
       }
 
-      const savedConfig = await db.widgetConfig.upsert({
+      await db.widgetConfig.upsert({
         where: { shop },
         create: { shop, ...data },
         update: data,
       });
 
-      // Sync full config (including visibility fields set via widget-visibility page)
-      await syncConfigMetafield(admin, {
-        ...data,
-        visibilityMode: savedConfig.visibilityMode,
-        visibilityProductIds: savedConfig.visibilityProductIds,
-        visibilityCollectionIds: savedConfig.visibilityCollectionIds,
-        visibilityPages: savedConfig.visibilityPages,
-      });
+      await syncConfigMetafield(admin, data);
 
       return { success: true };
     }
@@ -286,6 +285,10 @@ type WidgetConfig = {
   waitlistButtonText: string;
   borderRadius: string;
   customCss: string | null;
+  visibilityMode: string;
+  visibilityProductIds: string | null;
+  visibilityCollectionIds: string | null;
+  visibilityPages: string | null;
 };
 
 // ── Default widget configuration values ─────────────────────────────────────
@@ -320,6 +323,10 @@ const DEFAULTS = {
   waitlistButtonText: "Notify Me",
   borderRadius: "8",
   customCss: "",
+  visibilityMode: "all_products",
+  visibilityProductIds: null,
+  visibilityCollectionIds: null,
+  visibilityPages: "product",
 };
 
 // ── Scope custom CSS for admin preview — prefix selectors with #wid ─────────
@@ -1188,6 +1195,20 @@ export default function WidgetPage() {
   const [borderRadius, setBorderRadius] = useState(c.borderRadius);
   const [customCss, setCustomCss] = useState(c.customCss || "");
 
+  // Visibility state
+  const [visibilityMode, setVisibilityMode] = useState([(c as unknown as { visibilityMode?: string }).visibilityMode ?? "all_products"]);
+  const [visibilityProductIds, setVisibilityProductIds] = useState<string[]>(
+    ((c as unknown as { visibilityProductIds?: string | null }).visibilityProductIds ?? "").split(",").filter(Boolean),
+  );
+  const [visibilityProductNames, setVisibilityProductNames] = useState<Record<string, string>>({});
+  const [visibilityCollectionIds, setVisibilityCollectionIds] = useState<string[]>(
+    ((c as unknown as { visibilityCollectionIds?: string | null }).visibilityCollectionIds ?? "").split(",").filter(Boolean),
+  );
+  const [visibilityCollectionNames, setVisibilityCollectionNames] = useState<Record<string, string>>({});
+  const [visibilityPages, setVisibilityPages] = useState<string[]>(
+    ((c as unknown as { visibilityPages?: string | null }).visibilityPages ?? "product").split(",").filter(Boolean),
+  );
+
   // Unsaved changes tracking
   const [isDirty, setIsDirty] = useState(false);
 
@@ -1282,6 +1303,44 @@ export default function WidgetPage() {
   const handleBorderRadiusChange = useCallback((v: string) => { setBorderRadius(v); mark(); }, [mark]);
   const handleCustomCssChange = useCallback((v: string) => { setCustomCss(v); mark(); }, [mark]);
 
+  const handleSelectVisibilityProducts = useCallback(async () => {
+    const selection = await shopify.resourcePicker({
+      type: "product",
+      multiple: true,
+      selectionIds: visibilityProductIds.map((id) => ({ id: `gid://shopify/Product/${id}` })),
+    });
+    if (selection) {
+      const ids = selection.map((p) => p.id.split("/").pop()).filter((id): id is string => !!id);
+      const names: Record<string, string> = {};
+      selection.forEach((p) => {
+        const id = p.id.split("/").pop();
+        if (id) names[id] = p.title;
+      });
+      setVisibilityProductIds(ids);
+      setVisibilityProductNames(names);
+      mark();
+    }
+  }, [shopify, visibilityProductIds, mark]);
+
+  const handleSelectVisibilityCollections = useCallback(async () => {
+    const selection = await shopify.resourcePicker({
+      type: "collection",
+      multiple: true,
+      selectionIds: visibilityCollectionIds.map((id) => ({ id: `gid://shopify/Collection/${id}` })),
+    });
+    if (selection) {
+      const ids = selection.map((c) => c.id.split("/").pop()).filter((id): id is string => !!id);
+      const names: Record<string, string> = {};
+      selection.forEach((c) => {
+        const id = c.id.split("/").pop();
+        if (id) names[id] = c.title;
+      });
+      setVisibilityCollectionIds(ids);
+      setVisibilityCollectionNames(names);
+      mark();
+    }
+  }, [shopify, visibilityCollectionIds, mark]);
+
   const handleSave = useCallback(() => {
     const fd = new FormData();
     fd.set("intent", "save");
@@ -1315,6 +1374,10 @@ export default function WidgetPage() {
     fd.set("waitlistButtonText", waitlistButtonText);
     fd.set("borderRadius", borderRadius);
     fd.set("customCss", customCss);
+    fd.set("visibilityMode", visibilityMode[0]);
+    fd.set("visibilityProductIds", visibilityProductIds.join(","));
+    fd.set("visibilityCollectionIds", visibilityCollectionIds.join(","));
+    fd.set("visibilityPages", visibilityPages.join(","));
     fetcher.submit(fd, { method: "POST" });
     shopify.toast.show("Widget settings saved");
   }, [
@@ -1325,6 +1388,7 @@ export default function WidgetPage() {
     showCountdown, showDeliveryFee, blockCartOnInvalid,
     blockCheckoutInCart, showSocialProof, lockButtonsUntilZipCheck,
     waitlistTitle, waitlistButtonText, borderRadius, customCss,
+    visibilityMode, visibilityProductIds, visibilityCollectionIds, visibilityPages,
     fetcher, shopify,
   ]);
 
@@ -1377,6 +1441,10 @@ export default function WidgetPage() {
     showCountdown, showDeliveryFee, blockCartOnInvalid,
     blockCheckoutInCart, showSocialProof, lockButtonsUntilZipCheck,
     waitlistTitle, waitlistButtonText, borderRadius, customCss,
+    visibilityMode: visibilityMode[0],
+    visibilityProductIds: visibilityProductIds.join(",") || null,
+    visibilityCollectionIds: visibilityCollectionIds.join(",") || null,
+    visibilityPages: visibilityPages.join(",") || null,
   }), [
     position, primaryColor, successColor, errorColor, backgroundColor,
     textColor, heading, placeholder, buttonText, successMessage, errorMessage,
@@ -1385,6 +1453,7 @@ export default function WidgetPage() {
     showCountdown, showDeliveryFee, blockCartOnInvalid,
     blockCheckoutInCart, showSocialProof, lockButtonsUntilZipCheck,
     waitlistTitle, waitlistButtonText, borderRadius, customCss,
+    visibilityMode, visibilityProductIds, visibilityCollectionIds, visibilityPages,
   ]);
 
   const handleDiscard = useCallback(() => {
@@ -1418,6 +1487,10 @@ export default function WidgetPage() {
     setWaitlistButtonText((c as unknown as { waitlistButtonText?: string }).waitlistButtonText ?? DEFAULTS.waitlistButtonText);
     setBorderRadius(c.borderRadius);
     setCustomCss(c.customCss || "");
+    setVisibilityMode([(c as unknown as { visibilityMode?: string }).visibilityMode ?? "all_products"]);
+    setVisibilityProductIds(((c as unknown as { visibilityProductIds?: string | null }).visibilityProductIds ?? "").split(",").filter(Boolean));
+    setVisibilityCollectionIds(((c as unknown as { visibilityCollectionIds?: string | null }).visibilityCollectionIds ?? "").split(",").filter(Boolean));
+    setVisibilityPages(((c as unknown as { visibilityPages?: string | null }).visibilityPages ?? "product").split(",").filter(Boolean));
     setIsDirty(false);
     setPreviewState("idle");
   }, [c]);
@@ -1856,7 +1929,7 @@ export default function WidgetPage() {
                   </Card>
                 )}
 
-                {/* Tab 3: Advanced — Purchase Protection + Custom CSS */}
+                {/* Tab 3: Advanced — Purchase Protection + Custom CSS + Visibility */}
                 {settingsTab === 3 && (
                   <BlockStack gap="400">
                     <Card>
@@ -1936,6 +2009,102 @@ export default function WidgetPage() {
                                   </Button>
                                 </Text>
                               </Banner>
+                            )}
+                          </BlockStack>
+                        </Card>
+
+                        {/* Visibility Card */}
+                        <Card>
+                          <BlockStack gap="400">
+                            <InlineStack align="space-between" blockAlign="center">
+                              <Text as="h2" variant="headingMd">Widget Visibility</Text>
+                              {!limits.widgetVisibility && <Badge tone="info">Starter+</Badge>}
+                            </InlineStack>
+                            <Text as="p" variant="bodySm" tone="subdued">
+                              Control which pages and products show the ZIP code widget.
+                            </Text>
+                            <Divider />
+                            {!limits.widgetVisibility ? (
+                              <Banner tone="info">
+                                <Text as="p" variant="bodySm">
+                                  Upgrade to Starter to control widget visibility.{" "}
+                                  <Button variant="plain" onClick={() => navigate("/app/pricing")}>View plans</Button>
+                                </Text>
+                              </Banner>
+                            ) : (
+                              <BlockStack gap="400">
+                                <ChoiceList
+                                  title="Show widget on"
+                                  titleHidden
+                                  choices={[
+                                    { label: "All product pages (recommended)", value: "all_products", helpText: "Widget appears on every product page." },
+                                    { label: "Specific products only", value: "specific_products", helpText: "Choose exactly which products show the widget." },
+                                    { label: "Specific collections only", value: "specific_collections", helpText: "Show widget for products in selected collections." },
+                                    { label: "All pages (product, cart, home, collection)", value: "all_pages", helpText: "Widget appears everywhere across the store." },
+                                  ]}
+                                  selected={visibilityMode}
+                                  onChange={(v) => { setVisibilityMode(v); mark(); }}
+                                />
+
+                                {visibilityMode[0] === "specific_products" && (
+                                  <BlockStack gap="200">
+                                    <InlineStack align="space-between" blockAlign="center">
+                                      <Text as="p" variant="headingSm">Selected Products</Text>
+                                      <Button size="slim" onClick={handleSelectVisibilityProducts}>
+                                        {visibilityProductIds.length > 0 ? "Change" : "Select Products"}
+                                      </Button>
+                                    </InlineStack>
+                                    {visibilityProductIds.length === 0 ? (
+                                      <Banner tone="warning">No products selected — widget won&apos;t appear anywhere.</Banner>
+                                    ) : (
+                                      <InlineStack gap="200" wrap>
+                                        {visibilityProductIds.map((id) => (
+                                          <Tag key={id} onRemove={() => { setVisibilityProductIds((prev) => prev.filter((p) => p !== id)); mark(); }}>
+                                            {visibilityProductNames[id] ?? `Product ${id}`}
+                                          </Tag>
+                                        ))}
+                                      </InlineStack>
+                                    )}
+                                  </BlockStack>
+                                )}
+
+                                {visibilityMode[0] === "specific_collections" && (
+                                  <BlockStack gap="200">
+                                    <InlineStack align="space-between" blockAlign="center">
+                                      <Text as="p" variant="headingSm">Selected Collections</Text>
+                                      <Button size="slim" onClick={handleSelectVisibilityCollections}>
+                                        {visibilityCollectionIds.length > 0 ? "Change" : "Select Collections"}
+                                      </Button>
+                                    </InlineStack>
+                                    {visibilityCollectionIds.length === 0 ? (
+                                      <Banner tone="warning">No collections selected — widget won&apos;t appear anywhere.</Banner>
+                                    ) : (
+                                      <InlineStack gap="200" wrap>
+                                        {visibilityCollectionIds.map((id) => (
+                                          <Tag key={id} onRemove={() => { setVisibilityCollectionIds((prev) => prev.filter((c) => c !== id)); mark(); }}>
+                                            {visibilityCollectionNames[id] ?? `Collection ${id}`}
+                                          </Tag>
+                                        ))}
+                                      </InlineStack>
+                                    )}
+                                  </BlockStack>
+                                )}
+
+                                {visibilityMode[0] === "all_pages" && (
+                                  <ChoiceList
+                                    title="Page types"
+                                    allowMultiple
+                                    choices={[
+                                      { label: "Product pages", value: "product" },
+                                      { label: "Cart page", value: "cart" },
+                                      { label: "Collection pages", value: "collection" },
+                                      { label: "Home page", value: "home" },
+                                    ]}
+                                    selected={visibilityPages}
+                                    onChange={(v) => { setVisibilityPages(v); mark(); }}
+                                  />
+                                )}
+                              </BlockStack>
                             )}
                           </BlockStack>
                         </Card>

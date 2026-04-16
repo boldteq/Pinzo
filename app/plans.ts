@@ -40,6 +40,8 @@ export interface PlanLimits {
   cartBlocking: boolean;
   customCss: boolean;
   productCollectionRules: boolean;
+  zipLogs: boolean;
+  widgetVisibility: boolean;
   label: string;
 }
 
@@ -57,6 +59,8 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     cartBlocking: false,
     customCss: false,
     productCollectionRules: false,
+    zipLogs: false,
+    widgetVisibility: false,
     label: "Free",
   },
   starter: {
@@ -72,6 +76,8 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     cartBlocking: false,
     customCss: false,
     productCollectionRules: false,
+    zipLogs: true,
+    widgetVisibility: true,
     label: "Starter",
   },
   pro: {
@@ -87,6 +93,8 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     cartBlocking: true,
     customCss: false,
     productCollectionRules: true,
+    zipLogs: true,
+    widgetVisibility: true,
     label: "Pro",
   },
   ultimate: {
@@ -102,6 +110,8 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     cartBlocking: true,
     customCss: true,
     productCollectionRules: true,
+    zipLogs: true,
+    widgetVisibility: true,
     label: "Ultimate",
   },
 };

@@ -102,11 +102,15 @@ export default function App() {
       <PolarisAppProvider i18n={enTranslations}>
         <ChatwootWidget token={chatwootToken} />
         <NavMenu>
+          <a href="/app">Dashboard</a>
+          <a href="/app/analytics">Analytics</a>
           <a href="/app/zip-codes">Zip Codes</a>
           <a href="/app/delivery-rules">Delivery Rules</a>
           <a href="/app/waitlist">Waitlist</a>
           <a href="/app/widget">Widget Customization</a>
+          <a href="/app/widget-visibility">Widget Visibility</a>
           <a href="/app/settings">Settings</a>
+          <a href="/app/feature-requests">Feature Requests</a>
           <a href="/app/help">Help &amp; Support</a>
         </NavMenu>
         <AppContent />

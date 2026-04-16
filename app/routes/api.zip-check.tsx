@@ -156,6 +156,7 @@ async function handleZipCheck(
     if (!zipRecord && defaultBehavior === "allow") {
       const successMsg =
         widgetConfig?.successMessage ?? "We deliver to your area!";
+      db.zipCheckLog.create({ data: { shop, zipCode: normalizedZip, result: "defaulted_allow", productId: productId ?? null } }).catch(() => {});
       return new Response(
         JSON.stringify({
           allowed: true,
@@ -184,6 +185,7 @@ async function handleZipCheck(
     }
 
     if (!zipRecord) {
+      db.zipCheckLog.create({ data: { shop, zipCode: normalizedZip, result: "not_found", productId: productId ?? null } }).catch(() => {});
       return new Response(
         JSON.stringify({
           allowed: false,
@@ -197,6 +199,7 @@ async function handleZipCheck(
     }
 
     // Inactive zip — treat same as not found regardless of defaultBehavior
+    db.zipCheckLog.create({ data: { shop, zipCode: normalizedZip, result: "not_found", productId: productId ?? null } }).catch(() => {});
     return new Response(
       JSON.stringify({
         allowed: false,
@@ -225,6 +228,7 @@ async function handleZipCheck(
       waitlistCount = 0;
     }
 
+    db.zipCheckLog.create({ data: { shop, zipCode: normalizedZip, result: "blocked", productId: productId ?? null } }).catch(() => {});
     return new Response(
       JSON.stringify({
         allowed: false,
@@ -337,6 +341,7 @@ async function handleZipCheck(
   const rawFreeShippingAbove = widgetConfig?.showDeliveryFee !== false ? (matchedRule?.freeShippingAbove ?? null) : null;
   const freeShippingAboveValue = rawFreeShippingAbove != null && rawFreeShippingAbove >= 0 ? rawFreeShippingAbove : null;
 
+  db.zipCheckLog.create({ data: { shop, zipCode: normalizedZip, result: "allowed", productId: productId ?? null } }).catch(() => {});
   return new Response(
     JSON.stringify({
       allowed: true,

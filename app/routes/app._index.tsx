@@ -5,6 +5,7 @@ import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { getShopSubscription } from "../billing.server";
+import { detectThemeEmbed } from "../utils/theme-detection.server";
 import { PLAN_LIMITS, UNLIMITED } from "../plans";
 import {
   Page,
@@ -44,127 +45,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     waitlist: waitlistCount,
   };
 
-  // Detect whether the App Embed is enabled in the active theme (GraphQL)
-  let appEmbedEnabled = false;
-  let activeThemeName: string | null = null;
-  let themeEditorUrl = `https://${shop}/admin/themes/current/editor`;
-  let themeEditorAppEmbedsUrl = `https://${shop}/admin/themes/current/editor?context=apps`;
-  try {
-    const themeResponse = await admin.graphql(`{
-      themes(first: 1, roles: MAIN) {
-        nodes {
-          id
-          name
-          files(filenames: ["config/settings_data.json"], first: 1) {
-            nodes {
-              body {
-                ... on OnlineStoreThemeFileBodyText {
-                  content
-                }
-              }
-            }
-          }
-        }
-      }
-    }`);
-    const themeData = (await themeResponse.json()) as {
-      data?: {
-        themes?: {
-          nodes?: Array<{
-            id: string;
-            name: string;
-            files?: {
-              nodes?: Array<{
-                body?: { content?: string };
-              }>;
-            };
-          }>;
-        };
-      };
-    };
-    const mainTheme = themeData?.data?.themes?.nodes?.[0];
-    if (mainTheme) {
-      const gidParts = mainTheme.id.split("/");
-      const numericId = gidParts[gidParts.length - 1];
-      activeThemeName = mainTheme.name;
-      themeEditorUrl = `https://${shop}/admin/themes/${numericId}/editor`;
-      themeEditorAppEmbedsUrl = `https://${shop}/admin/themes/${numericId}/editor?context=apps`;
-
-      let content = mainTheme.files?.nodes?.[0]?.body?.content;
-      if (content) {
-        /* eslint-disable @typescript-eslint/no-explicit-any */
-        // Strip leading comments (some themes prepend CSS/JS comments)
-        content = content.replace(/^\/\*[\s\S]*?\*\/\s*/, "").trim();
-        // Find the first { to start valid JSON
-        const jsonStart = content.indexOf("{");
-        if (jsonStart > 0) content = content.substring(jsonStart);
-
-        let settingsData: any;
-        try {
-          settingsData = JSON.parse(content);
-        } catch {
-          return {
-            stats, subscription, appEmbedEnabled, activeThemeName,
-            themeEditorUrl, themeEditorAppEmbedsUrl,
-          };
-        }
-        const apiKey = process.env.SHOPIFY_API_KEY ?? "";
-
-        const blocks = settingsData?.current?.blocks ?? {};
-        const embedBlocks = Object.entries(blocks).filter(([, block]) => {
-          const b = block as { type?: string };
-          const t = b.type ?? "";
-          return t.includes("app_embed") || t.includes("app-embed");
-        });
-
-        // Check each embed block
-        for (const [key, block] of embedBlocks) {
-          const b = block as { type?: string; disabled?: boolean };
-          if (b.disabled === true) continue;
-          const typeStr = b.type ?? "";
-          const keyStr = key;
-          // Match by API key or app handle
-          if (
-            (apiKey && (keyStr.includes(apiKey) || typeStr.includes(apiKey))) ||
-            keyStr.includes("zip-code") || typeStr.includes("zip-code") ||
-            keyStr.includes("zip_code") || typeStr.includes("zip_code") ||
-            keyStr.includes("pinzo") || typeStr.includes("pinzo")
-          ) {
-            appEmbedEnabled = true;
-            break;
-          }
-        }
-
-        // Fallback: raw string scan
-        if (!appEmbedEnabled) {
-          const contentLower = content.toLowerCase();
-          const hasEmbed = contentLower.includes("app_embed");
-          const hasOurApp =
-            (apiKey && contentLower.includes(apiKey.toLowerCase())) ||
-            contentLower.includes("zip-code-checker") ||
-            contentLower.includes("zip-code-widget") ||
-            contentLower.includes("pinzo");
-          if (hasEmbed && hasOurApp) {
-            // Check not disabled
-            const notDisabled = !contentLower.includes('"disabled":true');
-            if (notDisabled) appEmbedEnabled = true;
-          }
-        }
-
-        /* eslint-enable @typescript-eslint/no-explicit-any */
-      }
-    }
-  } catch {
-    // Theme detection failed — leave appEmbedEnabled as false
-  }
+  const themeInfo = await detectThemeEmbed(shop, admin);
 
   return {
     stats,
     subscription,
-    appEmbedEnabled,
-    activeThemeName,
-    themeEditorUrl,
-    themeEditorAppEmbedsUrl,
+    ...themeInfo,
   };
 };
 
@@ -365,90 +251,24 @@ export default function DashboardPage() {
             </Banner>
           )}
 
-          {/* ─── 4. GETTING STARTED (dismissible onboarding) ─── */}
-          {isEmpty && !onboardingDismissed && (
-            <Card>
-              <BlockStack gap="400">
-                <InlineStack align="space-between" blockAlign="center">
-                  <Text as="h2" variant="headingMd">
-                    Get started
-                  </Text>
-                  <Button variant="plain" onClick={handleDismissOnboarding}>
-                    Dismiss
-                  </Button>
-                </InlineStack>
-                <InlineGrid columns={{ xs: 1, sm: 3 }} gap="400">
-                  {[
-                    {
-                      step: "1",
-                      title: "Add zip codes",
-                      desc: "Enter the zip codes you deliver to, or import them via CSV.",
-                      action: "Add zip codes",
-                      href: "/app/zip-codes",
-                      primary: true,
-                    },
-                    {
-                      step: "2",
-                      title: "Customize the widget",
-                      desc: "Set colors, text, and position to match your store.",
-                      action: "Customize",
-                      href: "/app/widget",
-                      primary: false,
-                    },
-                    {
-                      step: "3",
-                      title: "Add delivery rules",
-                      desc: "Set delivery fees, cutoff times, and schedules per zone.",
-                      action: "Add rules",
-                      href: "/app/delivery-rules",
-                      primary: false,
-                    },
-                  ].map((item) => (
-                    <Box
-                      key={item.step}
-                      padding="400"
-                      background="bg-surface-secondary"
-                      borderRadius="300"
-                    >
-                      <BlockStack gap="200">
-                        <InlineStack gap="200" blockAlign="center">
-                          <Box
-                            background="bg-fill-brand"
-                            borderRadius="full"
-                            padding="100"
-                            minWidth="24px"
-                            minHeight="24px"
-                          >
-                            <Text
-                              as="span"
-                              variant="bodySm"
-                              fontWeight="bold"
-                              alignment="center"
-                              tone="text-inverse"
-                            >
-                              {item.step}
-                            </Text>
-                          </Box>
-                          <Text as="h3" variant="headingSm">
-                            {item.title}
-                          </Text>
-                        </InlineStack>
-                        <Text as="p" variant="bodySm" tone="subdued">
-                          {item.desc}
-                        </Text>
-                        <Button
-                          variant={item.primary ? "primary" : undefined}
-                          size="slim"
-                          onClick={() => navigate(item.href)}
-                        >
-                          {item.action}
-                        </Button>
-                      </BlockStack>
-                    </Box>
-                  ))}
-                </InlineGrid>
-              </BlockStack>
-            </Card>
+          {/* ─── 4. SETUP GUIDE BANNER (shown to new users) ─── */}
+          {!onboardingDismissed && (
+            <Banner
+              title="Complete your Pinzo setup"
+              tone="info"
+              action={{
+                content: "Start Setup Guide",
+                onAction: () => navigate("/app/onboarding"),
+              }}
+              secondaryAction={{
+                content: "Dismiss",
+                onAction: handleDismissOnboarding,
+              }}
+            >
+              <Text as="p" variant="bodySm">
+                Get the ZIP code widget live on your store in 4 easy steps — takes about 5 minutes.
+              </Text>
+            </Banner>
           )}
 
           {/* ─── 5. NAVIGATION ─── */}

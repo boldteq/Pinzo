@@ -148,6 +148,12 @@ model WidgetConfig {
   borderRadius          String  @default("8")
   // Custom CSS
   customCss             String?
+  // Widget Visibility
+  visibilityMode          String  @default("all_products")
+  // "all_products" | "specific_products" | "specific_collections" | "all_pages"
+  visibilityProductIds    String? // comma-separated Shopify product IDs
+  visibilityCollectionIds String? // comma-separated Shopify collection IDs
+  visibilityPages         String? // comma-separated page types: "product,cart,home,collection"
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -203,4 +209,17 @@ model FeatureVote {
 
   @@unique([featureRequestId, shop])
   @@index([shop])
+}
+
+model ZipCheckLog {
+  id        String   @id @default(cuid())
+  shop      String
+  zipCode   String
+  result    String   // "allowed" | "blocked" | "not_found" | "defaulted_allow"
+  productId String?
+  createdAt DateTime @default(now())
+
+  @@index([shop, createdAt(sort: Desc)])
+  @@index([shop, zipCode])
+  @@index([shop, result])
 }

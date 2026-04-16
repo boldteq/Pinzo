@@ -12,6 +12,7 @@ import db from "../db.server";
 import { getShopSubscription } from "../billing.server";
 import { PLAN_LIMITS } from "../plans";
 import type { PlanTier } from "../plans";
+import { WIDGET_TEMPLATES } from "../utils/widget-templates";
 import {
   Page,
   Layout,
@@ -182,13 +183,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         // lockButtonsUntilZipCheck is allowed on all plans — do not strip it
       }
 
-      await db.widgetConfig.upsert({
+      const savedConfig = await db.widgetConfig.upsert({
         where: { shop },
         create: { shop, ...data },
         update: data,
       });
 
-      await syncConfigMetafield(admin, data);
+      // Sync full config (including visibility fields set via widget-visibility page)
+      await syncConfigMetafield(admin, {
+        ...data,
+        visibilityMode: savedConfig.visibilityMode,
+        visibilityProductIds: savedConfig.visibilityProductIds,
+        visibilityCollectionIds: savedConfig.visibilityCollectionIds,
+        visibilityPages: savedConfig.visibilityPages,
+      });
 
       return { success: true };
     }
@@ -1220,6 +1228,29 @@ export default function WidgetPage() {
 
   // Dirty-aware setters
   const mark = useCallback(() => setIsDirty(true), []);
+
+  const handleApplyTemplate = useCallback((templateId: string) => {
+    const tpl = WIDGET_TEMPLATES.find((t) => t.id === templateId);
+    if (!tpl || !limits.widgetFullCustom) return;
+    setPrimaryColor(tpl.primaryColor);
+    setSuccessColor(tpl.successColor);
+    setErrorColor(tpl.errorColor);
+    setBackgroundColor(tpl.backgroundColor);
+    setTextColor(tpl.textColor);
+    setBorderRadius(tpl.borderRadius);
+    mark();
+  }, [limits.widgetFullCustom, mark]);
+
+  const activeTemplateId = WIDGET_TEMPLATES.find(
+    (t) =>
+      t.primaryColor === primaryColor &&
+      t.successColor === successColor &&
+      t.errorColor === errorColor &&
+      t.backgroundColor === backgroundColor &&
+      t.textColor === textColor &&
+      t.borderRadius === borderRadius,
+  )?.id ?? null;
+
   const handlePositionChange = useCallback((v: string) => { setPosition(v); mark(); }, [mark]);
   const handlePrimaryColorChange = useCallback((v: string) => { setPrimaryColor(v); mark(); }, [mark]);
   const handleSuccessColorChange = useCallback((v: string) => { setSuccessColor(v); mark(); }, [mark]);
@@ -1439,9 +1470,82 @@ export default function WidgetPage() {
                   </ButtonGroup>
                 </Card>
 
-                {/* Tab 0: Design — Layout + Colors + Border Radius */}
+                {/* Tab 0: Design — Templates + Layout + Colors + Border Radius */}
                 {settingsTab === 0 && (
                   <BlockStack gap="400">
+                    {/* Template Picker */}
+                    <Card>
+                      <BlockStack gap="300">
+                        <InlineStack align="space-between" blockAlign="center">
+                          <Text as="h2" variant="headingMd">Templates</Text>
+                          {!limits.widgetFullCustom && <Badge tone="info">Starter+</Badge>}
+                        </InlineStack>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "10px" }}>
+                          {WIDGET_TEMPLATES.map((tpl) => {
+                            const isActive = activeTemplateId === tpl.id;
+                            return (
+                              <div
+                                key={tpl.id}
+                                onClick={() => handleApplyTemplate(tpl.id)}
+                                style={{
+                                  cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
+                                  opacity: limits.widgetFullCustom ? 1 : 0.5,
+                                  borderRadius: "8px",
+                                  border: isActive ? "2px solid #6366F1" : "2px solid var(--p-color-border-secondary)",
+                                  overflow: "hidden",
+                                  transition: "border-color 0.15s",
+                                }}
+                              >
+                                {/* Color preview */}
+                                <div style={{
+                                  background: tpl.backgroundColor,
+                                  height: "48px",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  justifyContent: "center",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  padding: "6px",
+                                }}>
+                                  <div style={{
+                                    width: "100%",
+                                    height: "12px",
+                                    borderRadius: "3px",
+                                    background: tpl.primaryColor,
+                                  }} />
+                                  <div style={{
+                                    width: "60%",
+                                    height: "6px",
+                                    borderRadius: "2px",
+                                    background: tpl.textColor,
+                                    opacity: 0.5,
+                                  }} />
+                                </div>
+                                {/* Label */}
+                                <div style={{
+                                  padding: "4px 6px",
+                                  background: isActive ? "#EEF2FF" : "var(--p-color-bg-surface-secondary)",
+                                  textAlign: "center",
+                                }}>
+                                  <Text as="p" variant="bodySm" fontWeight={isActive ? "semibold" : "regular"}>
+                                    {tpl.name}
+                                  </Text>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {!limits.widgetFullCustom && (
+                          <Banner tone="info">
+                            <Text as="p" variant="bodySm">
+                              Upgrade to Starter to apply templates.{" "}
+                              <Button variant="plain" onClick={() => navigate("/app/pricing")}>View plans</Button>
+                            </Text>
+                          </Banner>
+                        )}
+                      </BlockStack>
+                    </Card>
+
                     {/* Layout — Position */}
                     <Card>
                       <BlockStack gap="300">

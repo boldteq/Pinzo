@@ -10,7 +10,7 @@ import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { getShopSubscription } from "../billing.server";
-import { PLAN_LIMITS, UNLIMITED } from "../plans";
+import { PLAN_LIMITS } from "../plans";
 import {
   Page,
   Layout,
@@ -133,16 +133,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return {
           error:
             "Blocked zip codes are not available on your current plan. Upgrade to Pro or Ultimate to use blocked zip codes.",
-          upgradeRequired: true,
-        };
-      }
-
-      const currentCount = await db.zipCode.count({ where: { shop } });
-      if (limits.maxZipCodes < UNLIMITED && currentCount >= limits.maxZipCodes) {
-        const upgradeTarget =
-          subscription.planTier === "free" ? "Starter" : "Pro";
-        return {
-          error: `You have reached the ${limits.maxZipCodes} zip code limit on the ${limits.label} plan. Upgrade to ${upgradeTarget} for a higher limit.`,
           upgradeRequired: true,
         };
       }
@@ -275,7 +265,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           ? 1
           : 0;
 
-      const currentCount = await db.zipCode.count({ where: { shop } });
       let imported = 0;
       let skipped = 0;
       const errors: string[] = [];
@@ -302,18 +291,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         if (type === "blocked" && !limits.allowBlocked) {
           skipped++;
           continue;
-        }
-
-        if (
-          limits.maxZipCodes < UNLIMITED &&
-          currentCount + imported >= limits.maxZipCodes
-        ) {
-          const upgradeTarget =
-            subscription.planTier === "free" ? "Starter" : "Pro";
-          errors.push(
-            `Reached the ${limits.maxZipCodes} zip code limit on the ${limits.label} plan. Upgrade to ${upgradeTarget} for a higher limit. ${lines.length - startIdx - imported - skipped} zip codes were not imported.`,
-          );
-          break;
         }
 
         try {
@@ -523,16 +500,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         };
       }
 
-      const currentCount = await db.zipCode.count({ where: { shop } });
-      if (limits.maxZipCodes < UNLIMITED && currentCount + rangeSize > limits.maxZipCodes) {
-        const upgradeTarget =
-          subscription.planTier === "free" ? "Starter" : "Pro";
-        return {
-          error: `This range would exceed your ${limits.label} plan limit of ${limits.maxZipCodes} zip codes. You have ${limits.maxZipCodes - currentCount} slots remaining. Upgrade to ${upgradeTarget} for a higher limit.`,
-          upgradeRequired: true,
-        };
-      }
-
       // Build all zip records for the range
       const zipRecords = Array.from({ length: rangeSize }, (_, i) => ({
         shop,
@@ -599,8 +566,6 @@ export default function ZipCodesPage() {
   const limits = PLAN_LIMITS[subscription.planTier];
   const isFreePlan = subscription.planTier === "free";
   const isStarterPlan = subscription.planTier === "starter";
-  const atZipLimit =
-    limits.maxZipCodes < UNLIMITED && stats.total >= limits.maxZipCodes;
 
   // Search & filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -1050,50 +1015,19 @@ export default function ZipCodesPage() {
     <Page
       title="Pinzo"
       subtitle="Manage allowed and blocked zip codes for your store"
-      primaryAction={
-        atZipLimit
-          ? {
-              content: "Upgrade Plan",
-              icon: StarIcon,
-              onAction: () => navigate("/app/pricing"),
-            }
-          : {
-              content: "Add Zip Code",
-              icon: PlusIcon,
-              onAction: () => setAddModalOpen(true),
-            }
-      }
+      primaryAction={{
+        content: "Add Zip Code",
+        icon: PlusIcon,
+        onAction: () => setAddModalOpen(true),
+      }}
     >
       <Box paddingBlockEnd="1600">
       <Layout>
-        {/* Zip limit reached — takes priority over general upgrade nudge */}
-        {atZipLimit && (
+        {/* Upgrade nudge — Free plan */}
+        {isFreePlan && (
           <Layout.Section>
             <Banner
-              title="Zip code limit reached"
-              tone="warning"
-              action={{
-                content: `Upgrade to ${isFreePlan ? "Starter" : "Pro"}`,
-                url: "/app/pricing",
-              }}
-            >
-              <Text as="p" variant="bodyMd">
-                You have reached the {limits.maxZipCodes} zip code limit on the{" "}
-                {limits.label} plan. Upgrade to{" "}
-                {isFreePlan ? "Starter" : "Pro"} for a higher limit.
-                {isFreePlan
-                  ? " Starter unlocks 500 zip codes and CSV import. Pro unlocks unlimited zip codes, blocked zones, and CSV export."
-                  : " Pro unlocks unlimited zip codes, blocked zones, CSV export, and delivery rules."}
-              </Text>
-            </Banner>
-          </Layout.Section>
-        )}
-
-        {/* General upgrade nudge — only shown when NOT at the limit */}
-        {!atZipLimit && isFreePlan && (
-          <Layout.Section>
-            <Banner
-              title="Unlock more zip codes, blocked zones & CSV tools"
+              title="Unlock blocked zones, CSV import & more monthly checks"
               tone="info"
               action={{
                 content: "View Plans",
@@ -1101,21 +1035,20 @@ export default function ZipCodesPage() {
               }}
             >
               <Text as="p" variant="bodyMd">
-                You&apos;re on the Free plan — limited to{" "}
-                {limits.maxZipCodes} zip codes with no CSV import or blocked
-                zones. Starter unlocks 500 zip codes and CSV import. Pro
-                unlocks unlimited zip codes, blocked zones, CSV export, and
-                more.
+                You&apos;re on the Free plan — limited to 100 customer ZIP checks
+                per month with no CSV import or blocked zones. Starter unlocks
+                500 monthly checks, CSV import and blocked zones. Pro unlocks
+                unlimited monthly checks and full features.
               </Text>
             </Banner>
           </Layout.Section>
         )}
 
-        {/* Upgrade banner for starter plan — only shown when NOT at the limit */}
-        {!atZipLimit && isStarterPlan && (
+        {/* Upgrade nudge — Starter plan */}
+        {isStarterPlan && (
           <Layout.Section>
             <Banner
-              title="Unlock unlimited zip codes, blocked zones & CSV export"
+              title="Unlock unlimited monthly checks, CSV export & cart blocking"
               tone="info"
               action={{
                 content: "View Plans",
@@ -1123,10 +1056,10 @@ export default function ZipCodesPage() {
               }}
             >
               <Text as="p" variant="bodyMd">
-                You&apos;re on the Starter plan — limited to{" "}
-                {limits.maxZipCodes} zip codes with no blocked zones or CSV
-                export. Pro unlocks unlimited zip codes, blocked zones, CSV
-                export, and delivery rules.
+                You&apos;re on the Starter plan — 500 customer ZIP checks per
+                month, no CSV export and no cart blocking. Pro unlocks
+                unlimited monthly checks, CSV export and cart/checkout
+                blocking.
               </Text>
             </Banner>
           </Layout.Section>
@@ -1145,11 +1078,6 @@ export default function ZipCodesPage() {
                   <Text as="p" variant="headingXl" fontWeight="bold">
                     {stats.total}
                   </Text>
-                  {limits.maxZipCodes < UNLIMITED && (
-                    <Text as="p" tone="subdued" variant="bodySm">
-                      / {limits.maxZipCodes}
-                    </Text>
-                  )}
                 </InlineStack>
               </BlockStack>
             </Card>
@@ -1416,14 +1344,12 @@ export default function ZipCodesPage() {
                       Export
                     </Button>
                   </Tooltip>
-                  {!atZipLimit && (
-                    <Button
-                      icon={PlusIcon}
-                      onClick={() => setAddModalOpen(true)}
-                    >
-                      Add Zip Code
-                    </Button>
-                  )}
+                  <Button
+                    icon={PlusIcon}
+                    onClick={() => setAddModalOpen(true)}
+                  >
+                    Add Zip Code
+                  </Button>
                 </InlineStack>
               </InlineStack>
             </Box>

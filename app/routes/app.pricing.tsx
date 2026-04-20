@@ -15,6 +15,7 @@ import {
   PLAN_PRO_ANNUAL,
   PLAN_ULTIMATE_MONTHLY,
   PLAN_ULTIMATE_ANNUAL,
+  ALL_PAID_PLANS,
 } from "../plans";
 import {
   cancelShopSubscription,
@@ -50,10 +51,10 @@ const PLANS_DATA = {
     annualMonthlyPrice: 0,
     description: "Get started with basic ZIP code checking",
     features: [
-      "Up to 20 zip codes",
-      "Allowed zip codes only",
+      "100 customer ZIP checks / month",
+      "Unlimited stored ZIP codes",
+      "Allowed ZIP codes only",
       "Basic widget text customization",
-      "Unlimited searches",
       "Standard email support",
     ],
     shopifyPlanMonthly: null as string | null,
@@ -67,8 +68,9 @@ const PLANS_DATA = {
     annualMonthlyPrice: 3.25,
     description: "Essential features for small stores",
     features: [
-      "Up to 500 zip codes",
-      "Allowed + Blocked zip codes",
+      "500 customer ZIP checks / month",
+      "Unlimited stored ZIP codes",
+      "Allowed + Blocked ZIP codes",
       "Full widget customization",
       "Delivery ETA & COD info",
       "Zone-based organization",
@@ -87,7 +89,8 @@ const PLANS_DATA = {
     annualMonthlyPrice: 6.58,
     description: "Full control for growing stores",
     features: [
-      "Unlimited zip codes",
+      "Unlimited customer ZIP checks",
+      "Unlimited stored ZIP codes",
       "Unlimited delivery rules",
       "Full customer waitlist",
       "Bulk CSV import & export",
@@ -122,7 +125,8 @@ const PLANS_DATA = {
 type FeatureValue = boolean | string;
 
 const FEATURE_ROWS: { label: string; free: FeatureValue; starter: FeatureValue; pro: FeatureValue; ultimate: FeatureValue }[] = [
-  { label: "Zip codes", free: "20", starter: "500", pro: "Unlimited", ultimate: "Unlimited" },
+  { label: "Customer ZIP checks / month", free: "100", starter: "500", pro: "Unlimited", ultimate: "Unlimited" },
+  { label: "Stored ZIP codes", free: "Unlimited", starter: "Unlimited", pro: "Unlimited", ultimate: "Unlimited" },
   { label: "Blocked zip codes", free: false, starter: true, pro: true, ultimate: true },
   { label: "Delivery rules", free: false, starter: "3", pro: "Unlimited", ultimate: "Unlimited" },
   { label: "ZIP code requests (waitlist)", free: false, starter: "50", pro: "Unlimited", ultimate: "Unlimited" },
@@ -169,16 +173,19 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<
   const intent = String(formData.get("intent"));
 
   if (intent === "subscribe") {
-    const plan = String(formData.get("plan"));
+    const rawPlan = String(formData.get("plan"));
+    type BillablePlan = (typeof ALL_PAID_PLANS)[number];
+    if (!ALL_PAID_PLANS.includes(rawPlan as BillablePlan)) {
+      return { error: `Unknown plan: ${rawPlan}` };
+    }
+    const plan = rawPlan as BillablePlan;
     const returnUrl = `${process.env.SHOPIFY_APP_URL}/app/pricing`;
     try {
-      /* eslint-disable @typescript-eslint/no-explicit-any */
       await billing.request({
-        plan: plan as any,
+        plan,
         isTest: process.env.NODE_ENV !== "production",
         returnUrl,
       });
-      /* eslint-enable @typescript-eslint/no-explicit-any */
       return null;
     } catch (error) {
       if (error instanceof Response) throw error;
@@ -720,7 +727,7 @@ export default function PricingPage() {
             </Text>
             <BlockStack gap="200">
               {[
-                "Unlimited zip codes — limited to 20",
+                "Monthly ZIP checks drop to 100/month",
                 "Blocked zip codes",
                 "Delivery rules, zones & ETAs",
                 "Bulk CSV import & export",
@@ -738,8 +745,9 @@ export default function PricingPage() {
             </BlockStack>
             <Banner tone="warning">
               <Text as="p" variant="bodyMd">
-                Zip codes over the 20-entry limit will remain saved but become
-                inactive until you upgrade again.
+                Your stored ZIP codes will remain saved. Once you exceed
+                100 customer checks for the month, the widget will fall back
+                to a default message until the 1st or you upgrade.
               </Text>
             </Banner>
           </BlockStack>

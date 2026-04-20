@@ -17,6 +17,8 @@ import db from "../db.server";
 import { normalizeZipCode } from "../utils/zip";
 import { rateLimit, getClientIp, rateLimitResponse } from "../utils/rate-limit.server";
 import { getProductCollections } from "../utils/product-collections.server";
+import { getShopSubscription } from "../billing.server";
+import { getMonthlyCheckUsage } from "../utils/check-usage.server";
 
 function calculateDeliveryDate(
   estimatedDays: string,
@@ -135,6 +137,35 @@ async function handleZipCheck(
   const normalizedZip = normalizeZipCode(zip);
 
   try {
+  // Enforce monthly customer-check quota based on the shop's plan.
+  // Quota resets on the 1st of each month (UTC). When exceeded, we return a
+  // graceful fallback so the storefront doesn't break — customer sees the
+  // success message, the response includes overLimit:true so the merchant
+  // sees a clear upgrade signal on the dashboard/analytics pages.
+  const subscription = await getShopSubscription(shop);
+  const usage = await getMonthlyCheckUsage(shop, subscription.planTier);
+  if (usage.overLimit) {
+    const fallbackCfg = await db.widgetConfig.findUnique({ where: { shop } });
+    const fallbackMsg =
+      fallbackCfg?.successMessage ?? "Please contact us to confirm delivery to your area.";
+    return new Response(
+      JSON.stringify({
+        allowed: true,
+        message: fallbackMsg,
+        overLimit: true,
+        eta: null,
+        zone: null,
+        codAvailable: null,
+        returnPolicy: null,
+        showWaitlist: false,
+        waitlistCount: 0,
+        cutoffTime: null,
+        daysOfWeek: null,
+      }),
+      { status: 200, headers: DENY_HEADERS },
+    );
+  }
+
   const zipRecord = await db.zipCode.findUnique({
     where: { shop_zipCode: { shop, zipCode: normalizedZip } },
   });
@@ -156,7 +187,7 @@ async function handleZipCheck(
     if (!zipRecord && defaultBehavior === "allow") {
       const successMsg =
         widgetConfig?.successMessage ?? "We deliver to your area!";
-      db.zipCheckLog.create({ data: { shop, zipCode: normalizedZip, result: "defaulted_allow", productId: productId ?? null } }).catch(() => {});
+      db.zipCheckLog.create({ data: { shop, zipCode: normalizedZip, result: "defaulted_allow", productId: productId ?? null } }).catch((err) => console.error("[zip-check-log] create failed:", err));
       return new Response(
         JSON.stringify({
           allowed: true,
@@ -185,7 +216,7 @@ async function handleZipCheck(
     }
 
     if (!zipRecord) {
-      db.zipCheckLog.create({ data: { shop, zipCode: normalizedZip, result: "not_found", productId: productId ?? null } }).catch(() => {});
+      db.zipCheckLog.create({ data: { shop, zipCode: normalizedZip, result: "not_found", productId: productId ?? null } }).catch((err) => console.error("[zip-check-log] create failed:", err));
       return new Response(
         JSON.stringify({
           allowed: false,
@@ -199,7 +230,7 @@ async function handleZipCheck(
     }
 
     // Inactive zip — treat same as not found regardless of defaultBehavior
-    db.zipCheckLog.create({ data: { shop, zipCode: normalizedZip, result: "not_found", productId: productId ?? null } }).catch(() => {});
+    db.zipCheckLog.create({ data: { shop, zipCode: normalizedZip, result: "not_found", productId: productId ?? null } }).catch((err) => console.error("[zip-check-log] create failed:", err));
     return new Response(
       JSON.stringify({
         allowed: false,
@@ -228,7 +259,7 @@ async function handleZipCheck(
       waitlistCount = 0;
     }
 
-    db.zipCheckLog.create({ data: { shop, zipCode: normalizedZip, result: "blocked", productId: productId ?? null } }).catch(() => {});
+    db.zipCheckLog.create({ data: { shop, zipCode: normalizedZip, result: "blocked", productId: productId ?? null } }).catch((err) => console.error("[zip-check-log] create failed:", err));
     return new Response(
       JSON.stringify({
         allowed: false,
@@ -248,10 +279,11 @@ async function handleZipCheck(
   const zipZone = zipRecord.zone ?? null;
 
   // Fetch all active rules for the shop ordered by priority so we can apply
-  // the matching logic in a single query result.
+  // the matching logic in a single query result. Secondary sort on createdAt
+  // so ties resolve deterministically (most recently created rule wins).
   const activeRules = await db.deliveryRule.findMany({
     where: { shop, isActive: true },
-    orderBy: { priority: "asc" },
+    orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
   });
 
   let matchedRule: (typeof activeRules)[number] | null = null;
@@ -341,7 +373,7 @@ async function handleZipCheck(
   const rawFreeShippingAbove = widgetConfig?.showDeliveryFee !== false ? (matchedRule?.freeShippingAbove ?? null) : null;
   const freeShippingAboveValue = rawFreeShippingAbove != null && rawFreeShippingAbove >= 0 ? rawFreeShippingAbove : null;
 
-  db.zipCheckLog.create({ data: { shop, zipCode: normalizedZip, result: "allowed", productId: productId ?? null } }).catch(() => {});
+  db.zipCheckLog.create({ data: { shop, zipCode: normalizedZip, result: "allowed", productId: productId ?? null } }).catch((err) => console.error("[zip-check-log] create failed:", err));
   return new Response(
     JSON.stringify({
       allowed: true,

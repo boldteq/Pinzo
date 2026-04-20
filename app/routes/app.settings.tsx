@@ -9,6 +9,7 @@ import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { getShopSubscription } from "../billing.server";
+import { getMonthlyCheckUsage } from "../utils/check-usage.server";
 import { PLAN_LIMITS, UNLIMITED } from "../plans";
 import db from "../db.server";
 import { sendTestEmail, isEmailConfigured } from "../email.server";
@@ -67,12 +68,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     update: { shopName },
   });
 
+  const checkUsage = await getMonthlyCheckUsage(shop, subscription.planTier);
+
   return {
     subscription,
     zipCount,
     deliveryRuleCount,
     waitlistCount,
     blockedZipCount,
+    checkUsage,
     shop,
     shopName,
     defaultBehavior: shopSettings?.defaultBehavior ?? "block",
@@ -107,26 +111,30 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return { success: true, intent };
     }
 
-    if (intent === "save-notification") {
+    if (intent === "save-email-all") {
+      // Unified email-settings save — covers notificationEmail, sender name,
+      // reply-to in a single transaction so concurrent fetchers can't race.
       const notificationEmail =
-        (formData.get("notificationEmail") as string | null) ?? "";
-      await db.shopSettings.upsert({
-        where: { shop },
-        create: { shop, notificationEmail: notificationEmail || null },
-        update: { notificationEmail: notificationEmail || null },
-      });
-      return { success: true, intent };
-    }
-
-    if (intent === "save-email-settings") {
+        ((formData.get("notificationEmail") as string | null) ?? "").trim() || null;
       const emailSenderName =
         (formData.get("emailSenderName") as string | null)?.trim() || null;
       const emailReplyTo =
         (formData.get("emailReplyTo") as string | null)?.trim() || null;
+
+      if (notificationEmail && notificationEmail.length > 254) {
+        return { error: "Notification email is too long." };
+      }
+      if (notificationEmail && !/^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,24}$/.test(notificationEmail)) {
+        return { error: "Enter a valid notification email address." };
+      }
+      if (emailReplyTo && !/^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,24}$/.test(emailReplyTo)) {
+        return { error: "Enter a valid reply-to email address." };
+      }
+
       await db.shopSettings.upsert({
         where: { shop },
-        create: { shop, emailSenderName, emailReplyTo },
-        update: { emailSenderName, emailReplyTo },
+        create: { shop, notificationEmail, emailSenderName, emailReplyTo },
+        update: { notificationEmail, emailSenderName, emailReplyTo },
       });
       return { success: true, intent };
     }
@@ -149,7 +157,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     return { error: "Unknown intent" };
-  } catch {
+  } catch (err) {
+    console.error("[app.settings] action failed shop=%s intent=%s:", shop, intent, err);
     return { error: "Failed to save settings. Please try again." };
   }
 };
@@ -162,7 +171,7 @@ type SectionId = "general" | "email" | "plan" | "support";
 
 export default function SettingsPage() {
   const {
-    subscription, zipCount, deliveryRuleCount, waitlistCount, blockedZipCount,
+    subscription, zipCount, deliveryRuleCount, waitlistCount, blockedZipCount, checkUsage,
     shopName, defaultBehavior, notificationEmail, emailSenderName, emailReplyTo,
   } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
@@ -173,8 +182,7 @@ export default function SettingsPage() {
 
   // Fetchers
   const behaviorFetcher = useFetcher<typeof action>();
-  const notificationFetcher = useFetcher<typeof action>();
-  const emailSettingsFetcher = useFetcher<typeof action>();
+  const emailFetcher = useFetcher<typeof action>();
   const testEmailFetcher = useFetcher<typeof action>();
 
   // Controlled state
@@ -184,9 +192,8 @@ export default function SettingsPage() {
   const [replyToValue, setReplyToValue] = useState(emailReplyTo);
 
   const isSavingBehavior = behaviorFetcher.state !== "idle";
-  const isSavingNotification = notificationFetcher.state !== "idle";
-  const isSavingEmailSettings = emailSettingsFetcher.state !== "idle";
-  const isSaving = isSavingBehavior || isSavingNotification || isSavingEmailSettings;
+  const isSavingEmail = emailFetcher.state !== "idle";
+  const isSaving = isSavingBehavior || isSavingEmail;
 
   const isGeneralDirty = behaviorValue !== defaultBehavior;
   const isEmailDirty =
@@ -202,16 +209,10 @@ export default function SettingsPage() {
   }, [behaviorFetcher.data, shopify]);
 
   useEffect(() => {
-    if (notificationFetcher.data && "success" in notificationFetcher.data && notificationFetcher.data.success) {
-      shopify.toast.show("Settings saved");
-    }
-  }, [notificationFetcher.data, shopify]);
-
-  useEffect(() => {
-    if (emailSettingsFetcher.data && "success" in emailSettingsFetcher.data && emailSettingsFetcher.data.success) {
+    if (emailFetcher.data && "success" in emailFetcher.data && emailFetcher.data.success) {
       shopify.toast.show("Email settings saved");
     }
-  }, [emailSettingsFetcher.data, shopify]);
+  }, [emailFetcher.data, shopify]);
 
   useEffect(() => {
     if (testEmailFetcher.data && "success" in testEmailFetcher.data && testEmailFetcher.data.success) {
@@ -227,20 +228,13 @@ export default function SettingsPage() {
   }, [behaviorFetcher, behaviorValue]);
 
   const handleSaveEmail = useCallback(() => {
-    if (emailValue !== notificationEmail) {
-      const fd = new FormData();
-      fd.append("intent", "save-notification");
-      fd.append("notificationEmail", emailValue);
-      notificationFetcher.submit(fd, { method: "post" });
-    }
-    if (senderNameValue !== emailSenderName || replyToValue !== emailReplyTo) {
-      const fd = new FormData();
-      fd.append("intent", "save-email-settings");
-      fd.append("emailSenderName", senderNameValue);
-      fd.append("emailReplyTo", replyToValue);
-      emailSettingsFetcher.submit(fd, { method: "post" });
-    }
-  }, [notificationFetcher, emailSettingsFetcher, emailValue, senderNameValue, replyToValue, notificationEmail, emailSenderName, emailReplyTo]);
+    const fd = new FormData();
+    fd.append("intent", "save-email-all");
+    fd.append("notificationEmail", emailValue);
+    fd.append("emailSenderName", senderNameValue);
+    fd.append("emailReplyTo", replyToValue);
+    emailFetcher.submit(fd, { method: "post" });
+  }, [emailFetcher, emailValue, senderNameValue, replyToValue]);
 
   const handleDiscard = useCallback(() => {
     setBehaviorValue(defaultBehavior);
@@ -278,11 +272,21 @@ export default function SettingsPage() {
   ];
 
   const getSaveAction = () => {
-    if (selectedSection === "general" && isGeneralDirty) {
-      return { content: "Save", onAction: handleSaveGeneral, loading: isSavingBehavior };
+    if (selectedSection === "general") {
+      return {
+        content: "Save",
+        onAction: handleSaveGeneral,
+        loading: isSavingBehavior,
+        disabled: !isGeneralDirty || isSavingBehavior,
+      };
     }
-    if (selectedSection === "email" && isEmailDirty) {
-      return { content: "Save", onAction: handleSaveEmail, loading: isSavingNotification || isSavingEmailSettings };
+    if (selectedSection === "email") {
+      return {
+        content: "Save",
+        onAction: handleSaveEmail,
+        loading: isSavingEmail,
+        disabled: !isEmailDirty || isSavingEmail,
+      };
     }
     return undefined;
   };
@@ -375,11 +379,8 @@ export default function SettingsPage() {
                           </Text>
                         </BlockStack>
                         <Divider />
-                        {notificationFetcher.data && "error" in notificationFetcher.data && notificationFetcher.data.error && (
-                          <Banner tone="critical">{notificationFetcher.data.error}</Banner>
-                        )}
-                        {emailSettingsFetcher.data && "error" in emailSettingsFetcher.data && emailSettingsFetcher.data.error && (
-                          <Banner tone="critical">{emailSettingsFetcher.data.error}</Banner>
+                        {emailFetcher.data && "error" in emailFetcher.data && emailFetcher.data.error && (
+                          <Banner tone="critical">{emailFetcher.data.error}</Banner>
                         )}
                         {testEmailFetcher.data && "error" in testEmailFetcher.data && testEmailFetcher.data.error && (
                           <Banner tone="critical">{testEmailFetcher.data.error}</Banner>
@@ -605,32 +606,60 @@ export default function SettingsPage() {
                       <Divider />
 
                       <BlockStack gap="400">
-                        {/* Zip Codes */}
+                        {/* Monthly customer checks — the active plan gate */}
                         <BlockStack gap="200">
                           <InlineStack align="space-between" blockAlign="center">
                             <InlineStack gap="200" blockAlign="center">
                               <Icon source={LocationIcon} tone="subdued" />
-                              <Text as="p" variant="bodySm">ZIP Codes</Text>
+                              <BlockStack gap="050">
+                                <Text as="p" variant="bodySm">Customer ZIP Checks</Text>
+                                <Text as="p" variant="bodySm" tone="subdued">Resets on the 1st of each month</Text>
+                              </BlockStack>
                             </InlineStack>
-                            {limits.maxZipCodes < UNLIMITED ? (
+                            {!checkUsage.unlimited ? (
                               <InlineStack gap="100" blockAlign="baseline">
-                                <Text as="p" variant="headingLg" fontWeight="bold">{zipCount}</Text>
-                                <Text as="span" tone="subdued" variant="bodySm">/ {limits.maxZipCodes} used</Text>
+                                <Text as="p" variant="headingLg" fontWeight="bold">{checkUsage.used.toLocaleString()}</Text>
+                                <Text as="span" tone="subdued" variant="bodySm">/ {checkUsage.limit.toLocaleString()} this month</Text>
                               </InlineStack>
                             ) : (
                               <InlineStack gap="200" blockAlign="center">
-                                <Text as="p" variant="headingLg" fontWeight="bold">{zipCount}</Text>
+                                <Text as="p" variant="headingLg" fontWeight="bold">{checkUsage.used.toLocaleString()}</Text>
                                 <Badge tone="success">Unlimited</Badge>
                               </InlineStack>
                             )}
                           </InlineStack>
-                          {limits.maxZipCodes < UNLIMITED && (
+                          {!checkUsage.unlimited && (
                             <ProgressBar
-                              progress={Math.min(100, (zipCount / limits.maxZipCodes) * 100)}
+                              progress={checkUsage.percent}
                               size="small"
-                              tone={zipCount / limits.maxZipCodes > 0.8 ? "critical" : "primary"}
+                              tone={checkUsage.percent >= 80 ? "critical" : "primary"}
                             />
                           )}
+                          {checkUsage.overLimit && (
+                            <Banner tone="critical">
+                              <Text as="p" variant="bodySm">
+                                You&apos;ve reached your monthly check limit. The storefront widget is
+                                falling back to a default message until the 1st of next month or
+                                you upgrade.
+                              </Text>
+                            </Banner>
+                          )}
+                        </BlockStack>
+
+                        <Divider />
+
+                        {/* Stored ZIP Codes (no limit — all plans allow unlimited) */}
+                        <BlockStack gap="200">
+                          <InlineStack align="space-between" blockAlign="center">
+                            <InlineStack gap="200" blockAlign="center">
+                              <Icon source={LocationIcon} tone="subdued" />
+                              <Text as="p" variant="bodySm">Stored ZIP Codes</Text>
+                            </InlineStack>
+                            <InlineStack gap="200" blockAlign="center">
+                              <Text as="p" variant="headingLg" fontWeight="bold">{zipCount.toLocaleString()}</Text>
+                              <Badge tone="success">Unlimited</Badge>
+                            </InlineStack>
+                          </InlineStack>
                         </BlockStack>
 
                         <Divider />

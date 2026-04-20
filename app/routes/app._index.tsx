@@ -6,7 +6,8 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
 import { getShopSubscription } from "../billing.server";
 import { detectThemeEmbed } from "../utils/theme-detection.server";
-import { PLAN_LIMITS, UNLIMITED } from "../plans";
+import { getMonthlyCheckUsage } from "../utils/check-usage.server";
+import { PLAN_LIMITS } from "../plans";
 import {
   Page,
   Card,
@@ -37,6 +38,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getShopSubscription(shop),
   ]);
 
+  const checkUsage = await getMonthlyCheckUsage(shop, subscription.planTier);
+
   const stats = {
     total: totalZips,
     allowed: allowedZips,
@@ -50,6 +53,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return {
     stats,
     subscription,
+    checkUsage,
     ...themeInfo,
   };
 };
@@ -58,6 +62,7 @@ export default function DashboardPage() {
   const {
     stats,
     subscription,
+    checkUsage,
     appEmbedEnabled,
     activeThemeName,
     themeEditorUrl,
@@ -84,14 +89,9 @@ export default function DashboardPage() {
     }
   }, []);
   const isFreePlan = subscription.planTier === "free";
-  const hasZipLimit = limits.maxZipCodes < UNLIMITED;
+  const hasCheckLimit = !checkUsage.unlimited;
   const isEmpty = stats.total === 0;
-
-  const usagePercent =
-    limits.maxZipCodes < UNLIMITED
-      ? Math.min(100, Math.round((stats.total / limits.maxZipCodes) * 100))
-      : 0;
-
+  const usagePercent = checkUsage.percent;
   const planLabel = limits.label;
 
   return (
@@ -159,12 +159,21 @@ export default function DashboardPage() {
                 <InlineGrid columns={{ xs: 2, sm: 3, md: 5 }} gap="400">
                   <BlockStack gap="100">
                     <Text as="p" variant="headingXl" fontWeight="bold">
-                      {stats.total}
-                      {limits.maxZipCodes < UNLIMITED && (
+                      {checkUsage.used.toLocaleString()}
+                      {hasCheckLimit && (
                         <Text as="span" variant="bodySm" tone="subdued" fontWeight="regular">
-                          {" "}/ {limits.maxZipCodes}
+                          {" "}/ {checkUsage.limit.toLocaleString()}
                         </Text>
                       )}
+                    </Text>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      Checks this month
+                    </Text>
+                  </BlockStack>
+
+                  <BlockStack gap="100">
+                    <Text as="p" variant="headingXl" fontWeight="bold">
+                      {stats.total.toLocaleString()}
                     </Text>
                     <Text as="p" variant="bodySm" tone="subdued">
                       Zip codes
@@ -177,15 +186,6 @@ export default function DashboardPage() {
                     </Text>
                     <Text as="p" variant="bodySm" tone="subdued">
                       Serviceable
-                    </Text>
-                  </BlockStack>
-
-                  <BlockStack gap="100">
-                    <Text as="p" variant="headingXl" fontWeight="bold" tone={stats.blocked > 0 ? "critical" : "subdued"}>
-                      {stats.blocked}
-                    </Text>
-                    <Text as="p" variant="bodySm" tone="subdued">
-                      Blocked
                     </Text>
                   </BlockStack>
 
@@ -208,14 +208,14 @@ export default function DashboardPage() {
                   </BlockStack>
                 </InlineGrid>
 
-                {/* Usage bar — shown when plan has a finite zip limit */}
-                {hasZipLimit && (
+                {/* Monthly checks usage bar — shown for plans with a finite limit */}
+                {hasCheckLimit && (
                   <>
                     <Divider />
                     <BlockStack gap="200">
                       <InlineStack align="space-between">
                         <Text as="p" variant="bodySm" tone="subdued">
-                          Plan usage
+                          Monthly checks usage · resets on the 1st
                         </Text>
                         <Text as="p" variant="bodySm" fontWeight="semibold" tone={usagePercent >= 80 ? "critical" : "subdued"}>
                           {usagePercent}%
@@ -233,8 +233,29 @@ export default function DashboardPage() {
             </Card>
           )}
 
-          {/* ─── 3. UPGRADE PROMPT ─── */}
-          {hasZipLimit && !isEmpty && usagePercent >= 60 && (
+          {/* ─── 3. CHECK-LIMIT BANNERS ─── */}
+          {checkUsage.overLimit && (
+            <Banner
+              tone="critical"
+              title="Monthly check limit reached — widget may fall back to a default message"
+              action={{
+                content: isFreePlan ? "Upgrade to Starter" : "Upgrade to Pro",
+                onAction: () => navigate("/app/pricing"),
+              }}
+            >
+              <Text as="p" variant="bodySm">
+                Your store has used all {checkUsage.limit.toLocaleString()} customer ZIP
+                checks for this month on the {planLabel} plan. New checks from the
+                storefront will receive a fallback message until the quota resets on
+                the 1st of next month or you upgrade.
+                {isFreePlan
+                  ? " Upgrade to Starter for 500 checks/month."
+                  : " Upgrade to Pro for unlimited checks."}
+              </Text>
+            </Banner>
+          )}
+
+          {hasCheckLimit && !checkUsage.overLimit && usagePercent >= 80 && (
             <Banner
               tone="warning"
               action={{
@@ -243,10 +264,11 @@ export default function DashboardPage() {
               }}
             >
               <Text as="p" variant="bodySm">
-                You&apos;re using {stats.total} of {limits.maxZipCodes} zip codes on the {planLabel} plan.
+                You&apos;ve used {checkUsage.used.toLocaleString()} of{" "}
+                {checkUsage.limit.toLocaleString()} monthly ZIP checks ({usagePercent}%) on the {planLabel} plan.
                 {isFreePlan
-                  ? " Upgrade to Starter for 500 zip codes, delivery rules, and more."
-                  : " Upgrade to Pro for unlimited zip codes, blocked zones, and full features."}
+                  ? " Upgrade to Starter for 500 checks/month, delivery rules, and more."
+                  : " Upgrade to Pro for unlimited checks and full features."}
               </Text>
             </Banner>
           )}

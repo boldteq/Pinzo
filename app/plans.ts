@@ -28,6 +28,18 @@ export const ALL_PAID_PLANS = [
 export type PlanTier = "free" | "starter" | "pro" | "ultimate";
 
 export interface PlanLimits {
+  /**
+   * Maximum number of customer ZIP checks allowed per calendar month.
+   * This is NOT a limit on how many ZIP codes a merchant can store.
+   * Merchants can add unlimited ZIP codes to their list on every plan.
+   * Resets on the 1st of each month at 00:00 UTC.
+   */
+  maxChecksPerMonth: number;
+  /**
+   * Maximum number of ZIP code entries a merchant may store in their list.
+   * Retained for UI display of usage progress. All tiers currently allow
+   * UNLIMITED — the active gate is maxChecksPerMonth.
+   */
   maxZipCodes: number;
   allowBlocked: boolean;
   maxDeliveryRules: number;
@@ -47,7 +59,8 @@ export interface PlanLimits {
 
 export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
   free: {
-    maxZipCodes: 20,
+    maxChecksPerMonth: 100,
+    maxZipCodes: UNLIMITED,
     allowBlocked: false,
     maxDeliveryRules: 0,
     maxWaitlist: 0,
@@ -64,7 +77,8 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     label: "Free",
   },
   starter: {
-    maxZipCodes: 500,
+    maxChecksPerMonth: 500,
+    maxZipCodes: UNLIMITED,
     allowBlocked: true,
     maxDeliveryRules: 3,
     maxWaitlist: 50,
@@ -81,6 +95,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     label: "Starter",
   },
   pro: {
+    maxChecksPerMonth: UNLIMITED,
     maxZipCodes: UNLIMITED,
     allowBlocked: true,
     maxDeliveryRules: UNLIMITED,
@@ -98,6 +113,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     label: "Pro",
   },
   ultimate: {
+    maxChecksPerMonth: UNLIMITED,
     maxZipCodes: UNLIMITED,
     allowBlocked: true,
     maxDeliveryRules: UNLIMITED,

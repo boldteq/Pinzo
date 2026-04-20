@@ -106,11 +106,9 @@ export default function App() {
           <a href="/app/analytics">Analytics</a>
           <a href="/app/zip-codes">Zip Codes</a>
           <a href="/app/delivery-rules">Delivery Rules</a>
+          <a href="/app/widget">Widget</a>
           <a href="/app/waitlist">Waitlist</a>
-          <a href="/app/widget">Widget Customization</a>
           <a href="/app/settings">Settings</a>
-          <a href="/app/feature-requests">Feature Requests</a>
-          <a href="/app/help">Help &amp; Support</a>
         </NavMenu>
         <AppContent />
       </PolarisAppProvider>

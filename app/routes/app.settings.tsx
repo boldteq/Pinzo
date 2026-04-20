@@ -12,7 +12,6 @@ import { getShopSubscription } from "../billing.server";
 import { PLAN_LIMITS, UNLIMITED } from "../plans";
 import db from "../db.server";
 import { sendTestEmail, isEmailConfigured } from "../email.server";
-import { detectThemeEmbed } from "../utils/theme-detection.server";
 import {
   Page,
   Layout,
@@ -29,15 +28,16 @@ import {
   Banner,
   Icon,
   ProgressBar,
-  Tabs,
-  List,
 } from "@shopify/polaris";
 import {
   LocationIcon,
   DeliveryIcon,
   PersonIcon,
   DisabledIcon,
-  CheckCircleIcon,
+  SettingsIcon,
+  EmailIcon,
+  CreditCardIcon,
+  QuestionCircleIcon,
 } from "@shopify/polaris-icons";
 
 // ---------------------------------------------------------------------------
@@ -48,20 +48,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session, admin } = await authenticate.admin(request);
   const shop = session.shop;
 
-  const [subscription, zipCount, deliveryRuleCount, waitlistCount, blockedZipCount, shopSettings, shopResponse, themeInfo] = await Promise.all([
+  const [subscription, zipCount, deliveryRuleCount, waitlistCount, blockedZipCount, shopSettings, shopResponse] = await Promise.all([
     getShopSubscription(shop),
     db.zipCode.count({ where: { shop } }),
     db.deliveryRule.count({ where: { shop } }),
     db.waitlistEntry.count({ where: { shop } }),
     db.zipCode.count({ where: { shop, type: "blocked" } }),
     db.shopSettings.findUnique({ where: { shop } }),
-    admin.graphql(`{ shop { name primaryDomain { url } } }`),
-    detectThemeEmbed(shop, admin),
+    admin.graphql(`{ shop { name } }`),
   ]);
 
-  const shopData = await shopResponse.json() as { data?: { shop?: { name?: string; primaryDomain?: { url?: string } } } };
+  const shopData = await shopResponse.json() as { data?: { shop?: { name?: string } } };
   const shopName: string = shopData.data?.shop?.name ?? shop.replace(".myshopify.com", "");
-  const storeDomain: string = shopData.data?.shop?.primaryDomain?.url ?? `https://${shop.replace(".myshopify.com", "")}.myshopify.com`;
 
   await db.shopSettings.upsert({
     where: { shop },
@@ -77,12 +75,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     blockedZipCount,
     shop,
     shopName,
-    storeDomain,
     defaultBehavior: shopSettings?.defaultBehavior ?? "block",
     notificationEmail: shopSettings?.notificationEmail ?? "",
     emailSenderName: shopSettings?.emailSenderName ?? "",
     emailReplyTo: shopSettings?.emailReplyTo ?? "",
-    ...themeInfo,
   };
 };
 
@@ -162,17 +158,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 // Component
 // ---------------------------------------------------------------------------
 
+type SectionId = "general" | "email" | "plan" | "support";
+
 export default function SettingsPage() {
   const {
     subscription, zipCount, deliveryRuleCount, waitlistCount, blockedZipCount,
-    shopName, storeDomain, defaultBehavior, notificationEmail, emailSenderName, emailReplyTo,
-    appEmbedEnabled, activeThemeName, themeEditorUrl, themeEditorAppEmbedsUrl,
+    shopName, defaultBehavior, notificationEmail, emailSenderName, emailReplyTo,
   } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const shopify = useAppBridge();
   const limits = PLAN_LIMITS[subscription.planTier];
 
-  const [selectedTab, setSelectedTab] = useState(0);
+  const [selectedSection, setSelectedSection] = useState<SectionId>("general");
 
   // Fetchers
   const behaviorFetcher = useFetcher<typeof action>();
@@ -273,23 +270,25 @@ export default function SettingsPage() {
 
   const planLabel = limits.label;
 
-  const tabs = [
-    { id: "general", content: "General" },
-    { id: "email", content: "Email" },
-    { id: "plan", content: "Plan & Usage" },
-    { id: "setup", content: "Setup Guide" },
+  const sections: Array<{ id: SectionId; label: string; icon: typeof SettingsIcon }> = [
+    { id: "general", label: "General", icon: SettingsIcon },
+    { id: "email", label: "Email Notifications", icon: EmailIcon },
+    { id: "plan", label: "Plan & Usage", icon: CreditCardIcon },
+    { id: "support", label: "Help & Feature Requests", icon: QuestionCircleIcon },
   ];
 
-  // Dynamic save action based on active tab
   const getSaveAction = () => {
-    if (selectedTab === 0 && isGeneralDirty) {
+    if (selectedSection === "general" && isGeneralDirty) {
       return { content: "Save", onAction: handleSaveGeneral, loading: isSavingBehavior };
     }
-    if (selectedTab === 1 && isEmailDirty) {
+    if (selectedSection === "email" && isEmailDirty) {
       return { content: "Save", onAction: handleSaveEmail, loading: isSavingNotification || isSavingEmailSettings };
     }
     return undefined;
   };
+
+  const canDiscard =
+    isDirty && (selectedSection === "general" || selectedSection === "email");
 
   return (
     <Page
@@ -297,50 +296,67 @@ export default function SettingsPage() {
       subtitle="Manage your app settings and subscription"
       backAction={{ onAction: () => navigate("/app") }}
       primaryAction={getSaveAction()}
-      secondaryActions={isDirty && selectedTab < 2 ? [{ content: "Discard", onAction: handleDiscard }] : []}
+      secondaryActions={canDiscard ? [{ content: "Discard", onAction: handleDiscard }] : []}
     >
       <Box paddingBlockEnd="1600">
-        <Tabs tabs={tabs} selected={selectedTab} onSelect={setSelectedTab}>
-          {/* ── TAB 0: General ────────────────────────────────────────── */}
-          {selectedTab === 0 && (
-            <Box paddingBlockStart="500">
-              <Layout>
-                <Layout.Section>
-                  <Card>
-                    <BlockStack gap="400">
-                      <BlockStack gap="100">
-                        <Text as="h2" variant="headingMd">
-                          Default Behavior for Unknown ZIP Codes
-                        </Text>
-                        <Text as="p" tone="subdued" variant="bodyMd">
-                          Choose what happens when a customer enters a ZIP code that is not in your list.
-                        </Text>
-                      </BlockStack>
-                      <Divider />
-                      {behaviorFetcher.data && "error" in behaviorFetcher.data && behaviorFetcher.data.error && (
-                        <Banner tone="critical">{behaviorFetcher.data.error}</Banner>
-                      )}
-                      <Select
-                        label="Behavior for unlisted ZIP codes"
-                        options={behaviorOptions}
-                        value={behaviorValue}
-                        onChange={setBehaviorValue}
-                      />
-                      <Text as="p" tone="subdued" variant="bodySm">
-                        This only applies to ZIP codes not in your list. Explicitly blocked ZIP codes are always blocked.
-                      </Text>
-                    </BlockStack>
-                  </Card>
-                </Layout.Section>
-              </Layout>
-            </Box>
-          )}
+        <Layout>
+          {/* ── Left sub-nav ─────────────────────────────────────────── */}
+          <Layout.Section variant="oneThird">
+            <Card padding="200">
+              <BlockStack gap="050">
+                {sections.map((s) => {
+                  const active = selectedSection === s.id;
+                  return (
+                    <Button
+                      key={s.id}
+                      icon={s.icon}
+                      textAlign="left"
+                      fullWidth
+                      variant={active ? "primary" : "tertiary"}
+                      onClick={() => setSelectedSection(s.id)}
+                    >
+                      {s.label}
+                    </Button>
+                  );
+                })}
+              </BlockStack>
+            </Card>
+          </Layout.Section>
 
-          {/* ── TAB 1: Email ──────────────────────────────────────────── */}
-          {selectedTab === 1 && (
-            <Box paddingBlockStart="500">
-              <Layout>
-                <Layout.Section variant="oneHalf">
+          {/* ── Right content pane ───────────────────────────────────── */}
+          <Layout.Section>
+            {/* ── General ───────────────────────────────────────────── */}
+            {selectedSection === "general" && (
+              <Card>
+                <BlockStack gap="400">
+                  <BlockStack gap="100">
+                    <Text as="h2" variant="headingMd">
+                      Default Behavior for Unknown ZIP Codes
+                    </Text>
+                    <Text as="p" tone="subdued" variant="bodyMd">
+                      Choose what happens when a customer enters a ZIP code that is not in your list.
+                    </Text>
+                  </BlockStack>
+                  <Divider />
+                  {behaviorFetcher.data && "error" in behaviorFetcher.data && behaviorFetcher.data.error && (
+                    <Banner tone="critical">{behaviorFetcher.data.error}</Banner>
+                  )}
+                  <Select
+                    label="Behavior for unlisted ZIP codes"
+                    options={behaviorOptions}
+                    value={behaviorValue}
+                    onChange={setBehaviorValue}
+                  />
+                  <Text as="p" tone="subdued" variant="bodySm">
+                    This only applies to ZIP codes not in your list. Explicitly blocked ZIP codes are always blocked.
+                  </Text>
+                </BlockStack>
+              </Card>
+            )}
+
+            {/* ── Email Notifications ───────────────────────────────── */}
+            {selectedSection === "email" && (
+              <BlockStack gap="400">
                   {limits.maxWaitlist === 0 ? (
                     <Banner
                       tone="info"
@@ -422,9 +438,8 @@ export default function SettingsPage() {
                       </BlockStack>
                     </Card>
                   )}
-                </Layout.Section>
 
-                <Layout.Section variant="oneHalf">
+                  {limits.maxWaitlist > 0 && (
                   <Card>
                     <BlockStack gap="400">
                       <BlockStack gap="100">
@@ -563,17 +578,13 @@ export default function SettingsPage() {
                       )}
                     </BlockStack>
                   </Card>
-                </Layout.Section>
-              </Layout>
-            </Box>
-          )}
+                  )}
+              </BlockStack>
+            )}
 
-          {/* ── TAB 2: Plan & Usage ───────────────────────────────────── */}
-          {selectedTab === 2 && (
-            <Box paddingBlockStart="500">
-              <Layout>
-                <Layout.Section>
-                  <Card>
+            {/* ── Plan & Usage ──────────────────────────────────────── */}
+            {selectedSection === "plan" && (
+              <Card>
                     <BlockStack gap="400">
                       <InlineStack align="space-between" blockAlign="center">
                         <BlockStack gap="050">
@@ -706,131 +717,43 @@ export default function SettingsPage() {
                         </InlineStack>
                       </BlockStack>
                     </BlockStack>
-                  </Card>
-                </Layout.Section>
-              </Layout>
-            </Box>
-          )}
+              </Card>
+            )}
 
-          {/* ── TAB 3: Setup Guide ────────────────────────────────────── */}
-          {selectedTab === 3 && (
-            <Box paddingBlockStart="500">
-              <Layout>
-                <Layout.Section>
-                  {/* Step 1: App Embed */}
-                  <Card>
-                    <BlockStack gap="400">
-                      <InlineStack gap="300" blockAlign="center">
-                        <div style={{
-                          width: 32, height: 32, borderRadius: "50%",
-                          background: appEmbedEnabled ? "#008060" : "#6366f1",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          color: "#fff", fontWeight: 700, fontSize: 14, flexShrink: 0,
-                        }}>
-                          {appEmbedEnabled ? <Icon source={CheckCircleIcon} tone="inherit" /> : "1"}
-                        </div>
-                        <Text as="h2" variant="headingMd">Enable App Embed</Text>
-                        {appEmbedEnabled && <Badge tone="success">Complete</Badge>}
-                      </InlineStack>
-                      <Divider />
-                      {appEmbedEnabled ? (
-                        <Banner tone="success">
-                          <Text as="p">
-                            Pinzo App Embed is active on your {activeThemeName ? `"${activeThemeName}" theme` : "store"}.
-                          </Text>
-                        </Banner>
-                      ) : (
-                        <Banner
-                          tone="warning"
-                          action={{ content: "Open App Embeds", url: themeEditorAppEmbedsUrl, external: true }}
-                        >
-                          <Text as="p">
-                            Go to Theme Editor → App Embeds and turn on <strong>Pinzo</strong> to activate the widget.
-                          </Text>
-                        </Banner>
-                      )}
-                      <Button url={themeEditorAppEmbedsUrl} external variant={appEmbedEnabled ? "plain" : "primary"}>
-                        {appEmbedEnabled ? "View App Embeds" : "Enable in Theme Editor"}
+            {/* ── Help & Feature Requests ───────────────────────────── */}
+            {selectedSection === "support" && (
+              <BlockStack gap="400">
+                <Card>
+                  <BlockStack gap="300">
+                    <Text as="h2" variant="headingMd">Help & Support</Text>
+                    <Text as="p" tone="subdued" variant="bodyMd">
+                      Documentation, FAQs, setup guides, and direct contact with our team.
+                    </Text>
+                    <InlineStack>
+                      <Button onClick={() => navigate("/app/help")}>
+                        Open Help Center
                       </Button>
-                    </BlockStack>
-                  </Card>
-                </Layout.Section>
+                    </InlineStack>
+                  </BlockStack>
+                </Card>
 
-                <Layout.Section>
-                  {/* Step 2: Add Widget Block */}
-                  <Card>
-                    <BlockStack gap="400">
-                      <InlineStack gap="300" blockAlign="center">
-                        <div style={{
-                          width: 32, height: 32, borderRadius: "50%",
-                          background: "#6366f1",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          color: "#fff", fontWeight: 700, fontSize: 14, flexShrink: 0,
-                        }}>2</div>
-                        <Text as="h2" variant="headingMd">Add Widget Block to Product Pages</Text>
-                      </InlineStack>
-                      <Divider />
-                      <Text as="p" tone="subdued">
-                        In the Theme Editor, navigate to your <strong>Product template</strong>, click <strong>Add block</strong>, find the <strong>Pinzo</strong> block, and place it where you want the ZIP code checker to appear.
-                      </Text>
-                      <List>
-                        <List.Item>Open Theme Editor for your product template</List.Item>
-                        <List.Item>Click "Add block" in the left sidebar</List.Item>
-                        <List.Item>Search for "Pinzo" and add it</List.Item>
-                        <List.Item>Save the theme</List.Item>
-                      </List>
-                      <Button url={themeEditorUrl} external>Open Theme Editor</Button>
-                    </BlockStack>
-                  </Card>
-                </Layout.Section>
-
-                <Layout.Section>
-                  {/* Step 3: Add ZIP codes */}
-                  <Card>
-                    <BlockStack gap="400">
-                      <InlineStack gap="300" blockAlign="center">
-                        <div style={{
-                          width: 32, height: 32, borderRadius: "50%",
-                          background: "#6366f1",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          color: "#fff", fontWeight: 700, fontSize: 14, flexShrink: 0,
-                        }}>3</div>
-                        <Text as="h2" variant="headingMd">Add Your ZIP Codes</Text>
-                      </InlineStack>
-                      <Divider />
-                      <Text as="p" tone="subdued">
-                        Add the ZIP codes you deliver to. You can add them one by one or import via CSV. The widget will show availability based on your list.
-                      </Text>
-                      <Button url="/app/zip-codes">Go to ZIP Codes</Button>
-                    </BlockStack>
-                  </Card>
-                </Layout.Section>
-
-                <Layout.Section>
-                  {/* Step 4: Test */}
-                  <Card>
-                    <BlockStack gap="400">
-                      <InlineStack gap="300" blockAlign="center">
-                        <div style={{
-                          width: 32, height: 32, borderRadius: "50%",
-                          background: "#6366f1",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          color: "#fff", fontWeight: 700, fontSize: 14, flexShrink: 0,
-                        }}>4</div>
-                        <Text as="h2" variant="headingMd">Test on Your Storefront</Text>
-                      </InlineStack>
-                      <Divider />
-                      <Text as="p" tone="subdued">
-                        Visit your store and navigate to a product page. Enter a ZIP code you added to test the widget is working correctly.
-                      </Text>
-                      <Button url={storeDomain} external>Open Storefront</Button>
-                    </BlockStack>
-                  </Card>
-                </Layout.Section>
-              </Layout>
-            </Box>
-          )}
-        </Tabs>
+                <Card>
+                  <BlockStack gap="300">
+                    <Text as="h2" variant="headingMd">Feature Requests</Text>
+                    <Text as="p" tone="subdued" variant="bodyMd">
+                      Request new features or vote on ideas on our public roadmap.
+                    </Text>
+                    <InlineStack>
+                      <Button onClick={() => navigate("/app/feature-requests")}>
+                        Open Feature Requests
+                      </Button>
+                    </InlineStack>
+                  </BlockStack>
+                </Card>
+              </BlockStack>
+            )}
+          </Layout.Section>
+        </Layout>
       </Box>
     </Page>
   );

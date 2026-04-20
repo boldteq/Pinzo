@@ -173,7 +173,7 @@
       '{position:relative!important;opacity:.4!important;pointer-events:none!important;cursor:not-allowed!important;}' +
       'html[data-zcc-locked] .shopify-payment-button::after,' +
       'html[data-zcc-locked] [data-shopify="payment-button"]::after' +
-      '{content:""!important;position:absolute!important;inset:0!important;z-index:2147483647!important;cursor:not-allowed!important;background:transparent!important;}';
+      '{content:""!important;position:absolute!important;inset:0!important;z-index:999999!important;cursor:not-allowed!important;background:transparent!important;}';
     (document.head || document.documentElement).appendChild(s);
   }
   function _zccLock() {
@@ -194,13 +194,21 @@
     _zccLock();
   }
 
+  // ── Fetch helper with 5-second timeout ───────────────────────────────────
+  function zccFetch(url, opts) {
+    var ctrl = new AbortController();
+    var t = setTimeout(function() { ctrl.abort(); }, 5000);
+    var o = Object.assign({}, opts || {}, { signal: ctrl.signal });
+    return fetch(url, o).finally(function() { clearTimeout(t); });
+  }
+
   // Always fetch fresh config from the API so color/setting changes made in the
   // admin are reflected on the storefront immediately. The metafield-embedded
   // data-config attribute is intentionally ignored here: it is baked into
   // Shopify's CDN-cached HTML at render time and can be stale for many minutes
   // after a merchant saves new settings. The API endpoint returns
   // Cache-Control: no-store so it is always up to date.
-  fetch(API_BASE + "/api/widget-config?shop=" + encodeURIComponent(SHOP))
+  zccFetch(API_BASE + "/api/widget-config?shop=" + encodeURIComponent(SHOP))
     .then(function (r) {
       if (!r.ok) throw new Error("Widget config API returned " + r.status);
       return r.json();
@@ -445,9 +453,14 @@
     try {
       var parts = isoDate.split('-');
       var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-      var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      return days[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate();
+      try {
+        return d.toLocaleDateString(navigator.language || 'en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      } catch(e2) {
+        // Fallback for environments where Intl is unavailable
+        var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return days[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate();
+      }
     } catch(e) { return null; }
   }
 
@@ -504,7 +517,8 @@
   }
 
   // ── Shared meta/waitlist CSS — injected by all three style presets ──────────
-  function buildSharedCss(W, cfg) {
+  function buildSharedCss(W, cfg, btnRadius) {
+    var rad = btnRadius || "10px";
     return (
       // Spin animation for loading spinner
       "@keyframes zcc-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}" +
@@ -521,7 +535,7 @@
       W + " .zcc-btn--loading{gap:0 !important}" +
       // Section grouping — info group card with subtle background
       W + " .zcc-section-divider{height:1px !important;background:rgba(0,0,0,0.06) !important;margin:10px 0 !important;border:none !important}" +
-      W + " .zcc-info-group{display:flex !important;flex-direction:column !important;gap:7px !important;background:#f7faf7 !important;border:1px solid #e8f0e8 !important;border-radius:10px !important;padding:10px 12px !important}" +
+      W + " .zcc-info-group{display:flex !important;flex-direction:column !important;gap:7px !important;background:#f7faf7 !important;border:1px solid #e8f0e8 !important;border-radius:" + rad + " !important;padding:10px 12px !important}" +
       W + " .zcc-badges-row{display:flex !important;flex-wrap:wrap !important;align-items:center !important;gap:6px !important}" +
       // Result card layout — small inline icon, no circle background
       W + " .zcc-result-icon{flex-shrink:0 !important;width:18px !important;height:18px !important;display:flex !important;align-items:center !important;justify-content:center !important;box-sizing:content-box !important;margin-top:1px !important}" +
@@ -574,7 +588,7 @@
       W + " .zcc-delivery-fee--free{background:" + cfg.successColor + "10 !important;border:1px solid " + cfg.successColor + "22 !important;color:" + cfg.successColor + " !important}" +
       W + " .zcc-delivery-fee--paid{background:#f59e0b0e !important;border:1px solid #f59e0b1a !important;color:#92400e !important}" +
       // Order timeline — clean thin design with card background
-      W + " .zcc-timeline{margin-top:0 !important;display:flex !important;align-items:flex-start !important;justify-content:space-between !important;gap:0 !important;position:relative !important;padding:12px 4px 8px !important;background:#f7faf7 !important;border:1px solid #e8f0e8 !important;border-radius:10px !important}" +
+      W + " .zcc-timeline{margin-top:0 !important;display:flex !important;align-items:flex-start !important;justify-content:space-between !important;gap:0 !important;position:relative !important;padding:12px 4px 8px !important;background:#f7faf7 !important;border:1px solid #e8f0e8 !important;border-radius:" + rad + " !important}" +
       W + " .zcc-timeline::before{content:'' !important;position:absolute !important;top:22px !important;left:calc(16.66% + 6px) !important;right:calc(16.66% + 6px) !important;height:1.5px !important;background:#d1e8d1 !important;z-index:0 !important}" +
       W + " .zcc-timeline-step{display:flex !important;flex-direction:column !important;align-items:center !important;gap:5px !important;z-index:1 !important;position:relative !important;flex:1 !important}" +
       W + " .zcc-timeline-dot{width:20px !important;height:20px !important;border-radius:50% !important;display:flex !important;align-items:center !important;justify-content:center !important;border:1.5px solid " + cfg.successColor + " !important;background:" + cfg.backgroundColor + " !important}" +
@@ -632,16 +646,16 @@
       W + " .zcc-result{margin-top:12px !important;padding:0 !important;border-radius:0 !important;font-size:13.5px !important;line-height:1.5 !important;animation:zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1) !important;display:flex !important;gap:8px !important;align-items:flex-start !important;background:none !important;border:none !important}" +
       W + " .zcc-result.ok{background:none !important;border:none !important;color:" + cfg.textColor + " !important}" +
       W + " .zcc-result.ok .zcc-result-icon svg{color:" + cfg.successColor + " !important;stroke:" + cfg.successColor + " !important}" +
-      W + " .zcc-result.fail{background:" + cfg.errorColor + "08 !important;border:1px solid " + cfg.errorColor + "18 !important;color:" + cfg.textColor + " !important;padding:10px 12px !important;border-radius:10px !important;align-items:center !important}" +
+      W + " .zcc-result.fail{background:" + cfg.errorColor + "08 !important;border:1px solid " + cfg.errorColor + "18 !important;color:" + cfg.textColor + " !important;padding:10px 12px !important;border-radius:" + btnRadius + " !important;align-items:center !important}" +
       W + " .zcc-result.fail .zcc-result-icon{margin-top:0 !important}" +
       W + " .zcc-result.fail .zcc-result-icon svg{color:" + cfg.errorColor + " !important;stroke:" + cfg.errorColor + " !important}" +
-      W + " .zcc-wl{margin-top:12px !important;padding:12px !important;background:linear-gradient(135deg,#f8fafc,#f0f4f8) !important;border-radius:12px !important;border:1px solid #dde3ec !important}" +
-      W + " .zcc-wl-input{border-radius:8px !important;border:1.5px solid #dde3ec !important;padding:11px 14px !important;width:100% !important;display:block !important;margin-bottom:8px !important;outline:none !important;font-size:13.5px !important;transition:border-color 0.2s,box-shadow 0.2s !important;background:#fff !important;color:" + cfg.textColor + " !important;line-height:1.4 !important}" +
+      W + " .zcc-wl{margin-top:12px !important;padding:12px !important;background:linear-gradient(135deg,#f8fafc,#f0f4f8) !important;border-radius:" + btnRadius + " !important;border:1px solid #dde3ec !important}" +
+      W + " .zcc-wl-input{border-radius:" + btnRadius + " !important;border:1.5px solid #dde3ec !important;padding:11px 14px !important;width:100% !important;display:block !important;margin-bottom:8px !important;outline:none !important;font-size:13.5px !important;transition:border-color 0.2s,box-shadow 0.2s !important;background:#fff !important;color:" + cfg.textColor + " !important;line-height:1.4 !important}" +
       W + " .zcc-wl-input::placeholder{color:#9ca3af !important}" +
       W + " .zcc-wl-btn{border-radius:" + btnRadius + " !important;background:" + cfg.primaryColor + " !important;color:#fff !important;padding:11px 20px !important;width:100% !important;font-weight:600 !important;border:none !important;cursor:pointer !important;font-size:13.5px !important;transition:filter 0.2s,box-shadow 0.2s,transform 0.2s !important;letter-spacing:0.01em !important;box-shadow:0 2px 8px " + cfg.primaryColor + "25 !important;display:flex !important;align-items:center !important;justify-content:center !important;gap:6px !important;margin-top:4px !important}" +
       W + " .zcc-wl-btn:hover{filter:brightness(1.06) !important;box-shadow:0 4px 14px " + cfg.primaryColor + "40 !important;transform:translateY(-1px) !important}" +
       W + " .zcc-wl-btn:active{filter:brightness(0.95) !important;transform:translateY(0) !important}" +
-      buildSharedCss(W, cfg)
+      buildSharedCss(W, cfg, btnRadius)
     );
   }
 
@@ -717,10 +731,14 @@
       btn.disabled = loading;
       if (loading) {
         btn.classList.add('zcc-btn--loading');
+        btn.setAttribute('aria-busy', 'true');
+        btn.setAttribute('aria-label', 'Checking delivery');
         // Replace entire button content with a lone spinner — no text overlap
         btn.innerHTML = '<span class="zcc-spinner" aria-hidden="true"></span>';
       } else {
         btn.classList.remove('zcc-btn--loading');
+        btn.removeAttribute('aria-busy');
+        btn.removeAttribute('aria-label');
         // Restore original icon + label markup
         btn.innerHTML = btnOriginalHtml;
         // Keep button text in sync with config (merchant may have customised it)
@@ -742,13 +760,13 @@
 
       // Try primary URL (App Proxy). If it returns 404, attempt fallback with relative proxy path.
       function doZipFetch(url) {
-        return fetch(url).then(function(r) {
+        return zccFetch(url).then(function(r) {
           var _baseParams = "/api/zip-check?shop=" + encodeURIComponent(SHOP) + "&zip=" + encodeURIComponent(zip) + _productParam;
           if (r.status === 404 && url.indexOf("http") === 0 && url !== (_proxyPath + _baseParams)) {
             // App Proxy URL returned 404 — try relative proxy path as fallback
             var fallbackUrl = _proxyPath + _baseParams;
             console.warn("[Pinzo] Primary URL returned 404, retrying with proxy fallback: " + fallbackUrl);
-            return fetch(fallbackUrl);
+            return zccFetch(fallbackUrl);
           }
           return r;
         });
@@ -882,14 +900,18 @@
               if (data.deliveryFee === 0) {
                 html += '<div class="zcc-delivery-fee zcc-delivery-fee--free">' + ICONS.truck + ' Free Delivery</div>';
               } else if (data.deliveryFee != null && data.deliveryFee > 0) {
-                html += '<div class="zcc-delivery-fee zcc-delivery-fee--paid">' + ICONS.truck + ' Delivery: $' + data.deliveryFee.toFixed(2) + '</div>';
+                var _feeFormatted;
+                try { _feeFormatted = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(data.deliveryFee); } catch(e) { _feeFormatted = '$' + data.deliveryFee.toFixed(2); }
+                html += '<div class="zcc-delivery-fee zcc-delivery-fee--paid">' + ICONS.truck + ' Delivery: ' + _feeFormatted + '</div>';
               }
             }
             if (hasBadges) {
               html += '</div>'; // close .zcc-badges-row
             }
             if (cfg.showDeliveryFee !== false && data.freeShippingAbove != null && data.freeShippingAbove > 0 && (data.deliveryFee == null || data.deliveryFee > 0)) {
-              html += '<div class="zcc-meta" style="margin-top:3px !important"><span style="font-size:11px !important;color:#6d7175 !important">Free delivery on orders over $' + data.freeShippingAbove.toFixed(2) + '</span></div>';
+              var _freeThreshFormatted;
+              try { _freeThreshFormatted = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(data.freeShippingAbove); } catch(e) { _freeThreshFormatted = '$' + data.freeShippingAbove.toFixed(2); }
+              html += '<div class="zcc-meta" style="margin-top:3px !important"><span style="font-size:11px !important;color:#6d7175 !important">Free delivery on orders over ' + _freeThreshFormatted + '</span></div>';
             }
             if (cfg.showReturnPolicy !== false && data.returnPolicy) {
               html += '<div class="zcc-return-policy">' + ICONS.refresh + '<span>' + esc(data.returnPolicy) + '</span></div>';
@@ -1075,7 +1097,7 @@
       wBtn.innerHTML = wBtnOriginalHtml;
     }
 
-    fetch(API_BASE + "/api/waitlist", {
+    zccFetch(API_BASE + "/api/waitlist", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -1121,7 +1143,7 @@
     var floatCss =
       "#" + WID + "-float{position:fixed !important;bottom:20px !important;right:20px !important;z-index:9998 !important;display:flex !important;flex-direction:column !important;align-items:flex-end !important;gap:12px !important}" +
       "#" + WID + "-panel{" +
-        "background:" + cfg.backgroundColor + " !important;border-radius:16px !important;" +
+        "background:" + cfg.backgroundColor + " !important;border-radius:" + rad + " !important;" +
         "box-shadow:0 12px 40px rgba(0,0,0,.15),0 4px 12px rgba(0,0,0,.08) !important;overflow:hidden !important;" +
         "animation:zcc-slide-in 0.25s ease !important;max-width:380px !important;width:380px !important;" +
         "display:flex !important;flex-direction:column !important;max-height:70vh !important" +
@@ -1211,7 +1233,7 @@
       "}" +
       "#" + WID + "-overlay.zcc-open{display:flex !important}" +
       "#" + WID + "-modal{" +
-        "background:" + cfg.backgroundColor + " !important;border-radius:16px !important;overflow:hidden !important;" +
+        "background:" + cfg.backgroundColor + " !important;border-radius:" + rad + " !important;overflow:hidden !important;" +
         "max-width:480px !important;width:100% !important;position:relative !important;" +
         "box-shadow:0 24px 48px rgba(0,0,0,.2) !important;animation:zcc-slide-in 0.3s ease !important;" +
         "display:flex !important;flex-direction:column !important;max-height:70vh !important" +
@@ -1259,7 +1281,7 @@
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>' +
           '</button>' +
         '</div>' +
-        '<div id="' + WID + '" data-zcc-widget="true" style="border:none !important;box-shadow:none !important;max-width:none !important;padding:16px 24px 24px !important;overflow-y:auto !important;max-height:calc(70vh - 60px) !important;border-radius:0 0 16px 16px !important">' +
+        '<div id="' + WID + '" data-zcc-widget="true" style="border:none !important;box-shadow:none !important;max-width:none !important;padding:16px 24px 24px !important;overflow-y:auto !important;max-height:calc(70vh - 60px) !important;border-radius:0 0 ' + rad + ' ' + rad + ' !important">' +
           buildWidgetInner(WID, cfg, cfg.buttonText, false) +
         '</div>' +
       '</div>';
@@ -1293,11 +1315,17 @@
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   function escAttr(str) {
-    return String(str).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
   }
   } // end init()
 })();

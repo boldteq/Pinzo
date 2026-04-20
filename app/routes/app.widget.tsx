@@ -410,7 +410,7 @@ function scopeAdminCss(rawCss: string | null | undefined, wid: string): string {
 
 // ── CSS generators — one per style preset, mirrors the Liquid block CSS ─────
 
-function buildSharedMetaCss(W: string, cfg: WidgetConfig): string {
+function buildSharedMetaCss(W: string, cfg: WidgetConfig, btnRadius: string): string {
   const s = cfg.successColor;
   return (
     // Result card layout — small inline icon, no circle background
@@ -428,7 +428,7 @@ function buildSharedMetaCss(W: string, cfg: WidgetConfig): string {
     W + " .zcc-btn-label{display:inline}" +
     // Section grouping — info group card with subtle background
     W + " .zcc-section-divider{height:1px;background:rgba(0,0,0,0.06);margin:10px 0;border:none}" +
-    W + " .zcc-info-group{display:flex;flex-direction:column;gap:7px;background:#f7faf7;border:1px solid #e8f0e8;border-radius:10px;padding:10px 12px}" +
+    W + " .zcc-info-group{display:flex;flex-direction:column;gap:7px;background:#f7faf7;border:1px solid #e8f0e8;border-radius:" + btnRadius + ";padding:10px 12px}" +
     W + " .zcc-badges-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px}" +
     // Meta info rows
     W + " .zcc-meta{margin-top:0;font-size:13px;display:flex;align-items:center;gap:7px;color:#4b5563;line-height:1.4}" +
@@ -473,7 +473,7 @@ function buildSharedMetaCss(W: string, cfg: WidgetConfig): string {
     W + " .zcc-delivery-fee--free{background:" + s + "10;border:1px solid " + s + "22;color:" + s + "}" +
     W + " .zcc-delivery-fee--paid{background:#f59e0b0e;border:1px solid #f59e0b1a;color:#92400e}" +
     // Order timeline — clean thin design
-    W + " .zcc-timeline{margin-top:0;display:flex;align-items:flex-start;justify-content:space-between;gap:0;position:relative;padding:12px 4px 8px;background:#f7faf7;border:1px solid #e8f0e8;border-radius:10px}" +
+    W + " .zcc-timeline{margin-top:0;display:flex;align-items:flex-start;justify-content:space-between;gap:0;position:relative;padding:12px 4px 8px;background:#f7faf7;border:1px solid #e8f0e8;border-radius:" + btnRadius + "}" +
     W + " .zcc-timeline::before{content:'';position:absolute;top:22px;left:calc(16.66% + 6px);right:calc(16.66% + 6px);height:1.5px;background:#d1e8d1;z-index:0}" +
     W + " .zcc-timeline-step{display:flex;flex-direction:column;align-items:center;gap:5px;z-index:1;position:relative;flex:1}" +
     W + " .zcc-timeline-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1.5px solid " + s + ";background:" + cfg.backgroundColor + "}" +
@@ -525,14 +525,14 @@ function buildWidgetCss(wid: string, cfg: WidgetConfig): string {
     W + " .zcc-result{margin-top:12px;padding:0;border-radius:0;font-size:13.5px;line-height:1.5;animation:zcc-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1);display:flex;gap:8px;align-items:flex-start;background:none;border:none}" +
     W + " .zcc-result.ok{background:none;border:none;color:" + cfg.textColor + "}" +
     W + " .zcc-result.ok .zcc-result-icon svg{color:" + s + ";stroke:" + s + "}" +
-    W + " .zcc-result.fail{background:" + e + "08;border:1px solid " + e + "18;color:" + cfg.textColor + ";padding:10px 12px;border-radius:10px}" +
+    W + " .zcc-result.fail{background:" + e + "08;border:1px solid " + e + "18;color:" + cfg.textColor + ";padding:10px 12px;border-radius:" + btnRadius + "}" +
     W + " .zcc-result.fail .zcc-result-icon svg{color:" + e + ";stroke:" + e + "}" +
-    W + " .zcc-wl{margin-top:10px;padding:14px;background:linear-gradient(135deg,#f8fafc,#f0f4f8);border-radius:12px;border:1px solid #dde3ec}" +
-    W + " .zcc-wl-input{border-radius:8px;border:1.5px solid #dee2e6;padding:10px 14px;width:100%;display:block;margin-bottom:8px;outline:none;font-size:13px;transition:border-color 0.2s,box-shadow 0.2s;background:#fff;color:" + cfg.textColor + "}" +
+    W + " .zcc-wl{margin-top:10px;padding:14px;background:linear-gradient(135deg,#f8fafc,#f0f4f8);border-radius:" + btnRadius + ";border:1px solid #dde3ec}" +
+    W + " .zcc-wl-input{border-radius:" + btnRadius + ";border:1.5px solid #dee2e6;padding:10px 14px;width:100%;display:block;margin-bottom:8px;outline:none;font-size:13px;transition:border-color 0.2s,box-shadow 0.2s;background:#fff;color:" + cfg.textColor + "}" +
     W + " .zcc-wl-btn{border-radius:" + btnRadius + ";background:" + p + ";color:#fff;padding:10px 20px;width:100%;font-weight:600;border:none;cursor:pointer;font-size:13px;transition:filter 0.2s,box-shadow 0.2s,transform 0.2s;letter-spacing:0.01em;box-shadow:0 2px 8px " + p + "25;display:flex;align-items:center;justify-content:center;gap:6px}" +
     W + " .zcc-wl-btn:hover{filter:brightness(1.06);box-shadow:0 4px 14px " + p + "40;transform:translateY(-1px)}" +
     W + " .zcc-wl-btn:active{filter:brightness(0.95);transform:translateY(0)}" +
-    buildSharedMetaCss(W, cfg);
+    buildSharedMetaCss(W, cfg, btnRadius);
   return base + scopeAdminCss(cfg.customCss, wid);
 }
 
@@ -551,6 +551,7 @@ function FloatingPreview({
   pinIcon: React.ReactNode;
 }) {
   const [panelOpen, setPanelOpen] = useState(true);
+  const cfgRadius = Number(cfg.borderRadius) || 10;
 
   return (
     <>
@@ -563,7 +564,7 @@ function FloatingPreview({
           <div
             style={{
               background: cfg.backgroundColor,
-              borderRadius: 14,
+              borderRadius: cfgRadius,
               boxShadow: "0 8px 32px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.06)",
               width: "100%",
               overflow: "hidden",
@@ -679,13 +680,14 @@ function PopupPreview({
   pinIcon: React.ReactNode;
 }) {
   const [modalOpen, setModalOpen] = useState(true);
+  const cfgRadius = Number(cfg.borderRadius) || 10;
 
   return (
     <>
       {/* eslint-disable-next-line react/no-danger */}
       <style dangerouslySetInnerHTML={{ __html: css }} />
       <div style={{ position: "relative" }}>
-        {/* Trigger button (always visible) — pill with shadow */}
+        {/* Trigger button (always visible) — respects configured radius (matches live popup) */}
         <div style={{ marginBottom: modalOpen ? 16 : 0 }}>
           <button
             type="button"
@@ -694,7 +696,7 @@ function PopupPreview({
               background: cfg.primaryColor,
               color: "#fff",
               border: "none",
-              borderRadius: 50,
+              borderRadius: cfgRadius,
               padding: "13px 28px",
               fontSize: 14,
               fontWeight: 600,
@@ -731,7 +733,7 @@ function PopupPreview({
             <div
               style={{
                 background: cfg.backgroundColor,
-                borderRadius: 18,
+                borderRadius: cfgRadius,
                 boxShadow: "0 32px 64px rgba(0,0,0,.18), 0 8px 24px rgba(0,0,0,.08)",
                 width: "100%",
                 maxWidth: 420,
@@ -1559,7 +1561,17 @@ export default function WidgetPage() {
                             return (
                               <div
                                 key={tpl.id}
+                                role="button"
+                                tabIndex={limits.widgetFullCustom ? 0 : -1}
+                                aria-disabled={!limits.widgetFullCustom}
+                                aria-pressed={isActive}
                                 onClick={() => handleApplyTemplate(tpl.id)}
+                                onKeyDown={(e) => {
+                                  if ((e.key === "Enter" || e.key === " ") && limits.widgetFullCustom) {
+                                    e.preventDefault();
+                                    handleApplyTemplate(tpl.id);
+                                  }
+                                }}
                                 style={{
                                   cursor: limits.widgetFullCustom ? "pointer" : "not-allowed",
                                   opacity: limits.widgetFullCustom ? 1 : 0.5,
@@ -1975,44 +1987,6 @@ export default function WidgetPage() {
                             )}
                           </BlockStack>
                         </Card>
-                        <Card>
-                          <BlockStack gap="400">
-                            <InlineStack align="space-between" blockAlign="center">
-                              <Text as="h2" variant="headingMd">
-                                Custom CSS
-                              </Text>
-                              {!limits.customCss && (
-                                <Badge tone="info">Ultimate</Badge>
-                              )}
-                            </InlineStack>
-                            <TextField
-                              label="Custom CSS"
-                              labelHidden
-                              value={customCss}
-                              onChange={handleCustomCssChange}
-                              multiline={4}
-                              placeholder=".zcc-heading { font-size: 18px; } .zcc-btn { border-radius: 4px; }"
-                              autoComplete="off"
-                              disabled={!limits.customCss}
-                              maxLength={MAX_CUSTOM_CSS_LENGTH}
-                              helpText="Target widget elements with these classes: .zcc-heading, .zcc-heading-icon, .zcc-search-bar, .zcc-input, .zcc-btn, .zcc-btn-icon, .zcc-btn-label, .zcc-result, .zcc-result-icon, .zcc-result-message, .zcc-meta, .zcc-cutoff, .zcc-days, .zcc-cod, .zcc-return-policy, .zcc-delivery-date, .zcc-countdown, .zcc-delivery-fee, .zcc-wl (waitlist), .zcc-wl-input, .zcc-wl-btn, .zcc-social-proof. All selectors are automatically scoped to the widget — your CSS won't affect the rest of your store."
-                            />
-                            {!limits.customCss && (
-                              <Banner tone="info">
-                                <Text as="p" variant="bodySm">
-                                  Upgrade to Ultimate to add custom CSS overrides.{" "}
-                                  <Button
-                                    variant="plain"
-                                    onClick={() => navigate("/app/pricing")}
-                                  >
-                                    View plans
-                                  </Button>
-                                </Text>
-                              </Banner>
-                            )}
-                          </BlockStack>
-                        </Card>
-
                         {/* Visibility Card */}
                         <Card>
                           <BlockStack gap="400">
@@ -2105,6 +2079,45 @@ export default function WidgetPage() {
                                   />
                                 )}
                               </BlockStack>
+                            )}
+                          </BlockStack>
+                        </Card>
+
+                        {/* Custom CSS Card */}
+                        <Card>
+                          <BlockStack gap="400">
+                            <InlineStack align="space-between" blockAlign="center">
+                              <Text as="h2" variant="headingMd">
+                                Custom CSS
+                              </Text>
+                              {!limits.customCss && (
+                                <Badge tone="info">Ultimate</Badge>
+                              )}
+                            </InlineStack>
+                            <TextField
+                              label="Custom CSS"
+                              labelHidden
+                              value={customCss}
+                              onChange={handleCustomCssChange}
+                              multiline={4}
+                              placeholder=".zcc-heading { font-size: 18px; } .zcc-btn { border-radius: 4px; }"
+                              autoComplete="off"
+                              disabled={!limits.customCss}
+                              maxLength={MAX_CUSTOM_CSS_LENGTH}
+                              helpText="Target widget elements with these classes: .zcc-heading, .zcc-heading-icon, .zcc-search-bar, .zcc-input, .zcc-btn, .zcc-btn-icon, .zcc-btn-label, .zcc-result, .zcc-result-icon, .zcc-result-message, .zcc-meta, .zcc-cutoff, .zcc-days, .zcc-cod, .zcc-return-policy, .zcc-delivery-date, .zcc-countdown, .zcc-delivery-fee, .zcc-wl (waitlist), .zcc-wl-input, .zcc-wl-btn, .zcc-social-proof. All selectors are automatically scoped to the widget — your CSS won't affect the rest of your store."
+                            />
+                            {!limits.customCss && (
+                              <Banner tone="info">
+                                <Text as="p" variant="bodySm">
+                                  Upgrade to Ultimate to add custom CSS overrides.{" "}
+                                  <Button
+                                    variant="plain"
+                                    onClick={() => navigate("/app/pricing")}
+                                  >
+                                    View plans
+                                  </Button>
+                                </Text>
+                              </Banner>
                             )}
                           </BlockStack>
                         </Card>

@@ -34,6 +34,7 @@ import {
   Banner,
   ChoiceList,
   Tag,
+  InlineError,
 } from "@shopify/polaris";
 import { PlusIcon, DeleteIcon, EditIcon, ViewIcon, HideIcon } from "@shopify/polaris-icons";
 
@@ -79,8 +80,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   ]);
 
   // Batch-fetch names for rules that target specific products or collections
-  let productNames: Record<string, string> = {};
-  let collectionNames: Record<string, string> = {};
+  const productNames: Record<string, string> = {};
+  const collectionNames: Record<string, string> = {};
+  let namesError = false;
 
   if (hasProductScope) {
     const allProductIds = new Set<string>();
@@ -149,6 +151,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       }
     } catch {
       // Non-critical — names are cosmetic; fall back to showing IDs
+      namesError = true;
     }
   }
 
@@ -159,6 +162,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     hasProductScope,
     productNames,
     collectionNames,
+    namesError,
   };
 };
 
@@ -203,6 +207,29 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (!name) return { error: "Rule name is required." };
 
+    // Reject NaN and negative amounts — TextField accepts any number string.
+    const negativeField = (
+      [
+        ["minOrderAmount", minOrderAmount],
+        ["deliveryFee", deliveryFee],
+        ["freeShippingAbove", freeShippingAbove],
+      ] as const
+    ).find(([, v]) => v !== null && (Number.isNaN(v) || v < 0));
+    if (negativeField) {
+      return { error: `${negativeField[0]} must be 0 or greater.` };
+    }
+
+    if (!daysOfWeek) {
+      return { error: "Select at least one delivery day." };
+    }
+
+    if (targetType === "products" && !productIds) {
+      return { error: "Select at least one product for product targeting." };
+    }
+    if (targetType === "collections" && !collectionIds) {
+      return { error: "Select at least one collection for collection targeting." };
+    }
+
     // Plan-gating for product/collection targeting
     if (targetType !== "all") {
       const subscription = await getShopSubscription(shop);
@@ -235,8 +262,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         if (!existing) return { error: "Rule not found." };
         await db.deliveryRule.update({ where: { id }, data });
         return { success: true, action: "updated" };
-      } catch {
-        return { error: "Failed to update rule." };
+      } catch (err) {
+        console.error("[app.delivery-rules] update failed shop=%s id=%s:", shop, id, err);
+        return { error: "Failed to update rule. Please try again." };
       }
     } else {
       // Plan-gating: check limits before creating a new rule
@@ -271,8 +299,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (!existing) return { error: "Rule not found." };
       await db.deliveryRule.delete({ where: { id } });
       return { success: true, action: "deleted" };
-    } catch {
-      return { error: "Failed to delete rule." };
+    } catch (err) {
+      console.error("[app.delivery-rules] delete failed shop=%s id=%s:", shop, id, err);
+      return { error: "Failed to delete rule. Please try again." };
     }
   }
 
@@ -287,8 +316,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         data: { isActive: !isActive },
       });
       return { success: true, action: "toggled" };
-    } catch {
-      return { error: "Failed to toggle rule." };
+    } catch (err) {
+      console.error("[app.delivery-rules] toggle failed shop=%s id=%s:", shop, id, err);
+      return { error: "Failed to toggle rule. Please try again." };
     }
   }
 
@@ -298,8 +328,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     try {
       await db.deliveryRule.deleteMany({ where: { id: { in: ids }, shop } });
       return { success: true, action: "bulk-deleted" };
-    } catch {
-      return { error: "Failed to delete rules." };
+    } catch (err) {
+      console.error("[app.delivery-rules] bulk-delete failed shop=%s count=%d:", shop, ids.length, err);
+      return { error: "Failed to delete rules. Please try again." };
     }
   }
 
@@ -313,8 +344,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         data: { isActive: active },
       });
       return { success: true, action: active ? "bulk-activated" : "bulk-deactivated" };
-    } catch {
-      return { error: "Failed to update rules." };
+    } catch (err) {
+      console.error("[app.delivery-rules] bulk-toggle failed shop=%s:", shop, err);
+      return { error: "Failed to update rules. Please try again." };
     }
   }
 
@@ -340,7 +372,7 @@ type Rule = {
 };
 
 export default function DeliveryRulesPage() {
-  const { rules, zones, subscription, hasProductScope, productNames, collectionNames } =
+  const { rules, zones, subscription, hasProductScope, productNames, collectionNames, namesError } =
     useLoaderData<typeof loader>();
   const limits = PLAN_LIMITS[subscription.planTier];
   const isFreePlan = limits.maxDeliveryRules === 0;
@@ -469,7 +501,23 @@ export default function DeliveryRulesPage() {
     [productNames, collectionNames],
   );
 
+  // Client-side field validation helpers
+  const isNegativeAmount = (val: string) => {
+    if (!val.trim()) return false;
+    const n = parseFloat(val);
+    return isNaN(n) || n < 0;
+  };
+
   const handleSave = useCallback(() => {
+    // Client-side guard: reject if any amount is negative/NaN
+    if (isNegativeAmount(minOrderAmount) || isNegativeAmount(deliveryFee) || isNegativeAmount(freeShippingAbove)) {
+      return; // field-level error shown inline via TextField error prop
+    }
+    // Client-side guard: at least one delivery day
+    if (selectedDays.length === 0) {
+      return; // InlineError shown under the checkboxes
+    }
+
     const fd = new FormData();
     fd.set("intent", editingRule ? "update" : "create");
     if (editingRule) fd.set("id", editingRule.id);
@@ -737,6 +785,13 @@ export default function DeliveryRulesPage() {
             </InlineStack>
           </Layout.Section>
         )}
+        {namesError && (
+          <Layout.Section>
+            <Banner tone="warning">
+              Couldn&apos;t load product/collection names — showing IDs. Refresh to retry.
+            </Banner>
+          </Layout.Section>
+        )}
         <Layout.Section>
           <Card padding="0">
             {(rules as Rule[]).length === 0 ? (
@@ -872,6 +927,8 @@ export default function DeliveryRulesPage() {
         primaryAction={{
           content: editingRule ? "Save Changes" : "Create Rule",
           onAction: handleSave,
+          loading: fetcher.state !== "idle",
+          disabled: fetcher.state !== "idle",
         }}
         secondaryActions={[
           {
@@ -1032,6 +1089,7 @@ export default function DeliveryRulesPage() {
                 placeholder="0.00"
                 autoComplete="off"
                 helpText="Leave empty for free delivery."
+                error={isNegativeAmount(deliveryFee) ? "Must be 0 or greater" : undefined}
               />
               <TextField
                 label="Min. Order Amount ($)"
@@ -1041,6 +1099,7 @@ export default function DeliveryRulesPage() {
                 placeholder="0.00"
                 autoComplete="off"
                 helpText="Minimum order to qualify for delivery."
+                error={isNegativeAmount(minOrderAmount) ? "Must be 0 or greater" : undefined}
               />
             </InlineGrid>
 
@@ -1052,6 +1111,7 @@ export default function DeliveryRulesPage() {
               placeholder="e.g. 50.00"
               autoComplete="off"
               helpText="Waive the delivery fee for orders above this amount."
+              error={isNegativeAmount(freeShippingAbove) ? "Must be 0 or greater" : undefined}
             />
 
             <Divider />
@@ -1091,6 +1151,9 @@ export default function DeliveryRulesPage() {
                   />
                 ))}
               </InlineStack>
+              {selectedDays.length === 0 && (
+                <InlineError message="Select at least one delivery day" fieldID="delivery-days" />
+              )}
             </BlockStack>
           </BlockStack>
         </Modal.Section>

@@ -603,7 +603,7 @@ export default function PricingPage() {
               <BlockStack gap="0">
                 {/* Header */}
                 <Box padding="500" paddingBlockEnd="400">
-                  <InlineGrid columns="4fr 2fr 2fr 2fr 2fr" gap="300" alignItems="end">
+                  <InlineGrid columns={{ xs: 1, md: "4fr 2fr 2fr 2fr 2fr" }} gap="300" alignItems="end">
                     <Text as="p" variant="bodyMd" fontWeight="semibold" tone="subdued">
                       Feature
                     </Text>
@@ -651,7 +651,7 @@ export default function PricingPage() {
                       paddingBlock="400"
                       background={i % 2 === 0 ? "bg-surface" : "bg-surface-secondary"}
                     >
-                      <InlineGrid columns="4fr 2fr 2fr 2fr 2fr" gap="300" alignItems="center">
+                      <InlineGrid columns={{ xs: 1, md: "4fr 2fr 2fr 2fr 2fr" }} gap="300" alignItems="center">
                         <Text as="p" variant="bodyLg">
                           {row.label}
                         </Text>

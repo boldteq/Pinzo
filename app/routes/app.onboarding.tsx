@@ -37,17 +37,19 @@ const TOTAL_STEPS = 5;
 function StepIndicator({ current, total }: { current: number; total: number }) {
   const progress = Math.round(((current - 1) / total) * 100);
   return (
-    <BlockStack gap="200">
-      <InlineStack align="space-between">
-        <Text as="p" variant="bodySm" tone="subdued">
-          Step {current} of {total}
-        </Text>
-        <Text as="p" variant="bodySm" fontWeight="semibold">
-          {progress}% complete
-        </Text>
-      </InlineStack>
-      <ProgressBar progress={progress} size="small" tone="highlight" />
-    </BlockStack>
+    <div role="status" aria-label={`Step ${current} of ${total}`}>
+      <BlockStack gap="200">
+        <InlineStack align="space-between">
+          <Text as="p" variant="bodySm" tone="subdued">
+            Step {current} of {total}
+          </Text>
+          <Text as="p" variant="bodySm" fontWeight="semibold">
+            {progress}% complete
+          </Text>
+        </InlineStack>
+        <ProgressBar progress={progress} size="small" tone="highlight" />
+      </BlockStack>
+    </div>
   );
 }
 
@@ -58,7 +60,11 @@ export default function OnboardingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const stepParam = parseInt(searchParams.get("step") ?? "1", 10);
-  const step = isNaN(stepParam) || stepParam < 1 || stepParam > TOTAL_STEPS ? 1 : stepParam;
+  const isValidStep = !isNaN(stepParam) && stepParam >= 1 && stepParam <= TOTAL_STEPS;
+  if (!isValidStep) {
+    console.warn("[onboarding] Invalid step param:", searchParams.get("step"));
+  }
+  const step = isValidStep ? stepParam : 1;
 
   const [isComplete, setIsComplete] = useState(false);
 

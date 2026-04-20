@@ -139,5 +139,8 @@ export function getPlanTier(planName: string): PlanTier {
     return "pro";
   if (planName === PLAN_ULTIMATE_MONTHLY || planName === PLAN_ULTIMATE_ANNUAL)
     return "ultimate";
+  if (planName && planName !== "free") {
+    console.warn("[plans] Unknown plan name:", planName);
+  }
   return "free";
 }

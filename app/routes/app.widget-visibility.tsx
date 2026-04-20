@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type {
   ActionFunctionArgs,
   HeadersFunction,
@@ -112,11 +112,19 @@ export default function WidgetVisibilityPage() {
     initPages ? initPages.split(",").filter(Boolean) : ["product"],
   );
 
+  const prevFetcherState = useRef(fetcher.state);
   useEffect(() => {
-    if (fetcher.data && "success" in fetcher.data && fetcher.data.success) {
-      shopify.toast.show("Visibility settings saved");
+    if (
+      prevFetcherState.current === "submitting" &&
+      fetcher.state === "idle" &&
+      fetcher.data &&
+      "success" in fetcher.data &&
+      fetcher.data.success
+    ) {
+      shopify.toast.show("Saved");
     }
-  }, [fetcher.data, shopify]);
+    prevFetcherState.current = fetcher.state;
+  }, [fetcher.state, fetcher.data, shopify]);
 
   const handleSelectProducts = useCallback(async () => {
     const selection = await shopify.resourcePicker({

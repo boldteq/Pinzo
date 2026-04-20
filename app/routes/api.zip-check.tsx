@@ -393,7 +393,8 @@ async function handleZipCheck(
     { status: 200, headers: SUCCESS_HEADERS },
   );
   } catch (err) {
-    console.error("[api.zip-check] Unhandled error for shop=%s zip=%s:", shop, zip, err);
+    const mask = (s: string | null | undefined) => (s ? s.slice(0, 2) + "***" : "");
+    console.error("[api.zip-check] Unhandled error for shop=%s zip=%s:", shop, mask(zip), err);
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: CORS_HEADERS },

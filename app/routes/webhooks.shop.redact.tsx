@@ -28,8 +28,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       db.shopSettings.deleteMany({ where: { shop } }), // contains notificationEmail (PII)
       db.featureRequest.deleteMany({ where: { shop } }),
       db.productCollectionCache.deleteMany({ where: { shop } }),
+      db.zipCheckLog.deleteMany({ where: { shop } }),
     ]);
-  } catch {
+  } catch (err) {
+    console.error("[webhook:shop.redact] cleanup failed for shop=%s:", shop, err);
     // Shopify requires a 200 response regardless of errors
   }
 

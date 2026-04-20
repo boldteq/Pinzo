@@ -10,32 +10,39 @@
 import type { ActionFunctionArgs } from "react-router";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
+import { sendGdprDataRequestExport } from "../email.server";
+
+interface DataRequestPayload {
+  customer?: { email?: string };
+}
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { shop, payload } = await authenticate.webhook(request);
 
-  const customerEmail = payload?.customer?.email;
+  const customerEmail = (payload as DataRequestPayload | undefined)?.customer?.email;
 
-  // Look up any data stored for this customer.
   // For this app, the only customer PII stored is waitlist entries (email + zip).
-  // Shopify does not auto-send the data — you must respond within 30 days.
+  // Merchant must respond within 30 days — we email the customer directly.
   try {
-    if (customerEmail) {
-      const customerData = await db.waitlistEntry.findMany({
+    if (customerEmail && shop) {
+      const rows = await db.waitlistEntry.findMany({
         where: { shop, email: customerEmail },
         select: { zipCode: true, status: true, createdAt: true },
       });
 
-      // Log customer data for manual GDPR response within 30 days.
-      // In production, integrate with an email service to send data directly.
-      if (customerData.length > 0) {
-        console.log(
-          `[GDPR] Data request for ${customerEmail} at ${shop}:`,
-          JSON.stringify(customerData),
+      const delivered = await sendGdprDataRequestExport(customerEmail, shop, rows);
+      if (!delivered) {
+        // Resend not configured or send failed — log so merchant can respond manually.
+        console.error(
+          "[GDPR:data_request] email delivery failed shop=%s customer=%s rows=%d",
+          shop,
+          customerEmail,
+          rows.length,
         );
       }
     }
-  } catch {
+  } catch (err) {
+    console.error("[GDPR:data_request] handler error for shop=%s:", shop, err);
     // Shopify requires a 200 response regardless of errors
   }
 

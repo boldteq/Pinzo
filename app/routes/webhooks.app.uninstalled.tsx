@@ -22,9 +22,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         db.shopSettings.deleteMany({ where: { shop } }),
         db.featureRequest.deleteMany({ where: { shop } }),
         db.productCollectionCache.deleteMany({ where: { shop } }),
+        db.zipCheckLog.deleteMany({ where: { shop } }),
       ]);
-    } catch {
-      // Log failures silently — Shopify requires a 200 response regardless
+    } catch (err) {
+      console.error("[webhook:app.uninstalled] cleanup failed for shop=%s:", shop, err);
+      // Shopify requires a 200 response regardless of cleanup errors
     }
   }
 

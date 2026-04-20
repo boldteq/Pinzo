@@ -17,6 +17,30 @@ import {
   PLAN_ULTIMATE_ANNUAL,
 } from "./plans";
 
+// Fail fast at boot if critical env vars are missing. A silent default ("" for
+// apiSecretKey, undefined SCOPES) would cause OAuth to fail with opaque errors
+// later in request handling — much harder to debug in production.
+const REQUIRED_ENV_VARS = [
+  "SHOPIFY_API_KEY",
+  "SHOPIFY_API_SECRET",
+  "SHOPIFY_APP_URL",
+  "SCOPES",
+] as const;
+const missingEnv = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
+if (missingEnv.length > 0) {
+  throw new Error(
+    `Missing required Shopify env vars: ${missingEnv.join(", ")}. Check Railway env config.`,
+  );
+}
+
+const SHOP_CUSTOM_DOMAIN = process.env.SHOP_CUSTOM_DOMAIN;
+const CUSTOM_DOMAIN_RE = /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)+$/;
+if (SHOP_CUSTOM_DOMAIN && !CUSTOM_DOMAIN_RE.test(SHOP_CUSTOM_DOMAIN)) {
+  throw new Error(
+    `SHOP_CUSTOM_DOMAIN="${SHOP_CUSTOM_DOMAIN}" is not a valid domain.`,
+  );
+}
+
 // Re-export plan helpers so server code can import from one place
 export {
   PLAN_FREE,
@@ -33,11 +57,11 @@ export {
 export type { PlanTier, PlanLimits } from "./plans";
 
 const shopify = shopifyApp({
-  apiKey: process.env.SHOPIFY_API_KEY,
-  apiSecretKey: process.env.SHOPIFY_API_SECRET || "",
+  apiKey: process.env.SHOPIFY_API_KEY!,
+  apiSecretKey: process.env.SHOPIFY_API_SECRET!,
   apiVersion: ApiVersion.January26,
-  scopes: process.env.SCOPES?.split(","),
-  appUrl: process.env.SHOPIFY_APP_URL || "",
+  scopes: process.env.SCOPES!.split(","),
+  appUrl: process.env.SHOPIFY_APP_URL!,
   authPathPrefix: "/auth",
   sessionStorage: new PrismaSessionStorage(prisma),
   distribution: AppDistribution.AppStore,
@@ -108,9 +132,7 @@ const shopify = shopifyApp({
     },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any,
-  ...(process.env.SHOP_CUSTOM_DOMAIN
-    ? { customShopDomains: [process.env.SHOP_CUSTOM_DOMAIN] }
-    : {}),
+  ...(SHOP_CUSTOM_DOMAIN ? { customShopDomains: [SHOP_CUSTOM_DOMAIN] } : {}),
 });
 
 export default shopify;

@@ -28,14 +28,34 @@ api_version = "2026-01"
   topics = [ "app_subscriptions/update" ]
   uri = "/webhooks/app_subscriptions/update"
 
-# GDPR compliance webhooks (customers/data_request, customers/redact, shop/redact)
-# are NOT registered here — they are configured in Shopify Partner Dashboard > App setup > Privacy.
-# Route handlers exist at: webhooks.customers.data_request.tsx, webhooks.customers.redact.tsx, webhooks.shop.redact.tsx
+  # GDPR compliance webhooks (required for Shopify App Store listing).
+  # Uses compliance_topics per Shopify CLI schema (https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#compliance-topics).
+  [[webhooks.subscriptions]]
+  compliance_topics = [ "customers/data_request" ]
+  uri = "/webhooks/customers/data_request"
+
+  [[webhooks.subscriptions]]
+  compliance_topics = [ "customers/redact" ]
+  uri = "/webhooks/customers/redact"
+
+  [[webhooks.subscriptions]]
+  compliance_topics = [ "shop/redact" ]
+  uri = "/webhooks/shop/redact"
+
+  # Invalidate product/collection cache when merchant updates catalog
+  [[webhooks.subscriptions]]
+  topics = [ "products/update" ]
+  uri = "/webhooks/products/update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "collections/update" ]
+  uri = "/webhooks/collections/update"
 
 [access_scopes]
 # read_themes is required to detect whether the app embed is enabled in the
 # merchant's active theme (reads config/settings_data.json via GraphQL themes API).
-scopes = "read_themes,read_products"
+# read_app_subscriptions is required to sync billing state from Shopify.
+scopes = "read_themes,read_products,read_app_subscriptions"
 optional_scopes = []
 use_legacy_install_flow = false
 

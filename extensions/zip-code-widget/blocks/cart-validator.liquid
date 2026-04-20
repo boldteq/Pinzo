@@ -31,7 +31,13 @@
     assign metafield_value = app.metafields.zip_checker.widget_config.value
   -%}
 
-  <div id="zcc-cart-validator" style="display:none; margin: 16px 0;" aria-live="polite"></div>
+  <div
+    id="zcc-cart-validator"
+    data-api="{{ app.url }}"
+    data-proxy="/apps/zipcheck"
+    style="display:none; margin: 16px 0;"
+    aria-live="polite"
+  ></div>
 
   <style>
     #zcc-cart-validator { font-family: inherit; }
@@ -87,10 +93,29 @@
     var SHOP = {{ shop_domain | json }};
     var META_RAW = {{ metafield_value | default: 'null' | json }};
 
+    // Resolve API base the same way the main widget does: prefer the full
+    // app URL from Shopify Liquid (`app.url`), fall back to the App Proxy
+    // path so requests still route through Shopify when rendered outside a
+    // context where `app.url` is populated.
+    var _container = document.getElementById('zcc-cart-validator');
+    var _rawApi = (_container && _container.dataset.api || '').replace(/\/$/, '');
+    var _proxyPath = (_container && _container.dataset.proxy || '/apps/zipcheck').replace(/\/$/, '');
+    var API_BASE = (_rawApi && _rawApi.indexOf('http') === 0) ? _rawApi : _proxyPath;
+
     function escapeHtml(str) {
       var d = document.createElement('div');
       d.textContent = str;
       return d.innerHTML;
+    }
+
+    // Escape untrusted content used inside HTML attribute values.
+    function escapeAttr(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
     }
 
     var cfg = { blockCheckoutInCart: false };
@@ -99,92 +124,129 @@
       if (meta) cfg = Object.assign(cfg, meta);
     } catch(e) {}
 
+    var CHECKOUT_SELECTORS = [
+      '[name="checkout"]',
+      '.cart__checkout-button',
+      '.cart-checkout-btn',
+      'button[data-action="checkout"]',
+      '.checkout-button',
+      'input[name="checkout"]',
+      '[href="/checkout"]',
+      'a.btn[href*="checkout"]'
+    ];
+
+    function blockCheckout(zip) {
+      CHECKOUT_SELECTORS.forEach(function(sel) {
+        try {
+          document.querySelectorAll(sel).forEach(function(el) {
+            el.classList.add('zcc-checkout-blocked');
+            el.setAttribute('data-zcc-checkout-blocked', 'true');
+            el.setAttribute('title', 'Delivery is not available for ZIP code ' + zip + '. Please update your ZIP code.');
+          });
+        } catch(e) {}
+      });
+    }
+
+    function unblockCheckout() {
+      document.querySelectorAll('[data-zcc-checkout-blocked="true"]').forEach(function(el) {
+        el.classList.remove('zcc-checkout-blocked');
+        el.removeAttribute('data-zcc-checkout-blocked');
+        el.removeAttribute('title');
+      });
+    }
+
+    function renderBlocked(zip) {
+      var wrapper = document.getElementById('zcc-cart-validator');
+      if (!wrapper) return;
+      wrapper.style.display = 'block';
+      wrapper.innerHTML = '<div class="zcc-cv-banner">'
+        + '<span class="zcc-cv-icon">⚠️</span>'
+        + '<div class="zcc-cv-content">'
+        + '<p class="zcc-cv-title">Delivery Not Available for Your Area</p>'
+        + '<p class="zcc-cv-msg">Your ZIP code <span class="zcc-cv-zip">' + escapeHtml(zip) + '</span> is outside our current delivery area. Please remove restricted items or check a different ZIP code.</p>'
+        + '<div class="zcc-cv-actions">'
+        + '<button class="zcc-cv-dismiss" type="button" data-zcc-dismiss="1">Dismiss</button>'
+        + '</div>'
+        + '</div>'
+        + '</div>';
+      var dismiss = wrapper.querySelector('[data-zcc-dismiss="1"]');
+      if (dismiss) dismiss.addEventListener('click', function() { wrapper.style.display = 'none'; });
+
+      if (cfg.blockCheckoutInCart) {
+        blockCheckout(escapeAttr(zip));
+        var notice = document.createElement('p');
+        notice.className = 'zcc-checkout-notice';
+        notice.style.display = 'block';
+        notice.textContent = 'Checkout unavailable — ZIP code ' + zip + ' is not in our delivery area.';
+        wrapper.appendChild(notice);
+      }
+    }
+
+    function renderHidden() {
+      var wrapper = document.getElementById('zcc-cart-validator');
+      if (wrapper) wrapper.style.display = 'none';
+      unblockCheckout();
+    }
+
+    // Re-verify with the server rather than trusting sessionStorage.
+    // This closes the bypass where a customer could write
+    //   sessionStorage.setItem('zcc:valid', 'true')
+    // in the browser console to unlock checkout. The cart-validator now
+    // asks the API every time and only trusts its live response.
+    function verifyAndRender(zip) {
+      var timeout = new AbortController();
+      var timeoutId = setTimeout(function() { timeout.abort(); }, 5000);
+      fetch(API_BASE + '/api/zip-check?shop=' + encodeURIComponent(SHOP) + '&zip=' + encodeURIComponent(zip), {
+        method: 'GET',
+        signal: timeout.signal,
+        headers: { 'Accept': 'application/json' }
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data || data.allowed === true) {
+            renderHidden();
+          } else {
+            renderBlocked(zip);
+          }
+        })
+        .catch(function() {
+          // Network or timeout error — fail closed only if merchant opted in.
+          if (cfg.blockCheckoutInCart) renderBlocked(zip);
+        })
+        .finally(function() { clearTimeout(timeoutId); });
+    }
+
     function init() {
       var wrapper = document.getElementById('zcc-cart-validator');
       if (!wrapper) return;
 
-      var isValid, zip, storedShop;
+      var zip, storedShop;
       try {
-        isValid = sessionStorage.getItem('zcc:valid');
         zip = sessionStorage.getItem('zcc:zip');
         storedShop = sessionStorage.getItem('zcc:shop');
       } catch(e) { return; }
 
-      // Only act if the stored validation is for THIS shop
-      if (!isValid || storedShop !== SHOP) return;
+      // Only act if the stored ZIP is for THIS shop and present.
+      if (!zip || storedShop !== SHOP) return;
 
-      if (isValid === 'false' && zip) {
-        // Show warning banner
-        wrapper.style.display = 'block';
-        wrapper.innerHTML = '<div class="zcc-cv-banner">'
-          + '<span class="zcc-cv-icon">⚠️</span>'
-          + '<div class="zcc-cv-content">'
-          + '<p class="zcc-cv-title">Delivery Not Available for Your Area</p>'
-          + '<p class="zcc-cv-msg">Your ZIP code <span class="zcc-cv-zip">' + escapeHtml(zip) + '</span> is outside our current delivery area. Please remove restricted items or check a different ZIP code.</p>'
-          + '<div class="zcc-cv-actions">'
-          + '<button class="zcc-cv-dismiss" onclick="document.getElementById(\'zcc-cart-validator\').style.display=\'none\'">Dismiss</button>'
-          + '</div>'
-          + '</div>'
-          + '</div>';
-
-        // Optionally block checkout buttons
-        if (cfg.blockCheckoutInCart) {
-          var CHECKOUT_SELECTORS = [
-            '[name="checkout"]',
-            '.cart__checkout-button',
-            '.cart-checkout-btn',
-            'button[data-action="checkout"]',
-            '.checkout-button',
-            'input[name="checkout"]',
-            '[href="/checkout"]',
-            'a.btn[href*="checkout"]'
-          ];
-
-          CHECKOUT_SELECTORS.forEach(function(sel) {
-            try {
-              document.querySelectorAll(sel).forEach(function(el) {
-                el.classList.add('zcc-checkout-blocked');
-                el.setAttribute('data-zcc-checkout-blocked', 'true');
-                el.setAttribute('title', 'Delivery is not available for ZIP code ' + escapeHtml(zip) + '. Please update your ZIP code.');
-              });
-            } catch(e) {}
-          });
-
-          // Add notice below checkout buttons
-          var notice = document.createElement('p');
-          notice.className = 'zcc-checkout-notice';
-          notice.style.display = 'block';
-          notice.textContent = 'Checkout unavailable — ZIP code ' + zip + ' is not in our delivery area.';
-          wrapper.appendChild(notice);
-        }
-      }
+      verifyAndRender(zip);
     }
 
-    // Run on DOM ready
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', init);
     } else {
       init();
     }
 
-    // Also listen for zcc:validated events (if widget and cart are on same page)
+    // Listen for zcc:validated events fired by the widget so the cart reacts
+    // immediately when the customer re-checks their ZIP on the same page.
     window.addEventListener('zcc:validated', function(e) {
       try {
         var detail = e.detail;
-        if (!detail.valid) {
-          sessionStorage.setItem('zcc:valid', 'false');
+        if (detail && detail.zip) {
           sessionStorage.setItem('zcc:zip', detail.zip);
-        } else {
-          sessionStorage.removeItem('zcc:valid');
-          sessionStorage.removeItem('zcc:zip');
-          var w = document.getElementById('zcc-cart-validator');
-          if (w) w.style.display = 'none';
-          // Re-enable checkout buttons if they were blocked
-          document.querySelectorAll('[data-zcc-checkout-blocked="true"]').forEach(function(el) {
-            el.classList.remove('zcc-checkout-blocked');
-            el.removeAttribute('data-zcc-checkout-blocked');
-            el.removeAttribute('title');
-          });
+          sessionStorage.setItem('zcc:shop', SHOP);
+          verifyAndRender(detail.zip);
         }
       } catch(e) {}
     });

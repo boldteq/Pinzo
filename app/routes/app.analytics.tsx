@@ -12,7 +12,6 @@ import {
   Banner,
   Button,
   IndexTable,
-  useIndexResourceState,
   EmptyState,
   Box,
   Divider,
@@ -192,8 +191,7 @@ export default function AnalyticsPage() {
     recentLogs,
   } = data;
 
-  const { selectedResources, allResourcesSelected, handleSelectionChange } =
-    useIndexResourceState(recentLogs as unknown as { [key: string]: unknown }[]);
+  // selectable={false} — no row selection needed, useIndexResourceState removed
 
   if (!hasAccess) {
     return (
@@ -241,19 +239,17 @@ export default function AnalyticsPage() {
         {/* Date filter */}
         <Layout.Section>
           <InlineStack align="end">
-            <div style={{ width: "200px" }}>
-              <Select
-                label="Date range"
-                labelHidden
-                options={dayOptions}
-                value={days}
-                onChange={(v) => {
-                  const next = new URLSearchParams(searchParams);
-                  next.set("days", v);
-                  setSearchParams(next);
-                }}
-              />
-            </div>
+            <Select
+              label="Date range"
+              labelHidden
+              options={dayOptions}
+              value={days}
+              onChange={(v) => {
+                const next = new URLSearchParams(searchParams);
+                next.set("days", v);
+                setSearchParams(next);
+              }}
+            />
           </InlineStack>
         </Layout.Section>
 
@@ -367,10 +363,6 @@ export default function AnalyticsPage() {
               <IndexTable
                 resourceName={{ singular: "log", plural: "logs" }}
                 itemCount={recentLogs.length}
-                selectedItemsCount={
-                  allResourcesSelected ? "All" : selectedResources.length
-                }
-                onSelectionChange={handleSelectionChange}
                 headings={[
                   { title: "ZIP Code" },
                   { title: "Result" },

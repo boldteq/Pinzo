@@ -345,8 +345,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === "accept") {
     const id = String(formData.get("id"));
-    const entry = await db.waitlistEntry.findUnique({ where: { id } });
-    if (!entry || entry.shop !== shop) {
+    const entry = await db.waitlistEntry.findFirst({ where: { id, shop } });
+    if (!entry) {
       return { error: "Entry not found." };
     }
 
@@ -568,6 +568,12 @@ export default function WaitlistPage() {
   }, [entries, searchQuery, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredEntries.length / PAGE_SIZE));
+
+  // Guard: if filter change reduces totalPages below currentPage, reset to 1
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) setCurrentPage(1);
+  }, [totalPages, currentPage]);
+
   const paginatedEntries = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredEntries.slice(start, start + PAGE_SIZE);
@@ -1285,7 +1291,7 @@ export default function WaitlistPage() {
           setNewNote("");
         }}
         title="Add Waitlist Entry"
-        primaryAction={{ content: "Add to Waitlist", onAction: handleAdd }}
+        primaryAction={{ content: "Add to Waitlist", onAction: handleAdd, loading: fetcher.state !== "idle", disabled: fetcher.state !== "idle" }}
         secondaryActions={[
           {
             content: "Cancel",
@@ -1472,6 +1478,7 @@ export default function WaitlistPage() {
         onClose={() => {
           setNotifyResultModalOpen(false);
           setCopySuccess(false);
+          setNotifyResult(null);
         }}
         title={`Notify Waitlist for ZIP ${notifyResult?.zipCode ?? ""}`}
         primaryAction={{
@@ -1492,6 +1499,7 @@ export default function WaitlistPage() {
                   onAction: () => {
                     setNotifyResultModalOpen(false);
                     setCopySuccess(false);
+                    setNotifyResult(null);
                   },
                 },
               ]
@@ -1501,6 +1509,7 @@ export default function WaitlistPage() {
                   onAction: () => {
                     setNotifyResultModalOpen(false);
                     setCopySuccess(false);
+                    setNotifyResult(null);
                   },
                 },
               ]

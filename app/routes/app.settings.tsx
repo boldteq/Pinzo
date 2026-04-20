@@ -193,7 +193,6 @@ export default function SettingsPage() {
 
   const isSavingBehavior = behaviorFetcher.state !== "idle";
   const isSavingEmail = emailFetcher.state !== "idle";
-  const isSaving = isSavingBehavior || isSavingEmail;
 
   const isGeneralDirty = behaviorValue !== defaultBehavior;
   const isEmailDirty =

@@ -55,25 +55,33 @@ const DEFAULTS = {
 
 /**
  * Sanitize merchant-supplied custom CSS before embedding it in a storefront
- * <style> element. Strips known injection vectors:
- *   - </style> close tags  — would break out of the enclosing style block
- *   - @import directives   — would load arbitrary external stylesheets
- *   - expression()         — IE-era JS-in-CSS execution vector
- *   - javascript: URLs     — covers url(javascript:...) and similar
+ * <style> element. Strips known injection vectors and layout-hijack at-rules.
  */
+const CSS_MAX_LENGTH = 10_000;
+
 function sanitizeCss(css: string): string {
-  return css
+  const trimmed = css.length > CSS_MAX_LENGTH ? css.slice(0, CSS_MAX_LENGTH) : css;
+  return trimmed
     // Break out of <style> blocks — strip both opening and closing tags
     .replace(/<style\b[^>]*>/gi, "")
     .replace(/<\/style>/gi, "")
     // External stylesheet loading
     .replace(/@import\b[^;]*(;|$)/gi, "")
+    // At-rules that can target arbitrary storefront elements and break layout
+    // (e.g. @media(prefers-color-scheme: dark) { body { display: none } })
+    .replace(/@media\b[^{]*\{[\s\S]*?\}\s*\}/gi, "")
+    .replace(/@supports\b[^{]*\{[\s\S]*?\}\s*\}/gi, "")
+    .replace(/@keyframes\b[^{]*\{[\s\S]*?\}\s*\}/gi, "")
+    .replace(/@font-face\b[^{]*\{[\s\S]*?\}/gi, "")
     // IE expression() — JS execution inside CSS property values
     .replace(/\bexpression\s*\(/gi, "")
-    // javascript: protocol inside url() references
+    // Any remote url() — only allow same-origin/Shopify CDN (safer to strip all)
+    .replace(/url\s*\(\s*['"]?\s*https?\s*:/gi, "url(")
     .replace(/url\s*\(\s*['"]?\s*javascript\s*:/gi, "url(")
-    // data: URIs inside url() — can embed arbitrary content including scripts
-    .replace(/url\s*\(\s*['"]?\s*data\s*:/gi, "url(");
+    .replace(/url\s*\(\s*['"]?\s*data\s*:/gi, "url(")
+    // Positioning that can cover the whole page/hijack clicks
+    .replace(/position\s*:\s*fixed/gi, "position:static")
+    .replace(/position\s*:\s*sticky/gi, "position:static");
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -193,7 +201,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     status: 200,
     headers: {
       ...CORS_HEADERS,
-      "Cache-Control": "no-store, no-cache, must-revalidate",
+      // Public, short-lived cache with SWR so storefront repeat visits don't
+      // re-fetch config on every pageview. 5 min fresh + 15 min stale gives
+      // merchants fast config propagation (<5 min worst case) without adding
+      // 100–500 ms to every widget render.
+      "Cache-Control": "public, max-age=300, stale-while-revalidate=900",
     },
   });
 };

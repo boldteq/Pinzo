@@ -326,17 +326,16 @@ export const action = async ({
         const deleteId = String(formData.get("id") ?? "").trim();
         if (!deleteId) return { error: "Feature ID is required." };
 
-        const toDelete = await db.featureRequest.findUnique({
-          where: { id: deleteId },
+        // Admin can delete any; regular users only their own
+        const deleteWhere = isAdmin
+          ? { id: deleteId }
+          : { id: deleteId, shop };
+        const deleteResult = await db.featureRequest.deleteMany({
+          where: deleteWhere,
         });
-        if (!toDelete) return { error: "Feature request not found." };
-
-        // Admin can delete any, regular users only their own
-        if (!isAdmin && toDelete.shop !== shop) {
-          return { error: "You can only delete your own feature requests." };
+        if (deleteResult.count === 0) {
+          return { error: "Feature request not found." };
         }
-
-        await db.featureRequest.delete({ where: { id: deleteId } });
         return { success: true, intent: "delete" };
       }
 
@@ -358,12 +357,10 @@ export const action = async ({
           return { error: `Description must be ${MAX_DESCRIPTION_LENGTH} characters or fewer.` };
         }
 
-        const toEdit = await db.featureRequest.findUnique({ where: { id: editId } });
+        const toEdit = await db.featureRequest.findFirst({
+          where: isAdmin ? { id: editId } : { id: editId, shop },
+        });
         if (!toEdit) return { error: "Feature request not found." };
-
-        if (!isAdmin && toEdit.shop !== shop) {
-          return { error: "You can only edit your own feature requests." };
-        }
 
         const editData: { title: string; description: string; category: string; status?: string } = {
           title: editTitle,
@@ -377,8 +374,8 @@ export const action = async ({
           editData.status = editStatus;
         }
 
-        await db.featureRequest.update({
-          where: { id: editId },
+        await db.featureRequest.updateMany({
+          where: isAdmin ? { id: editId } : { id: editId, shop },
           data: editData,
         });
 
@@ -398,15 +395,11 @@ export const action = async ({
           return { error: "Invalid status value." };
         }
 
-        const toUpdate = await db.featureRequest.findUnique({
-          where: { id: statusId },
-        });
-        if (!toUpdate) return { error: "Feature request not found." };
-
-        await db.featureRequest.update({
+        const updateResult = await db.featureRequest.updateMany({
           where: { id: statusId },
           data: { status: newStatus },
         });
+        if (updateResult.count === 0) return { error: "Feature request not found." };
 
         return { success: true, intent: "update-status" };
       }
@@ -645,6 +638,12 @@ export default function FeatureRequestsPage() {
     1,
     Math.ceil(filteredFeatures.length / PAGE_SIZE),
   );
+
+  // Guard: if filter/tab change reduces totalPages below currentPage, reset to 1
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) setCurrentPage(1);
+  }, [totalPages, currentPage]);
+
   const paginatedFeatures = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredFeatures.slice(start, start + PAGE_SIZE);

@@ -197,6 +197,8 @@ export default function HelpPage() {
                   <div
                     role="button"
                     tabIndex={0}
+                    aria-expanded={openFaq === index}
+                    aria-controls={`faq-${index}`}
                     onClick={() => handleFaqToggle(index)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
@@ -294,8 +296,16 @@ export default function HelpPage() {
                       <Button
                         variant="primary"
                         onClick={() => {
-                          if (typeof window !== "undefined" && window.$chatwoot) {
+                          if (
+                            typeof window !== "undefined" &&
+                            window.$chatwoot &&
+                            typeof window.$chatwoot.toggle === "function"
+                          ) {
                             window.$chatwoot.toggle("open");
+                          } else {
+                            shopify.toast.show(
+                              "Chat is loading, try again in a moment.",
+                            );
                           }
                         }}
                       >

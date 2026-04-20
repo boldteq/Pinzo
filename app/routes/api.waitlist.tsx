@@ -100,7 +100,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  // Email validation — requires alphanumeric local, valid domain with TLD 2+ chars.
+  // Intentionally stricter than the lax \S@\S.\S pattern to reject obvious
+  // garbage like "a@b.c" or "x@localhost" while still allowing common formats.
+  if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,24}$/.test(email)) {
     return new Response(
       JSON.stringify({ error: "Invalid email address" }),
       { status: 400, headers: CORS_HEADERS },
@@ -157,9 +160,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     });
 
-    // Fire-and-forget: fetch email settings then send emails
+    // Fire-and-forget: fetch email settings then send emails.
+    // We explicitly capture non-null shop/email for the closure so TS narrows
+    // nullable types, and we log every failure so merchants can diagnose.
+    const finalEmail = email;
+    const finalShop = shop;
     db.shopSettings
-      .findUnique({ where: { shop } })
+      .findUnique({ where: { shop: finalShop } })
       .then((settings) => {
         const emailOpts: EmailOptions = {
           senderName: settings?.emailSenderName,
@@ -167,21 +174,39 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           replyTo: settings?.emailReplyTo,
         };
 
-        // Confirmation to customer
-        sendWaitlistConfirmation(email, normalizedZip, shop, emailOpts).catch(() => {});
+        sendWaitlistConfirmation(finalEmail, normalizedZip, finalShop, emailOpts).catch(
+          (err) =>
+            console.error(
+              "[api.waitlist] customer confirmation send failed shop=%s email=%s:",
+              finalShop,
+              finalEmail,
+              err,
+            ),
+        );
 
-        // Notify merchant if notificationEmail is set
         if (settings?.notificationEmail) {
           sendMerchantWaitlistAlert(
             settings.notificationEmail,
-            email,
+            finalEmail,
             normalizedZip,
-            shop,
+            finalShop,
             emailOpts,
-          ).catch(() => {});
+          ).catch((err) =>
+            console.error(
+              "[api.waitlist] merchant alert send failed shop=%s:",
+              finalShop,
+              err,
+            ),
+          );
         }
       })
-      .catch(() => {});
+      .catch((err) =>
+        console.error(
+          "[api.waitlist] shop settings lookup failed for email dispatch shop=%s:",
+          finalShop,
+          err,
+        ),
+      );
 
     return new Response(
       JSON.stringify({
@@ -190,7 +215,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }),
       { status: 200, headers: CORS_HEADERS },
     );
-  } catch {
+  } catch (err) {
+    const mask = (s: string | null | undefined) => (s ? s.slice(0, 2) + "***" : "");
+    console.error(
+      "[api.waitlist] upsert failed shop=%s zip=%s email=%s:",
+      shop,
+      mask(zip),
+      mask(email),
+      err,
+    );
     return new Response(
       JSON.stringify({ error: "Failed to join waitlist. Please try again." }),
       { status: 500, headers: CORS_HEADERS },

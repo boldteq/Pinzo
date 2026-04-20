@@ -55,7 +55,13 @@ export async function getShopSubscription(
  */
 export async function syncSubscriptionFromShopify(
   shop: string,
-  appSubscriptions: Array<{ id: string; name: string; status: string }>,
+  appSubscriptions: Array<{
+    id: string;
+    name: string;
+    status: string;
+    trialDays?: number | null;
+    createdAt?: string | null;
+  }>,
 ): Promise<ShopSubscription> {
   const activeSub = appSubscriptions.find((s) => s.status === "ACTIVE");
   const frozenSub = !activeSub
@@ -71,6 +77,7 @@ export async function syncSubscriptionFromShopify(
   let billingInterval = "monthly";
   let shopifySubscriptionId: string | null = null;
   let status = "active";
+  let trialEndsAt: Date | null = null;
 
   if (matchedSub) {
     // For FROZEN/PENDING keep the plan but reflect the real status.
@@ -80,9 +87,41 @@ export async function syncSubscriptionFromShopify(
     status = matchedSub.status.toLowerCase();
     billingInterval =
       planId.toLowerCase().includes("annual") ? "annual" : "monthly";
+
+    // Compute trialEndsAt when trial information is available from Shopify
+    if (
+      matchedSub.trialDays != null &&
+      matchedSub.trialDays > 0 &&
+      matchedSub.createdAt
+    ) {
+      const createdMs = new Date(matchedSub.createdAt).getTime();
+      if (!isNaN(createdMs)) {
+        trialEndsAt = new Date(
+          createdMs + matchedSub.trialDays * 24 * 60 * 60 * 1000,
+        );
+      }
+    }
   }
 
-  const planTier = getPlanTier(planId) ;
+  const planTier = getPlanTier(planId);
+
+  // Build the upsert update payload — only overwrite trialEndsAt when we have
+  // a non-null value; never null-out an existing trial end date.
+  const upsertUpdate: {
+    planId: string;
+    billingInterval: string;
+    shopifySubscriptionId: string | null;
+    status: string;
+    trialEndsAt?: Date;
+  } = {
+    planId,
+    billingInterval,
+    shopifySubscriptionId,
+    status,
+  };
+  if (trialEndsAt !== null) {
+    upsertUpdate.trialEndsAt = trialEndsAt;
+  }
 
   await db.subscription.upsert({
     where: { shop },
@@ -92,14 +131,13 @@ export async function syncSubscriptionFromShopify(
       billingInterval,
       shopifySubscriptionId,
       status,
+      ...(trialEndsAt !== null ? { trialEndsAt } : {}),
     },
-    update: {
-      planId,
-      billingInterval,
-      shopifySubscriptionId,
-      status,
-    },
+    update: upsertUpdate,
   });
+
+  // Retrieve the current trialEndsAt from DB in case we didn't overwrite it
+  const persisted = await db.subscription.findUnique({ where: { shop } });
 
   return {
     planId,
@@ -107,7 +145,7 @@ export async function syncSubscriptionFromShopify(
     billingInterval,
     shopifySubscriptionId,
     status,
-    trialEndsAt: null,
+    trialEndsAt: persisted?.trialEndsAt ?? null,
     limits: PLAN_LIMITS[planTier],
   };
 }

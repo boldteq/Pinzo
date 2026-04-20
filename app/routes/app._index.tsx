@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
-import { useLoaderData, useNavigate, useRevalidator, useRouteError } from "react-router";
+import { useLoaderData, useNavigate, useNavigation, useRevalidator, useRouteError } from "react-router";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
@@ -69,6 +69,7 @@ export default function DashboardPage() {
     themeEditorAppEmbedsUrl,
   } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
+  const navigation = useNavigation();
   const { revalidate, state: revalidateState } = useRevalidator();
   const limits = PLAN_LIMITS[subscription.planTier];
 
@@ -340,6 +341,7 @@ export default function DashboardPage() {
                   <Button
                     size="slim"
                     onClick={() => navigate(item.href)}
+                    loading={navigation.state !== "idle" && navigation.location?.pathname === item.href}
                   >
                     {item.action}
                   </Button>

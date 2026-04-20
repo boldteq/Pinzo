@@ -45,6 +45,15 @@ export function isEmailConfigured(): boolean {
   return Boolean(process.env.RESEND_API_KEY);
 }
 
+// Guard: RESEND_API_KEY configured but RESEND_FROM_EMAIL missing → mis-configuration
+// (both unset → email skipped silently, which is fine for local dev)
+if (process.env.RESEND_API_KEY && !process.env.RESEND_FROM_EMAIL) {
+  throw new Error(
+    "[email] RESEND_API_KEY is set but RESEND_FROM_EMAIL is not configured. " +
+      "Set RESEND_FROM_EMAIL to the verified sender address (e.g. noreply@yourdomain.com).",
+  );
+}
+
 function getRawFromEmail(): string {
   return process.env.RESEND_FROM_EMAIL || "noreply@example.com";
 }
@@ -221,7 +230,81 @@ export async function sendZipAvailableNotification(
 }
 
 // ---------------------------------------------------------------------------
-// 4. Test Email  (Settings page)
+// 4. GDPR Data Request  (App → Customer)
+// ---------------------------------------------------------------------------
+
+export interface GdprDataRow {
+  zipCode: string;
+  status: string;
+  createdAt: Date;
+}
+
+/**
+ * Sends the customer a JSON export of all data we store about them.
+ * Required for Shopify App Store compliance (customers/data_request webhook).
+ */
+export async function sendGdprDataRequestExport(
+  to: string,
+  shop: string,
+  rows: GdprDataRow[],
+): Promise<boolean> {
+  const resend = getClient();
+  if (!resend) {
+    console.warn(
+      "[email] sendGdprDataRequestExport skipped — Resend not configured; shop=%s customer=%s",
+      shop,
+      to,
+    );
+    return false;
+  }
+
+  const name = shopFallbackName(shop);
+  const rowsJson = JSON.stringify(rows, null, 2);
+  const tableHtml = rows.length
+    ? `<table style="width:100%;border-collapse:collapse;margin:16px 0">
+        <thead><tr>
+          <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:12px;text-transform:uppercase">ZIP</th>
+          <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:12px;text-transform:uppercase">Status</th>
+          <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:12px;text-transform:uppercase">Joined</th>
+        </tr></thead>
+        <tbody>
+          ${rows
+            .map(
+              (r) =>
+                `<tr><td style="padding:8px;border-bottom:1px solid #f3f4f6">${r.zipCode}</td><td style="padding:8px;border-bottom:1px solid #f3f4f6">${r.status}</td><td style="padding:8px;border-bottom:1px solid #f3f4f6">${new Date(r.createdAt).toISOString().slice(0, 10)}</td></tr>`,
+            )
+            .join("")}
+        </tbody>
+      </table>`
+    : `<p style="color:#374151">We have no stored data associated with this email address.</p>`;
+
+  try {
+    await resend.emails.send({
+      from: buildFrom(shop),
+      to,
+      subject: `Your data export from ${name}`,
+      html: emailLayout(
+        name,
+        `
+          <h2 style="margin:0 0 16px;color:#1a1a1a">Your data export</h2>
+          <p style="color:#374151;line-height:1.6">You requested a copy of the personal data ${name} stores about you. Below is every record tied to this email address.</p>
+          ${tableHtml}
+          <p style="color:#6b7280;font-size:13px;margin-top:24px">Machine-readable copy:</p>
+          <pre style="background:#f9fafb;padding:12px;border-radius:6px;font-size:12px;overflow:auto;color:#111827">${rowsJson.replace(/</g, "&lt;")}</pre>
+          <p style="color:#6b7280;font-size:13px;margin-top:24px">If you believe this is incomplete or would like the data removed, reply to this email and we will respond within 30 days.</p>
+        `,
+      ),
+      text: `Your data export from ${name}\n\nRecords for ${to}:\n${rowsJson}\n\nIf anything looks wrong, reply to this email.`,
+    });
+    return true;
+  } catch (error) {
+    console.error("[email] Failed to send GDPR data export:", error);
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 5. Test Email  (Settings page)
 // ---------------------------------------------------------------------------
 
 export async function sendTestEmail(
